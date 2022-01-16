@@ -1,0 +1,98 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta http-equiv="X-UA-Compatible" content="ie=edge"><title>编程格调 | Oasis</title><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css"><script src="/js/third-party/jquery.min.js">           </script><script src="/js/third-party/velocity.min.js">           </script><script src="/js/third-party/velocity.ui.min.js">           </script><link rel="icon" href="/img/favicon.ico"><meta name="generator" content="Hexo 5.4.0"></head><body><nav id="nav-bar"><nav class="clear-fix" id="nav-container"><div class="pull-left" id="page-home"><a href="/">Oasis</a></div><i class="fa fa-bars pull-right" id="toggle-nav" aria-hidden="true"></i><ul class="pull-right" id="navs"><li><a class="nav" href="/">Home</a></li><li><a class="nav" href="/tags">Tags</a></li><li><a class="nav" href="/categories">Categories</a></li><li><a class="nav" href="/about">About</a></li></ul></nav></nav><header id="header-info"><div id="header-container"><div id="site-info"><div id="terminal-pl"><div id="top-bar"><ul id="control"><li class="btn"></li><li class="btn"></li><li class="btn"></li></ul><div id="file-path"><i class="fa fa-folder folder-ic" aria-hidden="true"></i> oasis 10 X 10</div></div><div id="code-pl">oasis:~/blog$
+<span class="code-pl-input">source &quot;编程格调.sh&quot;</span><br><br>oasis:~/blog$
+<span class="code-pl-input">printenv</span><br><span class="code-pl-output">CREATED_DATE = 2021-12-22</span><br><span class="code-pl-output">UPDATED_DATE = 2021-12-22</span><br><span class="code-pl-output">TAGS =</span><span class="code-pl-output"> </span><span class="code-pl-output"></span><br><span class="code-pl-output">CATEGORIES =</span><span class="code-pl-output"> </span><span class="code-pl-output"></span><br><br>oasis:~/blog$
+<span class="code-pl-input">grep -lr $TAGS post</span><br><br><!--if page.next| > .prev
+br
+a(href=url_for(page.next.path))
+  span.answer= page.next.title
+br
+br--><!--if page.prev| > .next
+br
+a(href=url_for(page.prev.path))
+  span.answer= page.prev.title--></div></div></div></div></header><div id="content-outer"><div id="content-inner"><article id="post"><a class="article-title">编程格调</a><time class="article-date"><i class="fa fa-calendar" aria-hidden="true"></i> 2021-12-22</time><h2 id="表达"><a href="#表达" class="headerlink" title="表达"></a>表达</h2><ol>
+<li>如何表达每一个语句很大程度上决定了程序本身是否易于理解，语句的完美表达是用任何注释、格式规范或补充文档都无法替代的。</li>
+<li>简单直接地表达你要说的意思</li>
+<li>使用库函数</li>
+<li>避免使用临时变量</li>
+<li>代码要清晰，不要为了“效率”牺牲可读性</li>
+<li>让机器干脏活</li>
+<li>用函数调用替代重复的表达式</li>
+<li>加括号来避免歧义</li>
+<li>选择不会被混淆的变量名</li>
+<li>避免不必要的冲突</li>
+<li>使用语言好的特性，避免使用不好的特性</li>
+<li>不要使用条件分支来代替一个逻辑表达式</li>
+<li>用“电话测试”来检查可读性</li>
+</ol>
+<h2 id="控制结构"><a href="#控制结构" class="headerlink" title="控制结构"></a>控制结构</h2><ol>
+<li>用 IFELSE 强调两个操作只有一个被执行</li>
+<li>用 DO 和 DOWHILE 来强调循环的存在</li>
+<li>确保你的程序是自顶向下阅读的</li>
+<li>使用 IF…ELSEIF…ELSEIF…ELSE 来实现多路分支</li>
+<li>使用基本的控制结构</li>
+<li>先用容易理解的伪语言编写代码，然后再翻译成你需要使用的语言</li>
+<li>避免使用 ELSEGOTO 和 ELSERETURN</li>
+<li>判断要尽可能挨着与之相关的操作</li>
+<li>使用数组来避免重复的控制流</li>
+<li>选择可以简化程序的数据表示方法</li>
+<li>不要止步于第一遍的代码草稿</li>
+</ol>
+<h2 id="程序结构"><a href="#程序结构" class="headerlink" title="程序结构"></a>程序结构</h2><ol>
+<li><strong>模块化，使用子例程</strong></li>
+<li><strong>让模块之间的耦合变得可见</strong></li>
+<li><strong>每一个模块都应该做好一件事</strong></li>
+<li><strong>确保每一个模块都隐藏好一些东西</strong></li>
+<li><strong>以数据为向导来构建程序的结构</strong></li>
+<li>不要修补蓝代码————重写它</li>
+<li>分块编写和测试大的程序</li>
+<li>对于递归定义的数据结构使用递归过程</li>
+</ol>
+<h2 id="输入输出"><a href="#输入输出" class="headerlink" title="输入输出"></a>输入输出</h2><ol>
+<li>校验输入的合法性和合理性</li>
+<li>保证输入的数据不会违背程序的限制</li>
+<li>利用文件结束符或结束标志来终止输入，不要让用户去计数</li>
+<li>识别出非法输入数据，如果可能则纠正之</li>
+<li>使用统一的形式处理文件结束条件</li>
+<li>让输入数据易于准备，并让输出数据意义不言自明</li>
+<li><strong>使用统一的输入格式</strong></li>
+<li><strong>让输入数据易于校对</strong></li>
+<li><strong>尽可能选择自由格式输入</strong></li>
+<li>使用含义自明的输入，指定默认值，将以上二者输出</li>
+<li>将输入与输出局限在子例程中</li>
+<li>确保所有的变量在使用之前都被初始化</li>
+<li>不要停留在一个 bug 上</li>
+<li>在边界值上测试程序</li>
+<li>预防性编程</li>
+<li>0.1+0.2 ！= 0.3</li>
+<li>不要比较浮点数是否相等</li>
+<li>先做对，再做快</li>
+<li>再提高程序运行速度时，要保持其正确性</li>
+<li>先把程序改得更简洁，再提高其运行速度</li>
+<li>不要为了“效率”上的蝇头小利而牺牲程序的间接性</li>
+<li>让编译器执行平凡优化</li>
+<li>不要勉强地复用代码，应该进行改编</li>
+<li>保证特殊情况真的有特殊性</li>
+<li>保持简单性，反而会更快</li>
+<li>不要为了提高速度而画蛇添足————寻找更好的算法</li>
+<li>在程序中放置测试语句，“增效”之前执行测试</li>
+</ol>
+<h2 id="文档"><a href="#文档" class="headerlink" title="文档"></a>文档</h2><ol>
+<li>确保注释和代码一致</li>
+<li>不要用注释复述代码做的事情，每个注释都要有实际意义</li>
+<li>不要注释糟糕的代码————重写它</li>
+<li>使用含有意义的变量名</li>
+<li>使用含有意义的语句</li>
+<li>程序的格式要有助于读者的理解</li>
+<li>用缩进来体现程序的逻辑结构</li>
+<li>记录你的数据规划</li>
+<li>不要过度注释</li>
+</ol>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ol>
+<li>从数据的角度来构造程序</li>
+<li>既要保证程序效率又要保证可读性，变量和函数应该指明是什么，而不是怎么做</li>
+<li>在程序结构章节中主要体现单一职责，利用抽象隐藏细节</li>
+<li>输入输出要保持统一，格式尽可能自由，避免让用户（使用 API 的程序开发人员）记格式</li>
+<li>好的代码便是文档，好的命名和好的代码结构尤其重要。主要考虑避免重复，自上而下的方法编写程序。</li>
+</ol>
+</article><article id="post"><script type="text/javascript" src="https://utteranc.es/client.js" repo="xxx/blog_comments" issue-term="pathname" theme="github-light" crossorigin="anonymous" async></script></article><nav id="pagination"><div class="pagination clear-fix"><div class="page-prev pull-left"><a href="/2021/12/22/sobering/"><i class="fa fa-chevron-left"> </i><span>醍醐灌顶</span></a></div></div></nav></div></div><footer><div id="footer-inner"><div class="social-icons"></div><p class="design-info">Powered by <a href="https://hexo.io" target="_blank">Hexo</a> | Theme <a href="https://github.com/lazysheep666/terminal_theme" target="_blank">Teminal</a> (<a href="https://github.com/Tonny-Gu/terminal_theme" target="_blank">NekoDaemon Remix</a>)</p><p class="design-info"><a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank">CC-BY-SA 4.0</a> 
+Licensed | Copyright © 2022 oasis</p></div></footer><script src="/js/nav.js"></script><script src="/js/scroll.js"></script><script src="/js/index.js"></script></body></html>
