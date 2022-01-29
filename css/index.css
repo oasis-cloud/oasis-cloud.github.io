@@ -536,7 +536,9 @@ pre .comment {
 }
 .recent-post-item .article-inner,
 #post .article-inner {
+  max-height: 25rem;
   margin: 1rem 0;
+  overflow: hidden;
 }
 .recent-post-item .article-footer,
 #post .article-footer {
