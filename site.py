@@ -10,7 +10,7 @@
 theme = "graphite"
 
 # Site title.
-title = "Mars"
+title = "Oasis And Cloud"
 
 # Site tagline.
 tagline = ""
