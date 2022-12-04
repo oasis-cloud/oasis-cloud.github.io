@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>绿洲</title>
+        <link rel="stylesheet" href="../../assets/fonts.css">
+        <link rel="stylesheet" href="../../assets/graphite.css">
+        <link rel="stylesheet" href="../../assets/pygments.css">
+        
+        
+    </head>
+    <body class="node-notes-thoughts-2 node-notes-thoughts node-notes node">
+        <header class="masthead">
+            <h1><a href="../../index.html">绿洲</a></h1>
+            
+                <p class="tagline">-- . -- . -- .</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../index.html">主页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1></h1>
+                
+                <hr>
+            </header>
+            <h1>软件开发的心得</h1>
+<ul>
+<li>
+<p>Make it work</p>
+</li>
+<li>
+<p>Make it right</p>
+</li>
+<li>
+<p>Make it fast</p>
+</li>
+<li>
+<p>In that order</p>
+</li>
+</ul>
+<h1>时间</h1>
+<p>时间的延续，让万物有了动态。</p>
+<p>例如操作系统中，时分共享 CPU 技术，则是基于时间的延续，让多个进程切换运行。</p>
+<p>动画的本质是时间的分片。</p>
+<h1>架构的划分</h1>
+<p>架构分为前端架构和服务端架构，前端架构主要考虑人的行为方式。因为前端是用户界面，需要与人进行交互。服务端架构主要考虑数据的传递和处理，如何更高效的、稳健的处理数据。</p>
+<h1>服务端 API 设计对前端的影响</h1>
+<p>服务端 API 设计对前端的影响</p>
+<p>服务端越来越讲求复用性，导致逻辑层特别薄，前端承接了较重的逻辑层。</p>
+<p>针对前端实践的思维模式，前端主要考量交互设计的实现以及数据的渲染，服务端主要提供了供渲染使用的数据，然而在开发阶段，前端进度往往优先于服务端，目前前端组件设计存在面向服务端特定 scheme 的问题，导致前端的组件复用能力低下。</p>
+<p>这里可以拿 todolist 的设计举证。</p>
+<p>针对于此种场景，考虑服务端提供的数据，针对数据的抽象处理包括：获取，选择，映射 三个步骤，针对这三个步骤，我们可在前端进行抽象，并通过 类 sql 的声明式实现。</p>
+<p>采用声明式的最大好处是代码可读性强。</p>
+<h1>芯片如何设计</h1>
+<p>计算机芯片为什么不做成立体的？</p>
+<h1>程序是什么</h1>
+<p>编程是小逻辑的排列</p>
+<h1>自动埋点系统</h1>
+<p>1.stopPropagation 通过编译阶段，转换为 <code>e.stopPropagation(); var event = new Event('build');elem.addEventListener('build', function (e) { ... }, false);elem.dispatchEvent(event);</code></p>
+<ol>
+<li>
+<p>如何在标签挂载数据？</p>
+<ol>
+<li>通过interface 进行约束组建的实现</li>
+<li>通过封装高级组建进行约束</li>
+<li>通过编译阶段解析数据</li>
+</ol>
+</li>
+</ol>
+<p>如何在浏览器插件获取元素？</p>
+<pre><code>1. 通过鼠标右键+ctrl，弹出选择父级元素的框以及表单选项
+2. 标签化已经处理过的dom元素
+3. 可删除标签，超级标签
+</code></pre>
+<p>带有逻辑的标签如何处理？</p>
+<pre><code>1. 分多次导出数据
+2. 如何在埋点阶段模拟标签渲染？
+</code></pre>
+<p>可以使用store进行埋点数据处理吗？</p>
+<p>配合工程的改造</p>
+<ol>
+<li>组建封装重新设计，统一抽象interface</li>
+<li>进行monorepo 规划</li>
+<li>utils提取</li>
+</ol>
+<p>两个系统通过消息机制通信</p>
+<p>两个棵树通过什么合并？</p>
+<ol>
+<li>解藕方案：脱离数据合并，独立于dom树定义规则，例如生成使用子元素索引，使用子元素内容</li>
+<li>数据自定义方案：通过在插件界面设置自定义方案，在埋点触发时机触发</li>
+<li>通过第一个渲染树的数据支持插件的提取树，例如在渲染阶段加上data属性</li>
+</ol>
+<h1>什么是泛型编程</h1>
+<p>泛型编程是一种专注于对算法和数据结构进行设计的编程方式，它使得这些算法和数据结构能在不损失效率的前提下，运用到最为通用的环境中。</p>
+<p>泛型编程也可理解为，对算法和数据结构处理方式的扩展。这里最终可以通过抽象代数的模式显示出来。</p>
+<p>泛型编程主要谈及的是编程态度，何为编程态度？</p>
+<ol>
+<li>泛型编程——主要考虑算法和数据的拓广</li>
+</ol>
+        </article>
+        
+    </body>
+</html>

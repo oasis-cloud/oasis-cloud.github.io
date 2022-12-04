@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>TypeScript 中的 type 和 interface 比较</title>
+        <link rel="stylesheet" href="../assets/fonts.css">
+        <link rel="stylesheet" href="../assets/graphite.css">
+        <link rel="stylesheet" href="../assets/pygments.css">
+        
+        
+    </head>
+    <body class="node-articles-6 node-articles node">
+        <header class="masthead">
+            <h1><a href="../index.html">Mars</a></h1>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>TypeScript 中的 type 和 interface 比较</h1>
+                
+                <hr>
+            </header>
+            <p>TypeScript 中定义一个命名类型，有两个选择，可以使用 type 或 interface。</p>
+<p><code>ts
+type P = {
+    name: string
+}</code></p>
+<p><code>ts
+interface P {
+    name: string
+}</code></p>
+<p>type 用于定义类型别名</p>
+<p><code>ts
+type Simple = string | number
+type Point = {
+    x: number
+    y: number
+}</code></p>
+<p>通过使用类型别名可以提高代码的可读性，例如：</p>
+<p><code>ts
+type TotalSize = number
+type Price = number
+type Quantity = number
+function calculateTotalSize(x:Price, y:Quantity): TotalSize {
+    return x * y
+}</code></p>
+<p>interface 用于定义对象类型</p>
+<p><code>ts 
+interface Point {
+    x:number
+    y:number
+}</code></p>
+<p>interface 可以重新打开类型，添加新属性，type 则不可。</p>
+<p>```ts
+interface Point {
+    x:number
+    y:number
+}</p>
+<p>interface Point {
+    z: number
+}
+```</p>
+<p>```ts
+type TPoint = {
+    x:number
+    y:number
+}</p>
+<p>type TPoint = {
+    z: number
+}
+// Errors in code
+// Duplicate identifier 'TPoint'.
+// Duplicate identifier 'TPoint'.
+```</p>
+<p>type 用于条件类型</p>
+<p><code>ts
+type NameOrId&lt;T extends number | string&gt; = T extends number
+  ? IdLabel
+  : NameLabel;</code></p>
+<p>在代码中应该使用哪种方式呢？</p>
+<ol>
+<li>从代码库维护层面来讲，如果维护的代码库统一采用 interface，那应该代码库风格保持一致</li>
+<li>从代码重构角度来讲，interface 的可扩展性更加简单和可读。<ol>
+<li>例如对外提供的 API，当 API 发生变化时，通过 interface 合并新字段可能对你的用户有帮助。</li>
+<li>再项目内部使用类型，声明合并很可能是一个错误，这时使用 type 更合适。</li>
+</ol>
+</li>
+</ol>
+<p>```ts
+// a libary
+export interface AProps {
+    visible: boolean
+}</p>
+<p>// our project global.d.ts
+import type {Aprops} from 'a-libary'
+interface AExtends extends Aprops {
+    closed: boolean
+}
+```</p>
+        </article>
+        
+    </body>
+</html>
