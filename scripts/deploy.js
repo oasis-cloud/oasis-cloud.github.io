@@ -2,7 +2,7 @@ var ghpages = require('gh-pages');
 
 ghpages.publish('out', {
     branch: 'main',
-    dest: './',
+    dest: '.',
     add: true,
     push: false,
     name: 'oasis',
