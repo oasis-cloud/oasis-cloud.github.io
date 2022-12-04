@@ -46,7 +46,7 @@ img {
 body {
     font-size: 17px;
     color: black;
-    font-family: 'Crimson Text', Georgia, serif;
+    font-family: lxwk, 'Crimson Text', Georgia, serif;
     line-height: 1.75;
 }
 
@@ -209,7 +209,7 @@ dd {
  */
 
 a {
-    color: black;
+    color: #3465a4;
     text-decoration: none;
     padding-bottom: 2px;
     border-bottom: 1px solid;

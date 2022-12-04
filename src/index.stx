@@ -2,8 +2,10 @@
 title: d22d21
 subTitle: 一个人（至少是一个年轻人）的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。—— 《一个数学家的辩白》
 ---
+
 * [编程格调](@root/articles/8.html)
 * [醍醐灌顶](@root/articles/10.html)
+
 * [DNS 解析流程](@root/articles/1.html)
 * [源码分析——nrm](@root/articles/3.html)
 * [自己动手实现——marquee](@root/articles/9.html)

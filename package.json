@@ -7,6 +7,7 @@
     "lib": "lib"
   },
   "scripts": {
+    "start": "ivy build && ivy serve",
     "deploy": "node scripts/deploy.js"
   },
   "repository": {
