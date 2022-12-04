@@ -5,7 +5,9 @@ subTitle: 一个人（至少是一个年轻人）的首要责任，就是要有�
 
 * [编程格调](@root/articles/8.html)
 * [醍醐灌顶](@root/articles/10.html)
-
+* 《软件设计》
+    * [系统编程](@root/articles/software-design/1.html)
+    * [异步编程](@root/articles/software-design/2.html)
 * [DNS 解析流程](@root/articles/1.html)
 * [源码分析——nrm](@root/articles/3.html)
 * [自己动手实现——marquee](@root/articles/9.html)
@@ -14,6 +16,6 @@ subTitle: 一个人（至少是一个年轻人）的首要责任，就是要有�
 * [TypeScript 中的 type 和 interface 比较](@root/articles/6.html)
 * [启动的第一个Python项目](@root/articles/7.html)
 * [Sass @use vs @import](@root/articles/4.html)
-* [视觉设计语言的动态话方案](@root/notes/thoughts/1.html)
+* [视觉设计语言的动态话方案](@root/notes/1.html)
 
 

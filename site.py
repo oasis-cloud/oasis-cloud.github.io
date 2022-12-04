@@ -14,3 +14,12 @@ title = "Oasis And Cloud"
 
 # Site tagline.
 tagline = ""
+
+
+markdown_settings = {
+    "extensions": [
+        "markdown.extensions.extra",
+        "markdown.extensions.smarty",
+        "pymdownx.superfences"
+    ]
+}
