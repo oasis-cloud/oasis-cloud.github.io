@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Sass @use vs @import</title>
+        <link rel="stylesheet" href="../assets/fonts.css">
+        <link rel="stylesheet" href="../assets/graphite.css">
+        <link rel="stylesheet" href="../assets/pygments.css">
+        
+        
+    </head>
+    <body class="node-articles-4 node-articles node">
+        <header class="masthead">
+            <h1><a href="../index.html">Mars</a></h1>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>Sass @use vs @import</h1>
+                
+                <hr>
+            </header>
+            <h2>@import</h2>
+<p>Sass 扩展了 CSS 的 @import 规则，能够导入 Sass样式表和 CSS样式表，提供对 mixins，functions,variables 的访问，并将多个样式表的 CSS 合并。</p>
+<p>CSS @import 指令在每次调用时，都会创建一个额外的 HTTP 请求，但 Sass @import 指令将文件包含在 CSS 中，不需要额外的 HTTP 请求。因为 Sass 的导入在编译阶段处理。</p>
+<p>Sass @import 指令语法：
+<code>scss
+@import filename;
+@import filename, filename;</code></p>
+<h2>工作过程说明</h2>
+<ol>
+<li>当 Sass 导入一个文件时，文件的内容将会被放到 @import 出现的位置。导入文件以及 @import 之前定义的任何 mixin，function，variable 都是可用的</li>
+<li>如果同一个样式表被多次导入，它会被计算相应的次数。如果被导入文件中只定义函数和 mixin，则没什么问题，因为 function、mixin、varibale会被插入到实际使用的位置。但是具体的样式规则会被多次插入。
+```scss
+// index.scss
+@import "variables"
+@import "border"
+@import "background"</li>
+</ol>
+<p>// _variables.scss
+$color: red;
+.square {
+  width: 100px;
+  height: 100px;
+  background-color: $color;
+}
+// border.scss
+@import 'variables';
+.border {
+  border: 1px solid $color;
+}
+// background.scss
+.background {
+  background: $color;
+}
+@import 'variables';
+// output.scss
+.square {
+  width: 100px;
+  height: 100px;
+  background-color: red;
+}</p>
+<p>.square {
+  width: 100px;
+  height: 100px;
+  background-color: red;
+}</p>
+<p>.border {
+  border: 1px solid red;
+}</p>
+<p>.background {
+  background: red;
+}</p>
+<p>.square {
+  width: 100px;
+  height: 100px;
+  background-color: red;
+}</p>
+<p><code>3. Sass 查找文件通过 URL 的方式工作，而不是通过文件路径的方式，这样可以兼容 windows 系统。文件后缀名也不是必须。
+4. 以 `_` 开头的 Sass 文件本身不会被编译，而是单纯的作为被导入的文件，这些文件是片段文件，再导入片段文件时可以省略`_`</code>scss
+// index.scss
+@import "variables"
+@import "border"
+@import "background"</p>
+<p>// _variables.scss
+$color: red;
+.square {
+  width: 100px;
+  height: 100px;
+}</p>
+<p>// border.scss
+.border {
+  border: 1px solid $color;
+}</p>
+<p>// background
+.background {
+  background: $color;
+}</p>
+<p>// output.css
+.border {
+  border: 1px solid red;
+}</p>
+<p>.background {
+  background: red;
+}
+<code>5. @import 导入的变量可以全局使用</code>scss
+// index.scss
+@import "variables"
+@import "border"
+@import "background"</p>
+<p>// variables.scss
+$color: red;</p>
+<p>// border.scss
+.border {
+  border: 1px solid $color;
+}</p>
+<p>// background
+.background {
+  background: $color;
+}</p>
+<p>// output.css
+.border {
+  border: 1px solid red;
+}</p>
+<p>.background {
+  background: red;
+}</p>
+<p><code>6. !default 与 import 的配置关系，import 在 !default 之前走的是配置化，import 在 !default 之后走的是覆盖，因为  `_variables.scss` 中的background-color 是 red。</code>scss
+//realme.scss
+$color: black;
+// index.scss
+@import 'realme';
+@import 'variables';
+@import 'border';
+@import 'background';
+// _variables.scss
+$color: red !default;</p>
+<p>.square {
+  width: 100px;
+  height: 100px;
+  background-color: $color;
+}
+// border.scss
+@import 'variables';
+.border {
+  border: 1px solid $color;
+}
+// background.scss
+.background {
+  background: $color;
+}
+@import 'variables';
+// output.scss
+.square {
+  width: 100px;
+  height: 100px;
+  background-color: black;
+}</p>
+<p>.square {
+  width: 100px;
+  height: 100px;
+  background-color: black;
+}</p>
+<p>.border {
+  border: 1px solid black;
+}</p>
+<p>.background {
+  background: black;
+}</p>
+<p>.square {
+  width: 100px;
+  height: 100px;
+  background-color: black;
+}
+```</p>
+<h2>@use</h2>
+<p>@use 可以从其他 Sass 样式表加载 mixins，functions，variables，将多个样式表合并。通过 @use 加载的样式表被称为“模块”。Sass 同时提供了非常有用的内置模块。</p>
+<h2>工作过程说明</h2>
+<ol>
+<li>@use 规则必须出现在除@forward之外的任何规则之前，包括样式规则。</li>
+<li>可通过 <namespace>.<variable>,<namespace>.<function>(), 或者 @include <namespace>.<mixin>() 访问模块内的成员。</li>
+<li>用@use加载的成员(变量、函数和mixin)只在加载它们的样式表中可见。其他样式表如果也想访问@use规则，则需要编写它们自己的@use规则。这有助于很容易地找出每个成员的确切来源。如果希望一次性从多个文件中加载成员，可以使用@forward规则从一个共享文件中转发所有成员。</li>
+<li>命名空间默认为 url，可通过 as 起别名
+<code>scss
+@use "src/corners" as c;
+@use "src/corners" as *;</code></li>
+<li>使用 <code>-</code> 或 <code>_</code> 指定私有成员
+```scss
+// src/_corners.scss
+$-radius: 3px;</li>
+</ol>
+<p>@mixin rounded {
+  border-radius: $-radius;
+}
+// style.scss
+@use "src/corners";</p>
+<p>.button {
+  @include corners.rounded;</p>
+<p>// This is an error! $-radius isn't visible outside of <code>_corners.scss</code>.
+  padding: 5px + corners.$-radius;
+}
+<code>6. 样式表可以用`!default`标志定义变量，使其可配置。使用 `@use &lt;url&gt; with (&lt;variable&gt;: &lt;value&gt;, &lt;variable&gt;: &lt;value&gt;)` 覆盖默认配置</code>scss
+// _library.scss
+$black: #000 !default;
+$border-radius: 0.25rem !default;
+$box-shadow: 0 0.5rem 1rem rgba($black, 0.15) !default;</p>
+<p>code {
+  border-radius: $border-radius;
+  box-shadow: $box-shadow;
+}</p>
+<p>// style.scss
+@use 'library' with (
+  $black: #222,
+  $border-radius: 0.1rem
+);</p>
+<p>// output.css
+code {
+  border-radius: 0.1rem;
+  box-shadow: 0 0.5rem 1rem rgba(34, 34, 34, 0.15);
+}</p>
+<p><code>7. 更灵活的配置推荐使用 mixin 配置</code>scss
+// _library.scss
+$-black: #000;
+$-border-radius: 0.25rem;
+$-box-shadow: null;</p>
+<p>/// If the user has configured <code>$-box-shadow</code>, returns their configured value.
+/// Otherwise returns a value derived from <code>$-black</code>.
+@function -box-shadow() {
+  @return $-box-shadow or (0 0.5rem 1rem rgba($-black, 0.15));
+}</p>
+<p>@mixin configure($black: null, $border-radius: null, $box-shadow: null) {
+  @if $black {
+    $-black: $black !global;
+  }
+  @if $border-radius {
+    $-border-radius: $border-radius !global;
+  }
+  @if $box-shadow {
+    $-box-shadow: $box-shadow !global;
+  }
+}</p>
+<p>@mixin styles {
+  code {
+    border-radius: $-border-radius;
+    box-shadow: -box-shadow();
+  }
+}</p>
+<p>// style.scss
+@use 'library';</p>
+<p>@include library.configure(
+  $black: #222,
+  $border-radius: 0.1rem
+);</p>
+<p>@include library.styles;
+```</p>
+        </article>
+        
+    </body>
+</html>
