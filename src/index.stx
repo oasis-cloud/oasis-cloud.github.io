@@ -9,6 +9,7 @@ subTitle: 一个人（至少是一个年轻人）的首要责任，就是要有�
     * [系统编程](@root/articles/software-design/1.html)
     * [异步编程](@root/articles/software-design/2.html)
     * [单元测试](@root/articles/software-design/3.html)
+    * [文件备份](@root/articles/software-design/4.html)
 * [DNS 解析流程](@root/articles/1.html)
 * [源码分析——nrm](@root/articles/3.html)
 * [自己动手实现——marquee](@root/articles/9.html)
