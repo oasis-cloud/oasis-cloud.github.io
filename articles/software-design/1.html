@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>系统编程</title>
+        <link rel="stylesheet" href="../../assets/fonts.css">
+        <link rel="stylesheet" href="../../assets/graphite.css">
+        <link rel="stylesheet" href="../../assets/pygments.css">
+        
+        
+    </head>
+    <body class="node-articles-software-design-1 node-articles-software-design node-articles node">
+        <header class="masthead">
+            <h1><a href="../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">☁️🌵️☁️🌵️☁️🌵☁️🌵️☁️🌵️☁️🌵☁️🌵</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>系统编程</h1>
+                
+                    <p class="subtitle">《软件设计》阅读笔记一</p>
+                
+                <hr>
+            </header>
+            <h2>背景简述</h2>
+<p>本章内容主要围绕这 JavaScript 的异步特性展开。异步特性也是 JavaScript 于其他语言的最大差别。JavaScript 中的异步处理主要是为了解决 I/O 问题。因为 I/O 的处理时需要 CPU 需要等待。I/O 所耗费的时间和 CPU 比起来可以说是天壤地别。</p>
+<p>我们来看看时间的概念：</p>
+<p>JavaScript 在初期可以通过 <code>Callback</code> 方式实现异步。ES6 版本之后已经添加了 Promise、async await。</p>
+<h2>列出目录</h2>
+<p>代码 1：
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nx">fs</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;fs&#39;</span><span class="w"></span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">srcDir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">process</span><span class="p">.</span><span class="nx">argv</span><span class="p">[</span><span class="mf">2</span><span class="p">]</span><span class="w"></span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">results</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">fs</span><span class="p">.</span><span class="nx">readdir</span><span class="p">(</span><span class="nx">srcDir</span><span class="p">)</span><span class="w"></span>
+<span class="k">for</span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">name</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">results</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">   </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</code></pre></div></p>
+<p>概念解析：</p>
+<ol>
+<li>process 是什么？</li>
+<li>node.js 中 process 对象提供了当前 node.js 进程的信息，并对其进行控制。argv 是一个数组，包含启动 node.js 进程时的命令行参数</li>
+<li>node test.js -a describe1</li>
+<li>process.argv[0] 是 bin 文件的路径 /usr/local/bin/node</li>
+<li>process.argv[1] 是 执行的脚本文件 test.js</li>
+<li>process.argv[2] 是 参数 -a</li>
+<li>process.argv[2] 是 参数 describe1</li>
+<li>node.js 可以使用 import 吗？</li>
+<li>node.js 默认使用 require 方式，如果采用 import 方式的话，需要将 package.json 文件中的 type 设置为 module</li>
+</ol>
+<p>代码 1 并不会正常工作，而是会报错：Callback muse be a function。所以需要给它添加一个 function，对数据进行处理。</p>
+<p>在 Node.js 中有这样一个观念需要明确：错误先行。至于为什么，我们看如下三个论点。</p>
+<ol>
+<li>任何一个程序至少包含一个 bug</li>
+<li>任何一个程序可以缩短一行。</li>
+<li>因此，任何一个程序可以简化为一条错误语句。</li>
+</ol>
+<p>代码 2：
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nx">fs</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;fs&#39;</span><span class="w"> </span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">listContents</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">err</span><span class="p">,</span><span class="w"> </span><span class="nx">files</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span><span class="w"></span>
+<span class="w">    </span><span class="k">else</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">files</span><span class="p">)</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">srcDir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">process</span><span class="p">.</span><span class="nx">argv</span><span class="p">[</span><span class="mf">2</span><span class="p">]</span><span class="w"></span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">results</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">fs</span><span class="p">.</span><span class="nx">readdir</span><span class="p">(</span><span class="nx">srcDir</span><span class="p">,</span><span class="w"> </span><span class="nx">listContents</span><span class="p">)</span><span class="w"></span>
+</code></pre></div></p>
+<h2>选择一组文件</h2>
+<p>在很多 node.js 项目中，我们经常看到 glob 模块。glob 是 &ldquo;global&rdquo; 的缩写。glob 是一个古老的 Unix 术语，用于按名称匹配一组文件。所以，我们在程序设计中很多概念是相同的，或者很多现有思想是可以借鉴的。</p>
+<p>概念解析：</p>
+<ol>
+<li>npm glob</li>
+<li>https://www.npmjs.com/package/glob</li>
+<li>https://man7.org/linux/man-pages/man3/fnmatch.3.html</li>
+<li>https://www.gnu.org/software/bash/manual/html_node/Pattern-Matching.html</li>
+<li>https://www.linuxjournal.com/content/pattern-matching-bash</li>
+</ol>
+        </article>
+        
+    </body>
+</html>

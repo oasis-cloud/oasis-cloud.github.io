@@ -12,7 +12,9 @@
     </head>
     <body class="node-articles-9 node-articles node">
         <header class="masthead">
-            <h1><a href="../index.html">Mars</a></h1>
+            <h1><a href="../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">☁️🌵️☁️🌵️☁️🌵☁️🌵️☁️🌵️☁️🌵☁️🌵</p>
             
             
             <nav class="menu">
@@ -39,20 +41,19 @@
 <h2>HTML <code>marquee</code> 元素</h2>
 <p>HTML <code>marquee</code> 元素（<code>&lt;marquee&gt;</code>） 用来插入一段滚动的文字。 但目前已经弃用，然而有些浏览器还是支持 <code>marquee</code> 的。</p>
 <p>示例代码：
-```html
-<marquee direction="up" style="border: 1px solid #000">Marquee content 1</marquee>
-<marquee direction="up" style="border: 1px solid #000">
-    <ul>
-        <li>list 1</li>
-        <li>list 2</li>
-    </ul>
-</marquee>
-<marquee direction="up" style="border: 1px solid #000">
-    <div>
-        <img src="https://img1.baidu.com/it/u=4018280332,3063702893&fm=253&fmt=auto&app=138&f=JPEG?w=500&h=500" />
-    </div>
-</marquee></p>
-<p>```
+<div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">marquee</span> <span class="na">direction</span><span class="o">=</span><span class="s">&quot;up&quot;</span> <span class="na">style</span><span class="o">=</span><span class="s">&quot;border: 1px solid #000&quot;</span><span class="p">&gt;</span>Marquee content 1<span class="p">&lt;/</span><span class="nt">marquee</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">marquee</span> <span class="na">direction</span><span class="o">=</span><span class="s">&quot;up&quot;</span> <span class="na">style</span><span class="o">=</span><span class="s">&quot;border: 1px solid #000&quot;</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">ul</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;</span>list 1<span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;</span>list 2<span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">ul</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">marquee</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">marquee</span> <span class="na">direction</span><span class="o">=</span><span class="s">&quot;up&quot;</span> <span class="na">style</span><span class="o">=</span><span class="s">&quot;border: 1px solid #000&quot;</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">div</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">img</span> <span class="na">src</span><span class="o">=</span><span class="s">&quot;https://img1.baidu.com/it/u=4018280332,3063702893&amp;fm=253&amp;fmt=auto&amp;app=138&amp;f=JPEG?w=500&amp;h=500&quot;</span> <span class="p">/&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">marquee</span><span class="p">&gt;</span>
+</code></pre></div>
 Demo:
 <marquee direction="up" style="border: 1px solid #000">Marquee content 1</marquee>
 <marquee direction="up" style="border: 1px solid #000"></p>
@@ -67,27 +68,27 @@ Demo:
 <h3>无缝滚动核心算法</h3>
 <p>一般来说滚动方向分为水平和垂直，我们首先以水平方向的滚动为例进行阐述。
 例如有如下字符 <code>AB</code>，且可视区域仅覆盖 <code>AB</code>，<code>|AB|</code> 标识字符串 <code>AB</code> 可见。
-<code>html
-|AB| // 初始状态
+<div class="highlight"><pre><span></span><code>|AB| // 初始状态
 AB|..| // 滚动后状态
-|AB| // 下一周期初始状态</code>
+|AB| // 下一周期初始状态
+</code></pre></div>
 从上述示例可以看出，<code>AB</code>滚动过程中会出现空白。如何解决空白问题？答案是：<strong>重复</strong>。</p>
 <p>例如有如下字符 <code>AB</code>，且可视区域仅覆盖 <code>AB</code>，<code>|AB|</code> 标识字符串 <code>AB</code> 可见。
-<code>html
-|AB|AB // 初始状态
+<div class="highlight"><pre><span></span><code>|AB|AB // 初始状态
 AB|AB| // 滚动后状态
-|AB|AB // 下一周期初始状态</code>
+|AB|AB // 下一周期初始状态
+</code></pre></div>
 例如有如下字符 <code>AB</code>，且可视区域大于 <code>AB</code>，<code>|AB|</code> 标识字符串 <code>AB</code> 可见。<code>.</code>表示空白
-<code>html
-|AB...|AB... // 初始状态
+<div class="highlight"><pre><span></span><code>|AB...|AB... // 初始状态
 AB...|AB...| // 滚动后状态
-|AB...|AB... // 下一周期初始状态</code>
+|AB...|AB... // 下一周期初始状态
+</code></pre></div>
 垂直方向逻辑同水平方向：
-<code>html
-AB
+<div class="highlight"><pre><span></span><code>AB
 ==
 AB
-==</code></p>
+==
+</code></pre></div></p>
 <h3>算法步骤</h3>
 <ol>
 <li>复制 AB</li>
@@ -104,21 +105,21 @@ AB
 </li>
 <li>设置 css animation</li>
 </ol>
-<p><code>css
-@keyframes scroll {
-    0% {
-        transform: translateX(0%);
-    }
-    100% {
-        transform: translateX(-100%);
-    }
-}
-.marquee-content {
-    animation: scroll var(--duration) linear var(--delay) var(--iteration-count);
-    animation-play-state: var(--play);
-    animation-delay: var(--delay);
-    animation-direction: var(--direction);
-}</code></p>
+<div class="highlight"><pre><span></span><code><span class="p">@</span><span class="k">keyframes</span><span class="w"> </span><span class="nt">scroll</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">0</span><span class="o">%</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="k">transform</span><span class="p">:</span><span class="w"> </span><span class="nb">translateX</span><span class="p">(</span><span class="mi">0</span><span class="kt">%</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="nt">100</span><span class="o">%</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="k">transform</span><span class="p">:</span><span class="w"> </span><span class="nb">translateX</span><span class="p">(</span><span class="nv">-100</span><span class="err">%</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+<span class="p">.</span><span class="nc">marquee-content</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">animation</span><span class="p">:</span><span class="w"> </span><span class="kc">scroll</span><span class="w"> </span><span class="nf">var</span><span class="p">(</span><span class="nv">--duration</span><span class="p">)</span><span class="w"> </span><span class="kc">linear</span><span class="w"> </span><span class="nf">var</span><span class="p">(</span><span class="nv">--delay</span><span class="p">)</span><span class="w"> </span><span class="nf">var</span><span class="p">(</span><span class="nv">--iteration-count</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="k">animation-play-state</span><span class="p">:</span><span class="w"> </span><span class="nf">var</span><span class="p">(</span><span class="nv">--play</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="k">animation-delay</span><span class="p">:</span><span class="w"> </span><span class="nf">var</span><span class="p">(</span><span class="nv">--delay</span><span class="p">);</span><span class="w"></span>
+<span class="w">    </span><span class="k">animation-direction</span><span class="p">:</span><span class="w"> </span><span class="nf">var</span><span class="p">(</span><span class="nv">--direction</span><span class="p">);</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</code></pre></div>
         </article>
         
     </body>

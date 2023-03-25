@@ -12,7 +12,9 @@
     </head>
     <body class="node-articles-3 node-articles node">
         <header class="masthead">
-            <h1><a href="../index.html">Mars</a></h1>
+            <h1><a href="../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">☁️🌵️☁️🌵️☁️🌵☁️🌵️☁️🌵️☁️🌵☁️🌵</p>
             
             
             <nav class="menu">
@@ -41,25 +43,25 @@
 <p>一个可以发布到 npm 上的软件，其根目录下必然有 package.json 文件，并且 nrm 是基于 node.js 开发的 cli 软件，所以 <a href="https://docs.npmjs.com/cli/v8/configuring-npm/package-json#main">package.json</a> 文件中的 <code>bin</code> 字段指定了 nrm 程序的入口文件： <code>"bin": "./cli.js"</code>。</p>
 <p><code>cli.js</code> 中通过 <code>require('commander')</code> 实现了 nrm 的各种命令，例如： <code>nrm ls</code>、<code>nrm use</code>、<code>nrm add</code> 等，本文主要分析 <code>nrm ls</code>以及 <code>nrm add</code>。</p>
 <p><code>nrm ls</code> 命令对应的源码如下：</p>
-<p><code>js
-program
-  .command('ls')
-  .description('List all the registries')
-  .action(actions.onList);</code>
+<p><div class="highlight"><pre><span></span><code><span class="nx">program</span><span class="w"></span>
+<span class="w">  </span><span class="p">.</span><span class="nx">command</span><span class="p">(</span><span class="s1">&#39;ls&#39;</span><span class="p">)</span><span class="w"></span>
+<span class="w">  </span><span class="p">.</span><span class="nx">description</span><span class="p">(</span><span class="s1">&#39;List all the registries&#39;</span><span class="p">)</span><span class="w"></span>
+<span class="w">  </span><span class="p">.</span><span class="nx">action</span><span class="p">(</span><span class="nx">actions</span><span class="p">.</span><span class="nx">onList</span><span class="p">);</span><span class="w"></span>
+</code></pre></div>
 <code>actions.onList</code>方法内部会查找当前使用的源，查询所有可用的源（包含用户添加的源)，之后美化格式进行输出。再这个方法里重点要看的是如何查询所有可用源，通过源码可以看出，nrm 将用户添加的源存放在用户目录下的 <code>.nrmrc</code> 文件。nrm 同时提供了一组 npm 源，存放在 nrm 目录下的 <code>registries.json</code> 中。</p>
-<p><code>js
-async function getRegistries() {
-  // 获取用户自定义源
-  const customRegistries = await readFile(NRMRC);
-  // 合并用户自定义源和 nrm 提供的源
-  return Object.assign({}, REGISTRIES, customRegistries);
-}</code></p>
+<div class="highlight"><pre><span></span><code><span class="k">async</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">getRegistries</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 获取用户自定义源</span><span class="w"></span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">customRegistries</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">readFile</span><span class="p">(</span><span class="nx">NRMRC</span><span class="p">);</span><span class="w"></span>
+<span class="w">  </span><span class="c1">// 合并用户自定义源和 nrm 提供的源</span><span class="w"></span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">Object</span><span class="p">.</span><span class="nx">assign</span><span class="p">({},</span><span class="w"> </span><span class="nx">REGISTRIES</span><span class="p">,</span><span class="w"> </span><span class="nx">customRegistries</span><span class="p">);</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</code></pre></div>
 <p>通过上面的步骤，已经知到源信息的存储方式————存在信息到 <code>HOME/.nrmrc</code> 中，信息的格式应该是什么样的呢？<code>readFile</code>源码中引入了 <code>ini</code> 模块，通过 <code>ini.parse</code> 对文件内容进行了解析。
-<code>js
-const fs = require('fs');
-const ini = require('ini');
-const chalk = require('chalk');
-const process = require('./process');</code>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">fs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">&#39;fs&#39;</span><span class="p">);</span><span class="w"></span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">ini</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">&#39;ini&#39;</span><span class="p">);</span><span class="w"></span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">chalk</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">&#39;chalk&#39;</span><span class="p">);</span><span class="w"></span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">process</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">&#39;./process&#39;</span><span class="p">);</span><span class="w"></span>
+</code></pre></div>
 nrm 为什么要引入 <code>ini</code> 模块？<code>ini</code>是 ndoe.js 内置模块还是 npm 包？通过 node.js 文档为发现 <code>ini</code> 相关信息，查看 package.json 文件中，发现 <code>ini</code> 是一个 npm 包。</p>
 <p>在 npmjs.com 上搜索 <a href="https://www.npmjs.com/package/ini"><code>ini</code></a>，可查看 <code>ini</code> 的简介。<a href="https://github.com/npm/ini"><code>ini</code></a> 是 <a href="https://en.wikipedia.org/wiki/INI_file">ini 格式</a>的解析器、序列化器。 到此可知 nrm 的源管理是采用 ini 格式的文件进行增删改查的，这一格式和 npmrc 的格式一致，通过一致的数据格式，可以省略不必要的格式转化，降低开发成本，提高用户认识的一致性。</p>
 <h2>其他信息</h2>
