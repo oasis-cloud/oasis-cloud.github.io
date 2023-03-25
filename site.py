@@ -10,10 +10,10 @@
 theme = "graphite"
 
 # Site title.
-title = "Oasis And Cloud"
+title = "Oasis's Cloud"
 
 # Site tagline.
-tagline = ""
+tagline = "☁️🌵️☁️🌵️☁️🌵☁️🌵️☁️🌵️☁️🌵☁️🌵"
 
 
 markdown_settings = {
