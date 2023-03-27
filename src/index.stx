@@ -4,19 +4,33 @@ subTitle: 一个人（至少是一个年轻人）的首要责任，就是要有�
 ---
 
 * [编程格调](@root/articles/8.html)
-* [醍醐灌顶](@root/articles/10.html)
-* [Node.js 的 preserve-symlinks](@root/articles/11.html)
+* [编程语言](@root/articles/10.html)
+
+---
+
 * [系统编程](@root/articles/software-design/1.html)
 * [异步编程](@root/articles/software-design/2.html)
 * [单元测试](@root/articles/software-design/3.html)
 * [文件备份](@root/articles/software-design/4.html)
+
+---
+
+* [微前端](@root/articles/13.html)
 * [DNS 解析流程](@root/articles/1.html)
 * [源码分析——nrm](@root/articles/3.html)
 * [自己动手实现——marquee](@root/articles/9.html)
+
+---
+
+* [Checkbox 组件设计与实现](@root/articles/12.html)
 * [JavaScript 中的枚举实现](@root/articles/2.html)
 * [TypeScript config 文件中的 extends](@root/articles/5.html)
 * [TypeScript 中的 type 和 interface 比较](@root/articles/6.html)
-* [启动的第一个Python项目](@root/articles/7.html)
 * [Sass @use vs @import](@root/articles/4.html)
+
+---
+
+* [启动 Python 项目](@root/articles/7.html)
+
 
 
