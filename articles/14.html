@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>GitHub Action 本地测试</title>
+        <link rel="stylesheet" href="../assets/fonts.css">
+        <link rel="stylesheet" href="../assets/graphite.css">
+        <link rel="stylesheet" href="../assets/pygments.css">
+        
+        
+    </head>
+    <body class="node-articles-14 node-articles node">
+        <header class="masthead">
+            <h1><a href="../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">☁️🌵️☁️🌵️☁️🌵☁️🌵️☁️🌵️☁️🌵☁️🌵</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>GitHub Action 本地测试</h1>
+                
+                <hr>
+            </header>
+            <p>通过 GitHub Action 可以进行 CI/CD，但是每次的修改需要在 GitHub 上出发相应的动作来进行测试，拿 push 的处理来说明。
+首先要在本地仓库中提交代码，然后 push 代码到 GitHub，GitHub 检测到相应的 push 动作，处理 Actions，Actions 执行出错，需要在 GitHub Actions 查看日志。修复后重复上述过程。</p>
+<p><a href="https://GitHub.com/nektos/act">act</a> 可以帮助我们解决上面的问题。这也是 act 获得 37.3k star 的原因之一。解决了实际开发过程中的遇到的痛点问题。</p>
+<p>act 对与为什么需要使用 act 给出了两个原因：</p>
+<ol>
+<li>快速反馈，不必提交推送 workflows。并且提供了与 GitHub 相同的环境变量和文件系统</li>
+<li>本地任务管理，可以使用 workflows 替换 Makefile</li>
+</ol>
+<p>act 是一款基于 docker 的软件，所以安装 act 之前，我们先去 docker 的站点下载 docker。</p>
+<p>之后通过 act 提供的安装方式进行 act 的安装。</p>
+<p>在执行 act 的时候，可能会遇到如下问题：</p>
+<div class="highlight"><pre><span></span><code>ERRO<span class="o">[</span><span class="m">0000</span><span class="o">]</span> failed to obtain container engine info: Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running? 
+<span class="o">[</span>CI/test<span class="o">]</span> 🚀  Start <span class="nv">image</span><span class="o">=</span>catthehacker/ubuntu:act-18.04
+<span class="o">[</span>CI/test<span class="o">]</span>   🐳  docker pull <span class="nv">image</span><span class="o">=</span>catthehacker/ubuntu:act-18.04 <span class="nv">platform</span><span class="o">=</span>linux/amd64 <span class="nv">username</span><span class="o">=</span> <span class="nv">forcePull</span><span class="o">=</span><span class="nb">true</span>
+Error: Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?
+</code></pre></div>
+<p>在 docker 的设置中 <code>docker &gt; Settings &gt; Advanced &gt; Enable default Docker socket</code> 开启此选项，便可以解决上面的问题。</p>
+<p>解决完上面的问题，便可以通过 act 进行测试了。act 的常用参数有：</p>
+<p>act [&lt;事件&gt;] -j [workflow 的文件名]</p>
+<p>act 同时提供了 .actrc 文件来设置默认的配置项（PS：在开发 cli 程序的时候也可以考虑加上类似的功能），下面是我设置的配置项：</p>
+<div class="highlight"><pre><span></span><code>-P ubuntu-latest<span class="o">=</span>catthehacker/ubuntu:act-18.04
+--container-architecture linux/amd64
+</code></pre></div>
+        </article>
+        
+    </body>
+</html>
