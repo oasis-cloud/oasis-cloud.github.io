@@ -15,15 +15,12 @@ subTitle: 一个人（至少是一个年轻人）的首要责任，就是要有�
 
 ---
 
-* [微前端](@root/articles/13.html)
-* [DNS 解析流程](@root/articles/1.html)
-* [源码分析——nrm](@root/articles/3.html)
-* [自己动手实现——marquee](@root/articles/9.html)
-
----
-
 * [Checkbox 组件设计与实现](@root/articles/12.html)
 * [JavaScript 中的枚举实现](@root/articles/2.html)
+* [DNS 解析流程](@root/articles/1.html)
+* [源码分析——nrm](@root/articles/3.html)
+* [微前端](@root/articles/13.html)
+* [自己动手实现——marquee](@root/articles/9.html)
 * [TypeScript config 文件中的 extends](@root/articles/5.html)
 * [TypeScript 中的 type 和 interface 比较](@root/articles/6.html)
 * [Sass @use vs @import](@root/articles/4.html)
