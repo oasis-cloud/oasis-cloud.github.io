@@ -3,14 +3,14 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>在 GitHub Action 中获取改动文件</title>
+        <title>NutUI React CI/CD -- 自动化测试</title>
         <link rel="stylesheet" href="../assets/fonts.css">
         <link rel="stylesheet" href="../assets/graphite.css">
         <link rel="stylesheet" href="../assets/pygments.css">
         
         
     </head>
-    <body class="node-articles-15 node-articles node">
+    <body class="node-articles-15-1 node-articles node">
         <header class="masthead">
             <h1><a href="../index.html">Oasis's Cloud</a></h1>
             
@@ -31,18 +31,44 @@
         </header>
         <article class="main">
             <header class="title">
-                <h1>在 GitHub Action 中获取改动文件</h1>
+                <h1>NutUI React CI/CD -- 自动化测试</h1>
                 
                 <hr>
             </header>
-            <p>在 GitHub Action 中可以通过下面的两种方式来获得变更的文件：</p>
+            <h2>GitHub Actions 介绍</h2>
+<p>GitHub Actions 是 GitHub 提供的一项功能，可以用来在 GitHub 上创建、测试、部署应用程序。它是一个自动化工作流程平台，可以通过触发事件来执行一系列操作，例如自动化测试，打包构建等。</p>
+<p>GitHub Actions 有几个核心的概念：</p>
 <ol>
-<li>在仓库下通过使用 <code>git</code> 命令对比两个分支。</li>
-<li>借助 GitHub 提供的 API 来查询变更的文件。</li>
+<li>Workflows（工作流）：CI/CD 从开始到结束这个周期可以理解为一个工作流。工作流可以通过 yml 脚本配置，并且一个工作流可以包含一个 Job 或 多个 Job。</li>
+<li>Events（事件）：触发 Workflows 的特定操作，例如：PR 创建，代码 Push 等。</li>
+<li>Jobs（任务）：一个 Job 由一系列的步骤组成，其中每个步骤可以标注步骤名称，执行的脚本等。</li>
+<li>Actions（动作）：每个步骤可以执行的处理，可以是一个或多个。</li>
+<li>Runners（执行器）：workflows 运行的容器。</li>
 </ol>
-<p>这篇文章主要介绍第二种方法，我采用第二种方式实现了获取 Pull Request 中的变更文件，针对变更的文件进行单元测试。</p>
+<h2>创建 GitHub Actions</h2>
+<p>在仓库中创建 <code>.github/workflows</code> 文件。</p>
+<p>在 <code>.github/workflows</code> 目录中，创建 <code>test.yml</code>，这里只是举例，文件可以定义其他名字。</p>
+<div class="highlight"><pre><span></span><code><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">test</span><span class="w"></span>
+
+<span class="nt">on</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">push</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">branches</span><span class="p">:</span><span class="w"> </span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">main</span><span class="w"></span>
+
+<span class="nt">jobs</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">test</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu-latest</span><span class="w"></span>
+<span class="w">    </span><span class="nt">steps</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">echo something</span><span class="w"></span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">echo &#39;Hello World&#39;</span><span class="w">    </span>
+</code></pre></div>
+<p>这段代码创建了一个名为 test 的工作流，当对 main 分支进行 push 的时候会触发此工作流的执行。工作流中有一个名为 test 的 Job，运行在 ubuntn 容器中，输出 <code>Hello World</code>。(<a href="https://docs.github.com/zh/actions/using-workflows/workflow-syntax-for-github-actions">更多语法可参考这里</a>)</p>
+<h2>NutUI React 自动化测试</h2>
+<p>NutUI React 中的每个组件都有自己的单元测试，并且单元测试覆盖率是 Review 中的一项指标。单元测试覆盖率可以借助 GitHub Actions 自动化执行单元测试，得到覆盖率的结果。</p>
+<p>单元测试可以分为两种方式处理：通过 Jest 处理全部的单元测试；通过识别变更文件，执行相关组件的单元测试。NutUI React 现在采用的是识别变更文件的方式来处理单元测试。</p>
+<p>识别变更文件的方案需要借助 GitHub API 解析出变更文件，之后对变更文件的特征进行处理，识别出组件，执行单元测试。</p>
 <p>GitHub 提供了 <a href="https://docs.github.com/zh/rest/pulls/pulls?apiVersion=2022-11-28#list-pull-requests-files"><code>/repos/{owner}/{repo}/pulls/{pull_number}/files</code></a> API 用于查询 Pull Request 的相关内容。</p>
-<p>想要使用此 API ，我们需要提供 owner、repo、pull number 这三个参数的内容。owner、repo 和 pull number 可以通过 GitHub Action 中的<a href="https://docs.github.com/zh/actions/learn-github-actions/contexts#github-context">上下文</a>来获取：</p>
+<p>要使用此 API ，我们需要提供 owner、repo、pull number 这三个参数的内容。owner、repo 和 pull number 可以通过 GitHub Action 中的<a href="https://docs.github.com/zh/actions/learn-github-actions/contexts#github-context">上下文</a>来获取：</p>
 <div class="highlight"><pre><span></span><code>name: CI
 
 on:
@@ -68,19 +94,19 @@ jobs:
           echo &quot;PR Message github.repository: ${{ github.repository }}&quot;
 </code></pre></div>
 <p>这里给出了一段 GitHub Action 的脚本，在 <code>Get PR info</code> 任务中，借助 linux 的 echo 命令，打印来 github.event.number 和 github.repository。想要对这段脚本进行测试，可将其提交到 <code>.github/workflows/test.yml</code> 中，然后通过其他分支向目标分支创建 PR。（备注：<code>github.event.number</code>来自<a href="https://docs.github.com/zh/webhooks-and-events/webhooks/webhook-events-and-payloads#pull_request">Webhook 的共有属性</a>）</p>
-<p>通过执行上述代码，我们可以看到输出的 PR 的 ID 和 repository。接下来要使用他们调用 GitHub 提供的 API。这里我采用了 curl 来进行 GitHub API 的调用：</p>
+<p>通过执行上述代码，我们可以看到输出的 PR 的 ID 和 repository。接下来要使用他们调用 GitHub 提供的 API。这段代码使用 curl 调用的 GitHub API：</p>
 <div class="highlight"><pre><span></span><code>pr_number=${{ github.event.number }}
 files_url=&quot;https://api.github.com/repos/${{ github.repository }}/pulls/$pr_number/files&quot;
 files_response=$(curl -sSL -H &quot;Authorization: token ${{ secrets.GITHUB_TOKEN }}&quot; $files_url)
 </code></pre></div>
-<p>在这段代码中即存在 <code>${{ xx }}</code> 又存在 <code>$xx</code>，我们需要先区分什么时候使用什么形式。<code>${{}}</code> 是 GitHub 提供的插值表达式，在 GitHub Actions 执行的时候会对这种表达式进行求值。简单理解的话，就是将表达式计算出的结果填到脚本中，然后在执行脚本。<code>$xx</code> 是 Linux shell 的变量调用的方式，所以在 GitHub Actions 中我们实际执行的主要是 Linux shell 脚本。</p>
-<p>在这段代码中，声明变量的方式形如：
+<p>这段代码中即有 <code>${{ xx }}</code> 又有 <code>$xx</code>，我们需要先区分什么时候使用什么形式。<code>${{}}</code> 是 GitHub 提供的插值表达式，在 GitHub Actions 执行的时候会对这种表达式进行求值。<code>$xx</code> 是 Linux shell 的变量调用的方式，在这段 GitHub Actions 中我们实际执行的主要是 Linux shell。</p>
+<p>shell 声明变量的方式如下：
 <div class="highlight"><pre><span></span><code><span class="nv">shellVariable</span><span class="o">=</span><span class="m">1</span>
 </code></pre></div></p>
-<p>调用变量的方式形如：</p>
+<p>调用变量的方式如下：</p>
 <div class="highlight"><pre><span></span><code><span class="nb">echo</span> <span class="s2">&quot;</span><span class="nv">$shellVariable</span><span class="s2">&quot;</span>
 </code></pre></div>
-<p>到这里我们已经获取到了 GitHub API 返回的结果，接下来需要对结果进行处理，即提取变更文件。</p>
+<p>通过 curl 获取到 GitHub API 返回的结果后，需要对结果进行处理，即提取变更文件。</p>
 <div class="highlight"><pre><span></span><code>files_changed=$(echo &quot;$files_response&quot; | jq -r &#39;.[].filename&#39;)
 echo &quot;PR files: $files_changed&quot;
 component=$(echo &quot;$files_changed&quot; |  grep -E -i &#39;src\/packages\/([a-z]+)(\/[a-z_\.]*)*&#39; | sed -E &#39;s/src\/packages\/([a-z]+)(\/[a-z_\.]*)*/\1/i&#39; | awk &#39;END{print}&#39;)
@@ -106,8 +132,7 @@ npm test -- $component
 <p>获取变更文件后，还需要将<code>src/packages/button/button.tsx</code>中的 button 提取出来，以便传递给 npm 脚本。对于变更文件的处理，主要借助 Linux 中的 grep、sed、awk。</p>
 <p><code>grep -E -i</code> 表示使用正则表达式，并且忽略大小写。
 <code>sed -E</code> 同样表示使用正则表达式，但是它的忽略大小写是写到后面的参数中。</p>
-<p>通过这些步骤，就可以提取 PR 中的变更文件，对文件进行过滤，然后针对特定文件执行特定的处理。</p>
-<p>总的来说，GitHub 提供了 Actions 来帮助我们做自动化的处理，并且允许我们通过 yml 格式的脚本来进行配置，针对 yml 的脚本，GitHub 提供了内置的变量，通过插值方式提供给开发者使用，而且 run 命令提供给开发者使用 shell 的便捷性。</p>
+<p>到这就完成了 GitHub Actions 的 workflow，除了通过 GitHub API 的方式来获取变更文件外，也可以通过对分支进行对比获取变更文件。</p>
         </article>
         
     </body>
