@@ -10,7 +10,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: npm i
-      - run: pip install
+      - run: pip -V
+      - run: pip install --src .
       - name : Sync
         uses : JamesIves/github-pages-deploy-action@4.1.7
         with :
