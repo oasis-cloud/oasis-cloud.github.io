@@ -7,8 +7,8 @@
     "lib": "lib"
   },
   "scripts": {
-    "start": "ivy watch",
-    "build": "ivy build",
+    "start": "ark watch",
+    "build": "ark build",
     "deploy": "node scripts/deploy.js"
   },
   "repository": {
