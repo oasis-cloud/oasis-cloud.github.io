@@ -16,4 +16,4 @@ jobs:
           folder : out #操作应该部署的文件夹 。
           clean: false
           token: ${{ secrets.GIT_ACTION }}
-          target-folder: .
+          target-folder: ./
