@@ -1,0 +1,21 @@
+name: deploy
+on:
+  push:
+    branches:
+      - articles
+
+jobs:
+  copy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: npm i
+      - run: pip install
+      - name : Sync
+        uses : JamesIves/github-pages-deploy-action@4.1.7
+        with :
+          branch : main # action 应该部署到的分支 。
+          folder : out #操作应该部署的文件夹 。
+          clean: false
+          token: ${{ secrets.GIT_ACTION }}
+          target-folder: .
