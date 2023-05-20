@@ -3,7 +3,7 @@ title: ☁️☁️☁️<br/>🌵🌵🌵🌵🌵
 subTitle: 一个人（至少是一个年轻人）的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br/>—— 《一个数学家的辩白》
 ---
 
-* [编程格调](@root/articles/8.html)
+* [编程格调](@root/articles/1.html)
 * [编程语言](@root/articles/10.html)
 
 ---
@@ -12,25 +12,38 @@ subTitle: 一个人（至少是一个年轻人）的首要责任，就是要有�
 * [异步编程](@root/articles/software-design/2.html)
 * [单元测试](@root/articles/software-design/3.html)
 * [文件备份](@root/articles/software-design/4.html)
+* [数据表](@root/articles/software-design/5.html)
+* [构建正则表达式](@root/articles/software-design/6.html)
 
 ---
 
-* [Checkbox 组件设计与实现](@root/articles/12.html)
-* [JavaScript 中的枚举实现](@root/articles/2.html)
-* [DNS 解析流程](@root/articles/1.html)
-* [源码分析——nrm](@root/articles/3.html)
-* [微前端](@root/articles/13.html)
-* [自己动手实现——marquee](@root/articles/9.html)
-* [TypeScript config 文件中的 extends](@root/articles/5.html)
-* [TypeScript 中的 type 和 interface 比较](@root/articles/6.html)
-* [Sass @use vs @import](@root/articles/4.html)
+SICP
+
+* [构造过程抽象](@root/articles/sicp/1.html)
 
 ---
 
-* [在 GitHub Action 中获取改动文件](@root/articles/15.html)
-* [GitHub Action 本地测试](@root/articles/14.html)
-* [GitHub Action 入门](@root/articles/16.html)
-* [启动 Python 项目](@root/articles/7.html)
+* [DNS 解析流程](@root/articles/network/1.html)
+
+---
+
+* [Node.js 的 preserve-symlinks](@root/articles/frontend/9.html)
+* [Checkbox 组件设计与实现](@root/articles/frontend/8.html)
+* [JavaScript 中的枚举实现](@root/articles/frontend/7.html)
+* [源码分析——nrm](@root/articles/frontend/6.html)
+* [微前端](@root/articles/frontend/5.html)
+* [自己动手实现——marquee](@root/articles/frontend/4.html)
+* [TypeScript config 文件中的 extends](@root/articles/frontend/3.html)
+* [TypeScript 中的 type 和 interface 比较](@root/articles/frontend/2.html)
+* [Sass @use vs @import](@root/articles/frontend/1.html)
+
+---
+
+* [NutUI React CI/CD](@root/articles/github/5.html)
+* [在 GitHub Action 中获取改动文件](@root/articles/github/4.html)
+* [GitHub Action 本地测试](@root/articles/github/3.html)
+* [GitHub Action 入门](@root/articles/github/2.html)
+* [启动 Python 项目](@root/articles/github/1.html)
 
 
 
