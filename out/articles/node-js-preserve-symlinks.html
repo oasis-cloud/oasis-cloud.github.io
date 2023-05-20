@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Node.js 的 preserve-symlinks</title>
+        <link rel="stylesheet" href="../assets/fonts.css">
+        <link rel="stylesheet" href="../assets/graphite.css">
+        <link rel="stylesheet" href="../assets/pygments.css">
+        
+        
+    </head>
+    <body class="node-articles-node-js-preserve-symlinks node-articles node">
+        <header class="masthead">
+            <h1><a href="../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">☁️🌵️☁️🌵️☁️🌵☁️🌵️☁️🌵️☁️🌵☁️🌵</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>Node.js 的 preserve-symlinks</h1>
+                
+                <hr>
+            </header>
+            <p>Node.js 在 6.5.0 版本中支持了 preserveSymlink 选项。通过 preserveSymlink 选项，开发人员可以在
+处理文件链接的时候，具有更多的选择。在默认情况下，node.js 默认情况下会解析链接文件，并尝试访问链接所指的
+目标文件或目录，这可能会导致 Node.js 提示模块无法解析的错误。</p>
+<p>例如在 demo 目录中 b.js 是一个软链，index.js 文件中 require 了
+b.js 文件，b.js 文件中通过相对路径的方式 require 了 c.js 文件。
+通过 <code>node index.js</code> 运行代码，会出现 <code>Error: Cannot find module './c.js'</code> 的错误提示。</p>
+<p>demo 目录结构
+<div class="highlight"><pre><span></span><code>├── a.js
+├── b.js -&gt; ../../../b.js
+├── c.js
+└── index.js
+</code></pre></div>
+b.js 文件内容
+<div class="highlight"><pre><span></span><code><span class="c1">// b.js 文件内容，b.js 的目标文件位于 ../../../b.js</span><span class="w"></span>
+
+<span class="c1">// 通过相对路径引入 c.js</span><span class="w"></span>
+<span class="c1">// 在不使用 preserve-symlinks 选项时，require(&#39;./c.js&#39;) 相当于 require(&#39;../../../c.js&#39;)</span><span class="w"></span>
+<span class="c1">// 使用 preserve-symlinks 选项时，require(&#39;./c.js&#39;) 仍然相对于 &#39;./&#39; 目录查找</span><span class="w"></span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">&#39;./c.js&#39;</span><span class="p">)</span><span class="w"></span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">c</span><span class="p">)</span><span class="w"></span>
+<span class="nx">exports</span><span class="p">.</span><span class="nx">module</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">c</span><span class="w"></span>
+</code></pre></div></p>
+<p>运行错误
+<div class="highlight"><pre><span></span><code>❯ node index.js 
+internal/modules/cjs/loader.js:905
+  throw err;
+  ^
+
+Error: Cannot find module &#39;./c.js&#39;
+</code></pre></div></p>
+<p>通过 <code>node --preserve-symlinks index.js</code> 可以让代码正常运行。
+<div class="highlight"><pre><span></span><code>❯ node --preserve-symlinks index.js                
+{ module: &#39;This is C&#39; }
+{ module: { module: &#39;This is C&#39; } }
+</code></pre></div></p>
+<p>在第一次运行代码时，node.js 会解析 b.js 软链接所指向的目标文件的路径，而不是 b.js 这个软链接所在的目录。
+所以会出现找不到 c.js 的情况，因为 c.js 和 b.js 软链接是同一个目录。 </p>
+<p>第二次运行代码是，node.js 会按照 b.js 软链接的目录来查找 c.js 文件，因为 b.js 软链接和 c.js 文件在同一个目录下，所以通过<code>require('./c.js')</code>是可以定位到的。</p>
+<p>了解了 Node.js 如何对文件链接进行处理后，在来看 pnpm ，pnpm 的实现采用了文件链接，借助文件链接来达到节约磁盘空间的目的。
+通过 pnpm 安装后的 node_modules 结构如下：</p>
+<div class="highlight"><pre><span></span><code>node_modules
+├── foo -&gt; ./.pnpm/foo@1.0.0/node_modules/foo
+└── .pnpm
+    ├── bar@1.0.0
+    │   └── node_modules
+    │       └── bar -&gt; <span class="p">&lt;</span><span class="nt">store</span><span class="p">&gt;</span>/bar
+    └── foo@1.0.0
+        └── node_modules
+            ├── foo -&gt; <span class="p">&lt;</span><span class="nt">store</span><span class="p">&gt;</span>/foo
+            └── bar -&gt; ../../bar@1.0.0/node_modules/bar
+</code></pre></div>
+<p>在这个示例中，foo 依赖的 bar 实际指安装了一次，通过链接的方式进行复用。<code>&lt;store&gt;</code>是存储链接的目录，可以通过 <code>.npmrc</code> 文件中的 <code>virtual-store-dir</code> 修改。</p>
+<p>由于 pnpm 的实现采用了链接，所以它提供了 <code>node-linker</code>和 <code>symlink</code>  对安装时所采用的链接形式进行控制，除了 pnpm 外，TypeScript 和 rollup 等提供了 preserveSymlinks 选项。</p>
+<p>如果对代码仓库进行 pnpm 的支持，遇到 <code>Error: Cannot find module</code> 类的错误，可以尝试修改 TypeScript 或 rollup 的相关配置。</p>
+        </article>
+        
+    </body>
+</html>

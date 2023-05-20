@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>DNS 解析流程</title>
+        <link rel="stylesheet" href="../../assets/fonts.css">
+        <link rel="stylesheet" href="../../assets/graphite.css">
+        <link rel="stylesheet" href="../../assets/pygments.css">
+        
+        
+    </head>
+    <body class="node-articles-network-dns node-articles-network node-articles node">
+        <header class="masthead">
+            <h1><a href="../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">☁️🌵️☁️🌵️☁️🌵☁️🌵️☁️🌵️☁️🌵☁️🌵</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>DNS 解析流程</h1>
+                
+                <hr>
+            </header>
+            <p>互联网使用 <code>IP</code> 地址来唯一标识一个主机，但对于人来说 <code>IP</code> 地址不易记忆，人们善于记忆有具体含义的事物。举个不太恰当的例子，我们记住一个人的名字远比记住一个人的身份证号要容易的多。基于这样的一种想法，人们把 <code>IP</code> 替换成了一个易于理解和识别的名字，这个名字叫做域名。</p>
+<p>域名和 <code>IP</code> 地址相对应，既然存在这种对应关系，就需要有地方管理和维护这种对应关系，那谁来负责存储和管理这种映射关系呢？在现实生活中，人和证件号码的映射关系由国家某单位管理，网络世界存在这样的机构吗？答案是肯定的，这就是 DNS 域名系统。</p>
+<p><code>DNS</code> 除提供域名到 <code>IP</code> 地址的转换服务，还提供主机别名、反向域名解析、负载均衡等功能。其中主机名到 <code>IP</code> 地址转换服务是最为重要的一个服务。负载均衡在日常的工作中也经常出现，例如 <code>jd.com</code> 背后的服务器少则几台，多则上百台。这样就出现了 一个 <code>IP</code> 地址集合与同一个域名相联系。<code>DNS</code> 会将 <code>IP</code> 集合存储在数据库中。</p>
+<p>在日常的开发时，访问测试环境经常需要修改电脑中的 <code>hosts</code> 文件。例如在 <code>mac OS</code> 上执行 <code>cat /etc/hosts</code> 查看 <code>hosts</code> 文件中的内容，或者向 <code>hosts</code> 文件添加内容： <code>11.20.8.1 misc.360buyimg.com</code>。</p>
+<p>为什么将 <code>11.20.8.1 misc.360buyimg.com</code> 添加到 <code>hosts</code> 文件，我们就可以访问到 <code>11.20.8.1</code> 这台机器呢？最开始网络上主机台数很少，网络管理员可以在操作系统中一个名为 <code>hosts</code> 的文件中管理主机名和 <code>IP</code> 地址，每当将新主机添加到网络时，每个网络管理员都会手动更新他的 <code>hosts</code> 文件，添加新的主机名和 <code>IP</code> 地址。伴随着网络规模的扩大，<code>hosts</code> 文件文件越来越大而且增删频繁，不利于网管的维护。<code>DNS</code> 的出现可以规避 <code>hosts</code> 文件的限制。</p>
+<p>如果没有向 <code>hosts</code> 文件添加 <code>11.20.8.1 misc.360buyimg.com</code>，将会由谁来解析 <code>misc.360buyimg.com</code> 域名呢？可以尝试在 <code>mac OS</code> 上可以执行 <code>cat /etc/resolv.conf</code>。
+<code>resolv.conf</code> 是操作系统域名系统解析器（<code>DNS Resolver</code>）的配置文件，当一个程序需要通过域名访问 <code>Internet</code> 上的其他主机时，需要利用 <code>Resolver</code> 库函数进行域名到 <code>IP</code> 地址的转换。<code>Resolver</code> 库函数会访问 <code>resolv.conf</code> 种定义的 <code>DNS</code> 服务器的 <code>IP</code> 地址，换取待解析域名的 <code>IP</code> 地址。</p>
+<p><code>resolv.conf</code> 种两个比较重要的参数：</p>
+<ol>
+<li><code>nameserver</code> 定义 <code>DNS</code> 服务器的 <code>IP</code> 地址</li>
+<li><code>search</code> 定义域名的搜索列表。</li>
+</ol>
+<p><code>nameserver</code> 是最主要的配置项，而其他配置项是可选的。<code>search</code> 配置项主要是用来拼装域名，例如： <code>search</code> 设置为 <code>jd.com</code>，<code>host -a my</code> 则会尝试解析 <code>my.jd.com</code>。</p>
+<p>从 DNS Resolver 这步我们接触到了 DNS 服务器，DNS 服务器的主要功能是根据输入的域名返回 对应的 IP 地址。域名的规则和 DNS 的架构设计紧密相关，两者相互影响。</p>
+<p>早期的因特网采用的是非层级命名方式，这样域名就可以很简短。但随着网络规模的扩大，非层级命名方式很难管理一个庞大且经常变化的域名集合。比如人的姓名就可以算是非层级命名方式，根据日常经验我们可以发现人的姓名重复几率非常大。假如将人的姓名格式改一下，按照省市县乡街道姓名的格式起名字，这样名字的重复几率就会大大降低。</p>
+<p>现在的域名规则是一种层次树状结构。通过层次树状结构,任何一个连接在因特网上的主机或路由器，都可以有一个唯一的层次结构的名字，也就是域名。域名中的域是一个可被管理的划分。例如域名可以有一级域名、二级域名等等。DNS 按照域名这种层次树状结构将整个域名空间划分成了许多不相交的区（zone），每个区的域名信息由权威域名服务器负责管理。除权威域名服务器之外还有两种主要类型的服务器：根 DNS 服务器，顶级域名 DNS 服务器。</p>
+<p><code>DNS</code> 的解析过程分为两种：迭代方式和递归方式。通常从请求主机到本地域名服务器的查询是递归查询，其余查询是迭代查询。</p>
+<p>在开始动手解析域名之前，我们最好先观察下域名解析的表现，第一种方法可以通过 <code>chrome network</code> 面板查看查看，其中有一项 <code>DNS lookup</code>，可以直观感受到 <code>DNS</code> 的耗时情况。第二种方式可以在 <code>mac OS</code> 上通过 <code>host</code> 命令查看解析的过程，例如 <code>host www.jd.com</code>。除上述两个方式外也可通过 <code>nslookup</code> 或 <code>dig</code> 命令来观察。之后我们会通过 <code>dig</code> 命令来动手验证 <code>DNS</code> 的解析过程。</p>
+<p>动手验证 <code>DNS</code> 的话，我们要先找到根服务器的地址，目前一共有 <code>13</code> 组根服务器。我们通过 <code>dig</code> 命令尝试用根域名服务器解析 <code>www.jd.com</code>。在终端执行 <code>dig @m.root-servers.net. www.jd.com</code>，这里采用 m 根域名服务器，当然也可以选用其他根域名服务器。 <code>dig</code> 命令执行的结果和 <code>DNS</code> 的 UDP 报文格式基本一致。</p>
+<p>dig 命令默认的输出信息可以分为 5 个部分。
+1. 第一部分显示 <code>dig</code> 命令的版本和输入的参数。
+2. 第二部分显示服务返回的一些技术详情，比较重要的是 <code>status</code>。如果 <code>status</code> 的值为 <code>NOERROR</code> 则说明本次查询成功结束。
+3. 第三部分中的 <code>QUESTION SECTION</code> 显示我们要查询的域名以及查询的类型，这里我们默认查询 A 记录。
+4. 第四部分的 <code>ANSWER SECTION</code> 是查询到的结果。
+5. 第五部分则是本次查询的一些统计信息，比如用了多长时间，查询了哪个 DNS 服务器，在什么时间进行的查询等等。</p>
+<p>通过 <code>ANSWER SECTION</code> 我们发现有一些关键字例如 <code>NS</code>、<code>CNAME</code>，这些表示什么呢？它们表示 DNS 记录的类型，DNS 记录的类型主要有以下几种：
+1. A 记录，表示 IP 地址，A 记录就是把一个域名解析到一个IP地址。
+2. AAAA 记录，表示 IP v6 地址。
+3. CNAME 别名记录，CNAME 记录就是把域名解析到另外一个域名。使用 CNAME 记录可以很方便地变更 IP 地址。
+4. NS 域名解析服务器。</p>
+<p>在我们解析 www.jd.com 的时候可以看到 CNAME 记录，通过这条 CNAME 记录可以看出 www.jd.com 采用了 cdn 服务。</p>
+<p>这样我们就成功解析出了 www.jd.com 对应的 IP 地址。</p>
+        </article>
+        
+    </body>
+</html>
