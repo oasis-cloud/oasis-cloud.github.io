@@ -1,6 +1,6 @@
 ---
 title: ☁️☁️☁️<br/>🌵🌵🌵🌵🌵
-subTitle: 一个人（至少是一个年轻人）的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br/>—— 《一个数学家的辩白》
+subTitle: 目录
 ---
 
 * [编程格调](@root/articles/1.html)
@@ -16,6 +16,7 @@ subTitle: 一个人（至少是一个年轻人）的首要责任，就是要有�
 
 ---
 
+* [构造数据抽象](@root/articles/sicp/2.html)
 * [构造过程抽象](@root/articles/sicp/1.html)
 
 ---
