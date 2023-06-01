@@ -14,7 +14,7 @@
         <header class="masthead">
             <h1><a href="../../index.html">Oasis's Cloud</a></h1>
             
-                <p class="tagline">☁️🌵️☁️🌵️☁️🌵☁️🌵️☁️🌵️☁️🌵☁️🌵</p>
+                <p class="tagline">☁️☁️️☁️☁️️☁️☁️☁️☁️️☁️☁️️☁️☁️🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵</p>
             
             
             <nav class="menu">
@@ -44,7 +44,7 @@
 - 输出取决于整个输入，即使改变单个字节也会生成不同的哈希码
 - 输出看起来像随机数，且不可预测，分布均匀</p>
 <p>我们对文件计算 160位 SHA-1 哈希值。我们不需要复杂的算法，我们需要的是极小的碰撞。</p>
-<h3>为什么选择 SHA-1？</h3>
+<h2>为什么选择 SHA-1？</h2>
 <p>首先我们的目标是极小的碰撞，那么我们要知道所要加密文件会出现碰撞的机率是怎么样的。这里例举了生日问题</p>
 <blockquote>
 <p>两个人同一天生日的机率是 1/365（忽略 2月29日）。因此不是同一天生日的机率是 364/365。
@@ -53,36 +53,36 @@
 </blockquote>
 <p>可以通过上面的算法，计算得出 50% 碰撞机率，我们需要散列多少文件，我们不使用 365，而是使用 2 的 160次方。</p>
 <p>为什么不实用 MD5，因为 SHA-1 采用的长度比 MD5 多 32 位。MD5 出现碰撞的机率相对于 SHA-1 更高。</p>
-<h3>流应该怎么使用？</h3>
+<h2>流应该怎么使用？</h2>
 <p>在 Node.js 中，可以使用 crypto 模块。为了不阻塞的执行，我们可以采用流处理。</p>
 <p>流处理 API 是说 一次处理一个块的数据，而不是要求所有数据一次都在内存中。Nodejs 中数据流块的大小可以配置的，比如
 <a href="https://nodejs.org/api/stream.html#implementing-a-writable-stream">可写流</a>可以设置 highWaterMark（默认值：16384，16KiB）。</p>
 <p>比如每次读取 16KB 的话，我们应该如何处理这些数据呢，比如基于流查找字符。在 Nodejs 中提供了 readline 模块，可以按照行的方式读取。</p>
-<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">fs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">&#39;fs&#39;</span><span class="p">)</span><span class="w"></span>
-<span class="kd">const</span><span class="w"> </span><span class="nx">readline</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">&#39;readline&#39;</span><span class="p">)</span><span class="w"></span>
-<span class="kd">const</span><span class="w"> </span><span class="nx">stream</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">&#39;stream&#39;</span><span class="p">)</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">fs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">&#39;fs&#39;</span><span class="p">)</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">readline</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">&#39;readline&#39;</span><span class="p">)</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">stream</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">&#39;stream&#39;</span><span class="p">)</span>
 
-<span class="kd">const</span><span class="w"> </span><span class="nx">searchStream</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">filename</span><span class="p">,</span><span class="w"> </span><span class="nx">text</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Promise</span><span class="p">((</span><span class="nx">reslove</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">inStream</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">fs</span><span class="p">.</span><span class="nx">createReadStream</span><span class="p">(</span><span class="sb">`file/</span><span class="si">${</span><span class="nx">filename</span><span class="si">}</span><span class="sb">.txt`</span><span class="p">)</span><span class="w"></span>
-<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">outStream</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">Stream</span><span class="w"></span>
-<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">rl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">readline</span><span class="p">.</span><span class="nx">createInterface</span><span class="p">(</span><span class="nx">inStream</span><span class="p">,</span><span class="w"> </span><span class="nx">outStream</span><span class="p">)</span><span class="w"></span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">searchStream</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">filename</span><span class="p">,</span><span class="w"> </span><span class="nx">text</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Promise</span><span class="p">((</span><span class="nx">reslove</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">inStream</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">fs</span><span class="p">.</span><span class="nx">createReadStream</span><span class="p">(</span><span class="sb">`file/</span><span class="si">${</span><span class="nx">filename</span><span class="si">}</span><span class="sb">.txt`</span><span class="p">)</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">outStream</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">Stream</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">rl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">readline</span><span class="p">.</span><span class="nx">createInterface</span><span class="p">(</span><span class="nx">inStream</span><span class="p">,</span><span class="w"> </span><span class="nx">outStream</span><span class="p">)</span>
 
-<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span><span class="w"></span>
-<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">reg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">RegExp</span><span class="p">(</span><span class="nx">text</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;i&quot;</span><span class="p">)</span><span class="w"></span>
-<span class="w">        </span><span class="nx">rl</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;line&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">line</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">            </span><span class="k">if</span><span class="p">(</span><span class="nx">line</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">line</span><span class="p">.</span><span class="nx">search</span><span class="p">(</span><span class="nx">reg</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mf">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">                </span><span class="nx">reslut</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">line</span><span class="p">)</span><span class="w"></span>
-<span class="w">            </span><span class="p">}</span><span class="w"></span>
-<span class="w">        </span><span class="p">})</span><span class="w"></span>
-<span class="w">        </span><span class="nx">rl</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;close&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">            </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`finished search: </span><span class="si">${</span><span class="nx">filename</span><span class="si">}</span><span class="sb">`</span><span class="p">)</span><span class="w"></span>
-<span class="w">            </span><span class="nx">reslove</span><span class="p">(</span><span class="nx">result</span><span class="p">)</span><span class="w"></span>
-<span class="w">        </span><span class="p">})</span><span class="w"></span>
-<span class="w">    </span><span class="p">})</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">reg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">RegExp</span><span class="p">(</span><span class="nx">text</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;i&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="nx">rl</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;line&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">line</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">if</span><span class="p">(</span><span class="nx">line</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">line</span><span class="p">.</span><span class="nx">search</span><span class="p">(</span><span class="nx">reg</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mf">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nx">reslut</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">line</span><span class="p">)</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">})</span>
+<span class="w">        </span><span class="nx">rl</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;close&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`finished search: </span><span class="si">${</span><span class="nx">filename</span><span class="si">}</span><span class="sb">`</span><span class="p">)</span>
+<span class="w">            </span><span class="nx">reslove</span><span class="p">(</span><span class="nx">result</span><span class="p">)</span>
+<span class="w">        </span><span class="p">})</span>
+<span class="w">    </span><span class="p">})</span>
+<span class="p">}</span>
 
-<span class="nx">searchStream</span><span class="p">(</span><span class="s1">&#39;demo&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Hi&#39;</span><span class="p">)</span><span class="w"></span>
+<span class="nx">searchStream</span><span class="p">(</span><span class="s1">&#39;demo&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Hi&#39;</span><span class="p">)</span>
 </code></pre></div>
 <h2>如何备份文件</h2>
 <p>很多文件在创建之后很少改动，如果每次改动，我们保存整个项目的快照这是很糟的，为什么？
@@ -94,7 +94,7 @@
 <h2>管理备份文件</h2>
 <p>既然我们针对每个改动的文件生成了本分文件，我们就要追踪备份文件，例如：a.file 连续发生了3次改动，怎么知道哪个备份文件是最新的呢？</p>
 <p>可以通过提交次数创建目录，里面保存着每个备份版本。</p>
-<h3>Git 是如何实现文件管理的？</h3>
+<h2>Git 是如何实现文件管理的？</h2>
 <p>https://wyag.thb.lt/</p>
         </article>
         

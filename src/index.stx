@@ -4,7 +4,6 @@ subTitle: 一个人（至少是一个年轻人）的首要责任，就是要有�
 ---
 
 * [编程格调](@root/articles/1.html)
-* [编程语言](@root/articles/10.html)
 
 ---
 
@@ -17,8 +16,6 @@ subTitle: 一个人（至少是一个年轻人）的首要责任，就是要有�
 
 ---
 
-SICP
-
 * [构造过程抽象](@root/articles/sicp/1.html)
 
 ---
@@ -29,6 +26,8 @@ SICP
 
 ---
 
+* [源码分析——async-validator](@root/articles/frontend/12.html)
+* [通过 jscodeshift 向类型文件增加注释](@root/articles/frontend/11.html)
 * [Node.js 的 preserve-symlinks](@root/articles/frontend/9.html)
 * [Checkbox 组件设计与实现](@root/articles/frontend/8.html)
 * [JavaScript 中的枚举实现](@root/articles/frontend/7.html)

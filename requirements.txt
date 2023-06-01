@@ -1,3 +1,12 @@
-beautifulsoup4>=4.11
-ivy>=6.4
-pybtex>=0.24
+argslib==2.1.0
+ark==7.1.0
+colorama==0.4.6
+ibis==3.2.0
+Jinja2==3.1.2
+Markdown==3.4.3
+MarkupSafe==2.1.2
+Pygments==2.15.1
+pymdown-extensions==10.0.1
+PyYAML==6.0
+shortcodes==5.4.0
+syntext==3.1.2

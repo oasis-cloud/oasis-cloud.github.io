@@ -14,7 +14,7 @@
         <header class="masthead">
             <h1><a href="../../index.html">Oasis's Cloud</a></h1>
             
-                <p class="tagline">☁️🌵️☁️🌵️☁️🌵☁️🌵️☁️🌵️☁️🌵☁️🌵</p>
+                <p class="tagline">☁️☁️️☁️☁️️☁️☁️☁️☁️️☁️☁️️☁️☁️🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵</p>
             
             
             <nav class="menu">
@@ -37,55 +37,53 @@
             </header>
             <h2>为什么要封装组件</h2>
 <p>在日常的项目开发过程中，会遇到很多相似的功能，在管理不同代码库的时候，也会面临重复代码的问题，组件的提炼可以解决代码粘贴复制的问题，同时通过对代码的封装复用，降低了同一功能的维护成本。</p>
-<h2>组件实现思路和实现原理</h2>
 <h3>组件功能梳理</h3>
 <p>Checkbox 组件的使用场景主要分为：单独使用、多个独立使用、组合使用。而且在组合使用的场景中需要考虑 Checkbox 嵌套在其他 HTML 标签中的场景。</p>
 <h3>组件实现思路</h3>
 <p>单独使用 Checkbox 的实现相对简单，主要根据设计的 props 来实现对应的功能，例如：checked 的对应功能是通过设置一个 state 来实现。</p>
 <p>在组合使用的场景中，我们又封装了另外一个 CheckboxGroup 组件，通过 CheckboxGroup 组件来对 Checkbox 组件进行分组。同时为了方便的实现全选、反选等功能，需要在 CheckboxGroup 组件是上暴露 Ref，并在 Ref 挂载上处理此功能的方法。例如 CheckboxGroup 可以对外暴露 toggleAll、reverse 方法。</p>
 <p>Ref 提供的方法主要借助 <a href="https://react.dev/reference/react/useImperativeHandle">useImperativeHandle</a> , 代码示例如下：</p>
-<div class="highlight"><pre><span></span><code><span class="nx">useImperativeHandle</span><span class="p">(</span><span class="nx">res</span><span class="p">,</span><span class="w"> </span><span class="p">()=&gt;</span><span class="w"> </span><span class="p">({</span><span class="w"></span>
-<span class="w">  </span><span class="nx">toggleAll</span><span class="p">(</span><span class="nx">state</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="nx">useImperativeHandle</span><span class="p">(</span><span class="nx">res</span><span class="p">,</span><span class="w"> </span><span class="p">()=&gt;</span><span class="w"> </span><span class="p">({</span>
+<span class="w">  </span><span class="nx">toggleAll</span><span class="p">(</span><span class="nx">state</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 
-<span class="w">  </span><span class="p">},</span><span class="w"></span>
-<span class="w">  </span><span class="nx">reverse</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">labelsForChildren</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span><span class="w"></span>
-<span class="w">    </span><span class="nx">React</span><span class="p">.</span><span class="nx">children</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">childern</span><span class="p">,</span><span class="w"> </span><span class="nx">child</span><span class="w"> </span><span class="p">=&gt;{</span><span class="w"></span>
-<span class="w">      </span><span class="nx">labelsForChildren</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">child</span><span class="p">.</span><span class="nx">props</span><span class="p">.</span><span class="nx">label</span><span class="p">)</span><span class="w"></span>
-<span class="w">    </span><span class="p">})</span><span class="w"></span>
-<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">nextState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">labelsForChildren</span><span class="p">.</span><span class="nx">filter</span><span class="p">((</span><span class="nx">childLabel</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">stateForCheckboxGroup</span><span class="p">.</span><span class="nx">findIndex</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">value</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nx">childlabel</span><span class="p">)</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="o">-</span><span class="mf">1</span><span class="w"></span>
-<span class="w">    </span><span class="nx">setStateForCheckboxGroup</span><span class="p">(</span><span class="nx">nextState</span><span class="p">)</span><span class="w"></span>
-<span class="w">  </span><span class="p">}</span><span class="w"></span>
-<span class="p">}))</span><span class="w"></span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">reverse</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">labelsForChildren</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="w">    </span><span class="nx">React</span><span class="p">.</span><span class="nx">children</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">childern</span><span class="p">,</span><span class="w"> </span><span class="nx">child</span><span class="w"> </span><span class="p">=&gt;{</span>
+<span class="w">      </span><span class="nx">labelsForChildren</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">child</span><span class="p">.</span><span class="nx">props</span><span class="p">.</span><span class="nx">label</span><span class="p">)</span>
+<span class="w">    </span><span class="p">})</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">nextState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">labelsForChildren</span><span class="p">.</span><span class="nx">filter</span><span class="p">((</span><span class="nx">childLabel</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">stateForCheckboxGroup</span><span class="p">.</span><span class="nx">findIndex</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">value</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nx">childlabel</span><span class="p">)</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="o">-</span><span class="mf">1</span>
+<span class="w">    </span><span class="nx">setStateForCheckboxGroup</span><span class="p">(</span><span class="nx">nextState</span><span class="p">)</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}))</span>
 </code></pre></div>
 <p>Checkbox 的组合使用以及支持 HTML 标签嵌套主要借助 React 的 Context 来传递 props。在设计 Context 的时候，要主要只提供必需的，而不要过多的提供 props 下传。</p>
 <p>在 CheckboxGroup 组件的 Context 中，主要提供了用于操控 state 的 check() uncheck() 方法，组合的选中状态 checkedValues，限制最大选中数量的 max</p>
-<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">CheckboxGroupContext</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
-<span class="w">  </span><span class="nx">createContext</span><span class="o">&lt;</span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="nx">checkedValues</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">[]</span><span class="w"></span>
-<span class="w">    </span><span class="nx">max</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">undefined</span><span class="w"></span>
-<span class="w">    </span><span class="nx">check</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="ow">void</span><span class="w"></span>
-<span class="w">    </span><span class="nx">uncheck</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="ow">void</span><span class="w"></span>
-<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">null</span><span class="o">&gt;</span><span class="p">(</span><span class="kc">null</span><span class="p">)</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">CheckboxGroupContext</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="nx">createContext</span><span class="o">&lt;</span><span class="p">{</span>
+<span class="w">    </span><span class="nx">checkedValues</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">[]</span>
+<span class="w">    </span><span class="nx">max</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">undefined</span>
+<span class="w">    </span><span class="nx">check</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="ow">void</span>
+<span class="w">    </span><span class="nx">uncheck</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="ow">void</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">null</span><span class="o">&gt;</span><span class="p">(</span><span class="kc">null</span><span class="p">)</span>
 </code></pre></div>
 <p>在调用 createContext 的时候，我们提供了 null 作为默认值，这一点比较重要。因为在 Checkbox 组件中，要同时支持 context 和 非 context 的情况。这种情况的判断，主要根据 context 的值来处理。</p>
-<div class="highlight"><pre><span></span><code><span class="c1">// checkbox.tsx</span><span class="w"></span>
-<span class="kd">const</span><span class="w"> </span><span class="nx">ctx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useContext</span><span class="p">(</span><span class="nx">CheckboxGroupContext</span><span class="p">)</span><span class="w"></span>
-<span class="k">if</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">  </span><span class="c1">// 存在 ctx 的情况处理</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="c1">// checkbox.tsx</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">ctx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useContext</span><span class="p">(</span><span class="nx">CheckboxGroupContext</span><span class="p">)</span>
+<span class="k">if</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 存在 ctx 的情况处理</span>
+<span class="p">}</span>
 </code></pre></div>
 <p>在未实现 Context 支持的 Checkbox 组件的实现中，我们设计了一些内部的状态，来控制 Checkbox 的选中，禁用等功能。那在支持 Context 的情况里，我们怎么处理之前设置过的 State 呢？我们可以通过覆盖的方式来处理。</p>
-<div class="highlight"><pre><span></span><code><span class="kd">let</span><span class="w"> </span><span class="p">[</span><span class="nx">checked</span><span class="p">,</span><span class="w"> </span><span class="nx">setChecked</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useState</span><span class="p">(</span><span class="nx">props</span><span class="p">.</span><span class="nx">checked</span><span class="p">)</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="kd">let</span><span class="w"> </span><span class="p">[</span><span class="nx">checked</span><span class="p">,</span><span class="w"> </span><span class="nx">setChecked</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useState</span><span class="p">(</span><span class="nx">props</span><span class="p">.</span><span class="nx">checked</span><span class="p">)</span>
 
-<span class="k">if</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">  </span><span class="nx">setChecked</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">checked</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="nx">checked</span><span class="p">)</span><span class="w"> </span><span class="nx">ctx</span><span class="p">.</span><span class="nx">check</span><span class="p">()</span><span class="w"></span>
-<span class="w">    </span><span class="k">else</span><span class="w"> </span><span class="nx">ctx</span><span class="p">.</span><span class="nx">uncheck</span><span class="p">()</span><span class="w"></span>
-<span class="w">  </span><span class="p">}</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<span class="k">if</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">setChecked</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">checked</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="nx">checked</span><span class="p">)</span><span class="w"> </span><span class="nx">ctx</span><span class="p">.</span><span class="nx">check</span><span class="p">()</span>
+<span class="w">    </span><span class="k">else</span><span class="w"> </span><span class="nx">ctx</span><span class="p">.</span><span class="nx">uncheck</span><span class="p">()</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
 </code></pre></div>
-<h3>最后</h3>
 <p>上面主要介绍了 Checkbox 的几个关键的处理点，如果大家在使用 NutUI-React 过程中，发现此组件的问题可以直接通过 Issues 提问或者直接 PR 给我们。</p>
         </article>
         

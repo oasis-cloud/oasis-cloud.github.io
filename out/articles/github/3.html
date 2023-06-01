@@ -14,7 +14,7 @@
         <header class="masthead">
             <h1><a href="../../index.html">Oasis's Cloud</a></h1>
             
-                <p class="tagline">☁️🌵️☁️🌵️☁️🌵☁️🌵️☁️🌵️☁️🌵☁️🌵</p>
+                <p class="tagline">☁️☁️️☁️☁️️☁️☁️☁️☁️️☁️☁️️☁️☁️🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵</p>
             
             
             <nav class="menu">
@@ -46,17 +46,17 @@
 <p>act 是一款基于 docker 的软件，所以安装 act 之前，我们先去 docker 的站点下载 docker。</p>
 <p>之后通过 act 提供的安装方式进行 act 的安装。</p>
 <p>在执行 act 的时候，可能会遇到如下问题：</p>
-<div class="highlight"><pre><span></span><code>ERRO<span class="o">[</span><span class="m">0000</span><span class="o">]</span> failed to obtain container engine info: Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running? 
-<span class="o">[</span>CI/test<span class="o">]</span> 🚀  Start <span class="nv">image</span><span class="o">=</span>catthehacker/ubuntu:act-18.04
-<span class="o">[</span>CI/test<span class="o">]</span>   🐳  docker pull <span class="nv">image</span><span class="o">=</span>catthehacker/ubuntu:act-18.04 <span class="nv">platform</span><span class="o">=</span>linux/amd64 <span class="nv">username</span><span class="o">=</span> <span class="nv">forcePull</span><span class="o">=</span><span class="nb">true</span>
-Error: Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?
+<div class="highlight"><pre><span></span><code>ERRO<span class="o">[</span><span class="m">0000</span><span class="o">]</span><span class="w"> </span>failed<span class="w"> </span>to<span class="w"> </span>obtain<span class="w"> </span>container<span class="w"> </span>engine<span class="w"> </span>info:<span class="w"> </span>Cannot<span class="w"> </span>connect<span class="w"> </span>to<span class="w"> </span>the<span class="w"> </span>Docker<span class="w"> </span>daemon<span class="w"> </span>at<span class="w"> </span>unix:///var/run/docker.sock.<span class="w"> </span>Is<span class="w"> </span>the<span class="w"> </span>docker<span class="w"> </span>daemon<span class="w"> </span>running?<span class="w"> </span>
+<span class="o">[</span>CI/test<span class="o">]</span><span class="w"> </span>🚀<span class="w">  </span>Start<span class="w"> </span><span class="nv">image</span><span class="o">=</span>catthehacker/ubuntu:act-18.04
+<span class="o">[</span>CI/test<span class="o">]</span><span class="w">   </span>🐳<span class="w">  </span>docker<span class="w"> </span>pull<span class="w"> </span><span class="nv">image</span><span class="o">=</span>catthehacker/ubuntu:act-18.04<span class="w"> </span><span class="nv">platform</span><span class="o">=</span>linux/amd64<span class="w"> </span><span class="nv">username</span><span class="o">=</span><span class="w"> </span><span class="nv">forcePull</span><span class="o">=</span><span class="nb">true</span>
+Error:<span class="w"> </span>Cannot<span class="w"> </span>connect<span class="w"> </span>to<span class="w"> </span>the<span class="w"> </span>Docker<span class="w"> </span>daemon<span class="w"> </span>at<span class="w"> </span>unix:///var/run/docker.sock.<span class="w"> </span>Is<span class="w"> </span>the<span class="w"> </span>docker<span class="w"> </span>daemon<span class="w"> </span>running?
 </code></pre></div>
 <p>在 docker 的设置中 <code>docker &gt; Settings &gt; Advanced &gt; Enable default Docker socket</code> 开启此选项，便可以解决上面的问题。</p>
 <p>解决完上面的问题，便可以通过 act 进行测试了。act 的常用参数有：</p>
 <p>act [&lt;事件&gt;] -j [workflow 的文件名]</p>
 <p>act 同时提供了 .actrc 文件来设置默认的配置项（PS：在开发 cli 程序的时候也可以考虑加上类似的功能），下面是我设置的配置项：</p>
-<div class="highlight"><pre><span></span><code>-P ubuntu-latest<span class="o">=</span>catthehacker/ubuntu:act-18.04
---container-architecture linux/amd64
+<div class="highlight"><pre><span></span><code>-P<span class="w"> </span>ubuntu-latest<span class="o">=</span>catthehacker/ubuntu:act-18.04
+--container-architecture<span class="w"> </span>linux/amd64
 </code></pre></div>
         </article>
         

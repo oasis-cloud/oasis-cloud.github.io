@@ -14,7 +14,7 @@
         <header class="masthead">
             <h1><a href="../../index.html">Oasis's Cloud</a></h1>
             
-                <p class="tagline">☁️🌵️☁️🌵️☁️🌵☁️🌵️☁️🌵️☁️🌵☁️🌵</p>
+                <p class="tagline">☁️☁️️☁️☁️️☁️☁️☁️☁️️☁️☁️️☁️☁️🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵</p>
             
             
             <nav class="menu">
@@ -54,20 +54,20 @@
 <li>可以通过 Error 的类型累处理，我们可以给 失败指定一个特殊类型，非此类型的视作测试用例本身存在错误。</li>
 </ul>
 <p>命令行的 test 库，首先要扫描包含测试用例的文件，然后通过动态导入，例如 import(f) 方式。</p>
-<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">main</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="p">(</span><span class="nx">args</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">filenames</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="nx">glob</span><span class="p">.</span><span class="nx">sync</span><span class="p">(</span><span class="s1">&#39;**/test-*.js&#39;</span><span class="p">)</span><span class="w"></span>
-<span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">f</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">filenames</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">        </span><span class="k">await</span><span class="w"> </span><span class="k">import</span><span class="p">(</span><span class="nx">f</span><span class="p">)</span><span class="w"></span>
-<span class="w">    </span><span class="p">}</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">main</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="p">(</span><span class="nx">args</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">filenames</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="nx">glob</span><span class="p">.</span><span class="nx">sync</span><span class="p">(</span><span class="s1">&#39;**/test-*.js&#39;</span><span class="p">)</span>
+<span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">f</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">filenames</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">await</span><span class="w"> </span><span class="k">import</span><span class="p">(</span><span class="nx">f</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
 </code></pre></div>
 <p>现在很多项目都是用 typescript 编写的，所以在需要将代码进行编译，编译到普通的 js 。</p>
 <p>PS: 除了上面代码中的动态导入，在低版本上，可以生成一个 JS 文件，包含那些测试用例，例如生成的结果如下：</p>
-<div class="highlight"><pre><span></span><code><span class="c1">// generated.js</span><span class="w"></span>
-<span class="nx">require</span><span class="p">(</span><span class="s1">&#39;./test-a.js&#39;</span><span class="p">)</span><span class="w"></span>
-<span class="nx">require</span><span class="p">(</span><span class="s1">&#39;./test-b.js&#39;</span><span class="p">)</span><span class="w"></span>
-<span class="nx">require</span><span class="p">(</span><span class="s1">&#39;./test-c.js&#39;</span><span class="p">)</span><span class="w"></span>
-<span class="p">...</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="c1">// generated.js</span>
+<span class="nx">require</span><span class="p">(</span><span class="s1">&#39;./test-a.js&#39;</span><span class="p">)</span>
+<span class="nx">require</span><span class="p">(</span><span class="s1">&#39;./test-b.js&#39;</span><span class="p">)</span>
+<span class="nx">require</span><span class="p">(</span><span class="s1">&#39;./test-c.js&#39;</span><span class="p">)</span>
+<span class="p">...</span>
 </code></pre></div>
         </article>
         
