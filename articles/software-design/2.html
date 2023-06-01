@@ -14,7 +14,7 @@
         <header class="masthead">
             <h1><a href="../../index.html">Oasis's Cloud</a></h1>
             
-                <p class="tagline">☁️🌵️☁️🌵️☁️🌵☁️🌵️☁️🌵️☁️🌵☁️🌵</p>
+                <p class="tagline">☁️☁️️☁️☁️️☁️☁️☁️☁️️☁️☁️️☁️☁️🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵</p>
             
             
             <nav class="menu">
@@ -52,114 +52,114 @@
 </ol>
 <h2>设计自己的 Promise</h2>
 <p>如何设计 Promise，我们既然要做 Promise 的 demo，那我们最终产物的使用方式要和 Promise 是一致的。所以我们要先思考清楚我们产物的用法。(ps: 这体现了从上向下的设计思路。先设计大的框架，定义好使用方法，再想办法实现。)</p>
-<div class="highlight"><pre><span></span><code><span class="c1">// 我们的文件</span><span class="w"></span>
-<span class="k">import</span><span class="w"> </span><span class="nx">OasisPromise</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;./oasis-promise.js&#39;</span><span class="w"></span>
-<span class="c1">// 使用方式</span><span class="w"></span>
-<span class="ow">new</span><span class="w"> </span><span class="nx">OasisPromise</span><span class="w"> </span><span class="p">((</span><span class="nx">reslove</span><span class="p">,</span><span class="w"> </span><span class="nx">reject</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;registry&#39;</span><span class="p">)</span><span class="w"></span>
-<span class="w">    </span><span class="nx">setTimeout</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">        </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;reslove callback&#39;</span><span class="p">)</span><span class="w"></span>
-<span class="w">        </span><span class="nx">reslove</span><span class="p">(</span><span class="s1">&#39;resloved&#39;</span><span class="p">)</span><span class="w"></span>
-<span class="w">    </span><span class="p">},</span><span class="w"> </span><span class="mf">0</span><span class="p">)</span><span class="w"></span>
-<span class="p">}).</span><span class="nx">then</span><span class="p">((</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;then value&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">value</span><span class="p">)</span><span class="w"></span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">value</span><span class="w"></span>
-<span class="p">})</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="c1">// 我们的文件</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">OasisPromise</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;./oasis-promise.js&#39;</span>
+<span class="c1">// 使用方式</span>
+<span class="ow">new</span><span class="w"> </span><span class="nx">OasisPromise</span><span class="w"> </span><span class="p">((</span><span class="nx">reslove</span><span class="p">,</span><span class="w"> </span><span class="nx">reject</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;registry&#39;</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">setTimeout</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;reslove callback&#39;</span><span class="p">)</span>
+<span class="w">        </span><span class="nx">reslove</span><span class="p">(</span><span class="s1">&#39;resloved&#39;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">},</span><span class="w"> </span><span class="mf">0</span><span class="p">)</span>
+<span class="p">}).</span><span class="nx">then</span><span class="p">((</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;then value&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">value</span><span class="p">)</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">value</span>
+<span class="p">})</span>
 </code></pre></div>
 <p>基于上述设计中的使用方式，我们首先要考虑链式调用如何实现，再 JavaScript 中，链式调用通过对象的方式可以实现。如下例：</p>
-<div class="highlight"><pre><span></span><code><span class="c1">// oasis-promise.js</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="c1">// oasis-promise.js</span>
 
-<span class="kd">class</span><span class="w"> </span><span class="nx">OasisPromise</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="kr">constructor</span><span class="p">()</span><span class="w"> </span><span class="p">{}</span><span class="w"></span>
-<span class="w">    </span><span class="nx">then</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="k">this</span><span class="w"></span>
-<span class="w">    </span><span class="p">}</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<span class="kd">class</span><span class="w"> </span><span class="nx">OasisPromise</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kr">constructor</span><span class="p">()</span><span class="w"> </span><span class="p">{}</span>
+<span class="w">    </span><span class="nx">then</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="k">this</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
 </code></pre></div>
 <p>然后我们那可以写：
-<div class="highlight"><pre><span></span><code><span class="ow">new</span><span class="w"> </span><span class="nx">OasisPromise</span><span class="p">().</span><span class="nx">then</span><span class="p">()</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="ow">new</span><span class="w"> </span><span class="nx">OasisPromise</span><span class="p">().</span><span class="nx">then</span><span class="p">()</span>
 </code></pre></div></p>
 <p>继续扩充我们的 OasisPromise 类。由其用法我们知道，在构造函数中需要传一个方式，此方法包含两个内置的函数（reslove，reject）作为参数。我们先来实现这一步：</p>
-<div class="highlight"><pre><span></span><code><span class="c1">// oasis-promise.js</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="c1">// oasis-promise.js</span>
 
-<span class="kd">class</span><span class="w"> </span><span class="nx">OasisPromise</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="kr">constructor</span><span class="p">(</span><span class="nx">action</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="nx">action</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">            </span><span class="nx">action</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">reslove</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">),</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">reject</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">))</span><span class="w"></span>
-<span class="w">        </span><span class="p">}</span><span class="w"></span>
-<span class="w">    </span><span class="p">}</span><span class="w"></span>
-<span class="w">    </span><span class="nx">reslove</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="kd">class</span><span class="w"> </span><span class="nx">OasisPromise</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kr">constructor</span><span class="p">(</span><span class="nx">action</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="nx">action</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">action</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">reslove</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">),</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">reject</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">))</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">reslove</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">       </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span>
-<span class="w">    </span><span class="p">}</span><span class="w"></span>
-<span class="w">    </span><span class="nx">reject</span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">reject</span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">       </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span>
-<span class="w">    </span><span class="p">}</span><span class="w"></span>
-<span class="w">    </span><span class="nx">then</span><span class="p">(</span><span class="nx">action</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">        </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;then&#39;</span><span class="p">)</span><span class="w"></span>
-<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="k">this</span><span class="w"></span>
-<span class="w">    </span><span class="p">}</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">then</span><span class="p">(</span><span class="nx">action</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;then&#39;</span><span class="p">)</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="k">this</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
 
-<span class="ow">new</span><span class="w"> </span><span class="nx">OasisPromise</span><span class="p">((</span><span class="nx">reslove</span><span class="p">,</span><span class="nx">reject</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="nx">reslove</span><span class="p">(</span><span class="s1">&#39;outter&#39;</span><span class="p">)</span><span class="w"></span>
-<span class="p">}).</span><span class="nx">then</span><span class="p">()</span><span class="w"></span>
+<span class="ow">new</span><span class="w"> </span><span class="nx">OasisPromise</span><span class="p">((</span><span class="nx">reslove</span><span class="p">,</span><span class="nx">reject</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">reslove</span><span class="p">(</span><span class="s1">&#39;outter&#39;</span><span class="p">)</span>
+<span class="p">}).</span><span class="nx">then</span><span class="p">()</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="ow">new</span><span class="w"> </span><span class="nb">Promise</span><span class="p">().</span><span class="nx">then</span><span class="p">()</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="ow">new</span><span class="w"> </span><span class="nb">Promise</span><span class="p">().</span><span class="nx">then</span><span class="p">()</span>
 </code></pre></div>
 <p>reslove 要做的事情是用此阶段的 value，传给下一个 then 中的 handler，所以，在 then 方法调用的时候要能存下 then 方法的 handler，这里用了 handlers 数组。</p>
-<div class="highlight"><pre><span></span><code><span class="c1">// oasis-promise.js</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="c1">// oasis-promise.js</span>
 
-<span class="kd">class</span><span class="w"> </span><span class="nx">OasisPromise</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="kr">constructor</span><span class="p">(</span><span class="nx">action</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">errorHanlders</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{}</span><span class="w"></span>
-<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">hanlders</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span><span class="w"></span>
-<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="nx">action</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">            </span><span class="nx">action</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">resloveEvent</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">),</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">rejectEvent</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">))</span><span class="w"></span>
-<span class="w">        </span><span class="p">}</span><span class="w"></span>
-<span class="w">    </span><span class="p">}</span><span class="w"></span>
-<span class="w">    </span><span class="nx">resloveEvent</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="nx">nextValue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">value</span><span class="w"></span>
-<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">            </span><span class="k">this</span><span class="p">.</span><span class="nx">hanlders</span><span class="p">.</span><span class="nx">forEach</span><span class="p">(</span><span class="nx">handler</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">                </span><span class="nx">nextValue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">handler</span><span class="p">(</span><span class="nx">nextValue</span><span class="p">)</span><span class="w"></span>
+<span class="kd">class</span><span class="w"> </span><span class="nx">OasisPromise</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kr">constructor</span><span class="p">(</span><span class="nx">action</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">errorHanlders</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{}</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">hanlders</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="nx">action</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">action</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">resloveEvent</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">),</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">rejectEvent</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">))</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">resloveEvent</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">let</span><span class="w"> </span><span class="nx">nextValue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">value</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">this</span><span class="p">.</span><span class="nx">hanlders</span><span class="p">.</span><span class="nx">forEach</span><span class="p">(</span><span class="nx">handler</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nx">nextValue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">handler</span><span class="p">(</span><span class="nx">nextValue</span><span class="p">)</span>
 <span class="w">            </span><span class="p">})</span><span class="w">  </span>
-<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">            </span><span class="k">this</span><span class="p">.</span><span class="nx">hanlders</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span><span class="w"></span>
-<span class="w">            </span><span class="k">this</span><span class="p">.</span><span class="nx">rejectEvent</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span><span class="w"></span>
-<span class="w">        </span><span class="p">}</span><span class="w"></span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">this</span><span class="p">.</span><span class="nx">hanlders</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="w">            </span><span class="k">this</span><span class="p">.</span><span class="nx">rejectEvent</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span>
+<span class="w">        </span><span class="p">}</span>
 
-<span class="w">    </span><span class="p">}</span><span class="w"></span>
-<span class="w">    </span><span class="nx">rejectEvent</span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">errorHandlers</span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"></span>
-<span class="w">    </span><span class="p">}</span><span class="w"></span>
-<span class="w">    </span><span class="nx">then</span><span class="p">(</span><span class="nx">thenHandler</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">hanlders</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">thenHandler</span><span class="p">)</span><span class="w"></span>
-<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="k">this</span><span class="w"></span>
-<span class="w">    </span><span class="p">}</span><span class="w"></span>
-<span class="w">    </span><span class="k">catch</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">errorHandlers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">err</span><span class="w"></span>
-<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="k">this</span><span class="w"></span>
-<span class="w">    </span><span class="p">}</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">rejectEvent</span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">errorHandlers</span><span class="p">(</span><span class="nx">error</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">then</span><span class="p">(</span><span class="nx">thenHandler</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">hanlders</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">thenHandler</span><span class="p">)</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="k">this</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">catch</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">errorHandlers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">err</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="k">this</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
 </code></pre></div>
 <p>在上面这段代码的测试 demo 如下：</p>
-<div class="highlight"><pre><span></span><code><span class="c1">// Hi Oasis</span><span class="w"></span>
-<span class="ow">new</span><span class="w"> </span><span class="nx">OasisPromise</span><span class="p">((</span><span class="nx">reslove</span><span class="p">,</span><span class="w"> </span><span class="nx">reject</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">        </span><span class="nx">setTimeout</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">            </span><span class="nx">reslove</span><span class="p">(</span><span class="s1">&#39;Hi Oasis&#39;</span><span class="p">)</span><span class="w"></span>
-<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="p">,</span><span class="mf">0</span><span class="p">)</span><span class="w"></span>
-<span class="w">    </span><span class="p">}).</span><span class="nx">then</span><span class="p">((</span><span class="nx">value</span><span class="p">)=&gt;</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">value</span><span class="p">))</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="c1">// Hi Oasis</span>
+<span class="ow">new</span><span class="w"> </span><span class="nx">OasisPromise</span><span class="p">((</span><span class="nx">reslove</span><span class="p">,</span><span class="w"> </span><span class="nx">reject</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">setTimeout</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">reslove</span><span class="p">(</span><span class="s1">&#39;Hi Oasis&#39;</span><span class="p">)</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="p">,</span><span class="mf">0</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}).</span><span class="nx">then</span><span class="p">((</span><span class="nx">value</span><span class="p">)=&gt;</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">value</span><span class="p">))</span>
 
-<span class="c1">// 无输出，因为 reslove 不是异步，导致then方法还未执行，所以 handlers 为空数组</span><span class="w"></span>
-<span class="ow">new</span><span class="w"> </span><span class="nx">OasisPromise</span><span class="p">((</span><span class="nx">reslove</span><span class="p">,</span><span class="w"> </span><span class="nx">reject</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="c1">// setTimeout(() =&gt; {</span><span class="w"></span>
-<span class="w">        </span><span class="nx">reslove</span><span class="p">(</span><span class="s1">&#39;Hi Oasis&#39;</span><span class="p">)</span><span class="w"></span>
-<span class="w">    </span><span class="c1">// } ,0)</span><span class="w"></span>
-<span class="p">}).</span><span class="nx">then</span><span class="p">((</span><span class="nx">value</span><span class="p">)=&gt;</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">value</span><span class="p">))</span><span class="w"></span>
+<span class="c1">// 无输出，因为 reslove 不是异步，导致then方法还未执行，所以 handlers 为空数组</span>
+<span class="ow">new</span><span class="w"> </span><span class="nx">OasisPromise</span><span class="p">((</span><span class="nx">reslove</span><span class="p">,</span><span class="w"> </span><span class="nx">reject</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// setTimeout(() =&gt; {</span>
+<span class="w">        </span><span class="nx">reslove</span><span class="p">(</span><span class="s1">&#39;Hi Oasis&#39;</span><span class="p">)</span>
+<span class="w">    </span><span class="c1">// } ,0)</span>
+<span class="p">}).</span><span class="nx">then</span><span class="p">((</span><span class="nx">value</span><span class="p">)=&gt;</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">value</span><span class="p">))</span>
 
-<span class="c1">// reslove 在这里是异步的</span><span class="w"></span>
-<span class="ow">new</span><span class="w"> </span><span class="nb">Promise</span><span class="p">((</span><span class="nx">reslove</span><span class="p">,</span><span class="w"> </span><span class="nx">reject</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">reslove</span><span class="p">(</span><span class="s1">&#39;Hi Oasis&#39;</span><span class="p">))</span><span class="w"></span>
-<span class="w">    </span><span class="p">.</span><span class="nx">then</span><span class="p">((</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">value</span><span class="p">))</span><span class="w"></span>
+<span class="c1">// reslove 在这里是异步的</span>
+<span class="ow">new</span><span class="w"> </span><span class="nb">Promise</span><span class="p">((</span><span class="nx">reslove</span><span class="p">,</span><span class="w"> </span><span class="nx">reject</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">reslove</span><span class="p">(</span><span class="s1">&#39;Hi Oasis&#39;</span><span class="p">))</span>
+<span class="w">    </span><span class="p">.</span><span class="nx">then</span><span class="p">((</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">value</span><span class="p">))</span>
 </code></pre></div>
 <p>可以看出，promise 的方式还是要写很多模板代码，这时我们可以通过 async await 来完成同样的效果。
 async await 在 nodejs 中会编译为 promise 的形式，所以 async 和 await 要配对，否则在翻译的时候找不到 then 的上下文。</p>

@@ -14,7 +14,7 @@
         <header class="masthead">
             <h1><a href="../../index.html">Oasis's Cloud</a></h1>
             
-                <p class="tagline">☁️🌵️☁️🌵️☁️🌵☁️🌵️☁️🌵️☁️🌵☁️🌵</p>
+                <p class="tagline">☁️☁️️☁️☁️️☁️☁️☁️☁️️☁️☁️️☁️☁️🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵</p>
             
             
             <nav class="menu">
@@ -48,14 +48,14 @@ b.js 文件，b.js 文件中通过相对路径的方式 require 了 c.js 文件�
 └── index.js
 </code></pre></div>
 b.js 文件内容
-<div class="highlight"><pre><span></span><code><span class="c1">// b.js 文件内容，b.js 的目标文件位于 ../../../b.js</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="c1">// b.js 文件内容，b.js 的目标文件位于 ../../../b.js</span>
 
-<span class="c1">// 通过相对路径引入 c.js</span><span class="w"></span>
-<span class="c1">// 在不使用 preserve-symlinks 选项时，require(&#39;./c.js&#39;) 相当于 require(&#39;../../../c.js&#39;)</span><span class="w"></span>
-<span class="c1">// 使用 preserve-symlinks 选项时，require(&#39;./c.js&#39;) 仍然相对于 &#39;./&#39; 目录查找</span><span class="w"></span>
-<span class="kd">const</span><span class="w"> </span><span class="nx">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">&#39;./c.js&#39;</span><span class="p">)</span><span class="w"></span>
-<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">c</span><span class="p">)</span><span class="w"></span>
-<span class="nx">exports</span><span class="p">.</span><span class="nx">module</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">c</span><span class="w"></span>
+<span class="c1">// 通过相对路径引入 c.js</span>
+<span class="c1">// 在不使用 preserve-symlinks 选项时，require(&#39;./c.js&#39;) 相当于 require(&#39;../../../c.js&#39;)</span>
+<span class="c1">// 使用 preserve-symlinks 选项时，require(&#39;./c.js&#39;) 仍然相对于 &#39;./&#39; 目录查找</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">&#39;./c.js&#39;</span><span class="p">)</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">c</span><span class="p">)</span>
+<span class="nx">exports</span><span class="p">.</span><span class="nx">module</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">c</span>
 </code></pre></div></p>
 <p>运行错误
 <div class="highlight"><pre><span></span><code>❯ node index.js 

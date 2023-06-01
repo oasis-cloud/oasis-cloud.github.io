@@ -14,7 +14,7 @@
         <header class="masthead">
             <h1><a href="../../index.html">Oasis's Cloud</a></h1>
             
-                <p class="tagline">☁️🌵️☁️🌵️☁️🌵☁️🌵️☁️🌵️☁️🌵☁️🌵</p>
+                <p class="tagline">☁️☁️️☁️☁️️☁️☁️☁️☁️️☁️☁️️☁️☁️🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵</p>
             
             
             <nav class="menu">
@@ -36,61 +36,61 @@
                 <hr>
             </header>
             <p>TypeScript 中定义一个命名类型，有两个选择，可以使用 type 或 interface。</p>
-<div class="highlight"><pre><span></span><code><span class="kr">type</span><span class="w"> </span><span class="nx">P</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="kr">type</span><span class="w"> </span><span class="nx">P</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="p">}</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nx">P</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nx">P</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="p">}</span>
 </code></pre></div>
 <p>type 用于定义类型别名</p>
-<div class="highlight"><pre><span></span><code><span class="kr">type</span><span class="w"> </span><span class="nx">Simple</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kt">number</span><span class="w"></span>
-<span class="kr">type</span><span class="w"> </span><span class="nx">Point</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="nx">x</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="w"></span>
-<span class="w">    </span><span class="nx">y</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="kr">type</span><span class="w"> </span><span class="nx">Simple</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kt">number</span>
+<span class="kr">type</span><span class="w"> </span><span class="nx">Point</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">x</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="w">    </span><span class="nx">y</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="p">}</span>
 </code></pre></div>
 <p>通过使用类型别名可以提高代码的可读性，例如：</p>
-<div class="highlight"><pre><span></span><code><span class="kr">type</span><span class="w"> </span><span class="nx">TotalSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">number</span><span class="w"></span>
-<span class="kr">type</span><span class="w"> </span><span class="nx">Price</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">number</span><span class="w"></span>
-<span class="kr">type</span><span class="w"> </span><span class="nx">Quantity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">number</span><span class="w"></span>
-<span class="kd">function</span><span class="w"> </span><span class="nx">calculateTotalSize</span><span class="p">(</span><span class="nx">x</span><span class="o">:</span><span class="kt">Price</span><span class="p">,</span><span class="w"> </span><span class="nx">y</span><span class="o">:</span><span class="kt">Quantity</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">TotalSize</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">y</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="kr">type</span><span class="w"> </span><span class="nx">TotalSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">number</span>
+<span class="kr">type</span><span class="w"> </span><span class="nx">Price</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">number</span>
+<span class="kr">type</span><span class="w"> </span><span class="nx">Quantity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">number</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">calculateTotalSize</span><span class="p">(</span><span class="nx">x</span><span class="o">:</span><span class="kt">Price</span><span class="p">,</span><span class="w"> </span><span class="nx">y</span><span class="o">:</span><span class="kt">Quantity</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">TotalSize</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">y</span>
+<span class="p">}</span>
 </code></pre></div>
 <p>interface 用于定义对象类型</p>
-<div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nx">Point</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="nx">x</span><span class="o">:</span><span class="kt">number</span><span class="w"></span>
-<span class="w">    </span><span class="nx">y</span><span class="o">:</span><span class="kt">number</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nx">Point</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">x</span><span class="o">:</span><span class="kt">number</span>
+<span class="w">    </span><span class="nx">y</span><span class="o">:</span><span class="kt">number</span>
+<span class="p">}</span>
 </code></pre></div>
 <p>interface 可以重新打开类型，添加新属性，type 则不可。</p>
-<div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nx">Point</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="nx">x</span><span class="o">:</span><span class="kt">number</span><span class="w"></span>
-<span class="w">    </span><span class="nx">y</span><span class="o">:</span><span class="kt">number</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nx">Point</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">x</span><span class="o">:</span><span class="kt">number</span>
+<span class="w">    </span><span class="nx">y</span><span class="o">:</span><span class="kt">number</span>
+<span class="p">}</span>
 
-<span class="kd">interface</span><span class="w"> </span><span class="nx">Point</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="nx">z</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<span class="kd">interface</span><span class="w"> </span><span class="nx">Point</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">z</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="p">}</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="kr">type</span><span class="w"> </span><span class="nx">TPoint</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="nx">x</span><span class="o">:</span><span class="kt">number</span><span class="w"></span>
-<span class="w">    </span><span class="nx">y</span><span class="o">:</span><span class="kt">number</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="kr">type</span><span class="w"> </span><span class="nx">TPoint</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">x</span><span class="o">:</span><span class="kt">number</span>
+<span class="w">    </span><span class="nx">y</span><span class="o">:</span><span class="kt">number</span>
+<span class="p">}</span>
 
-<span class="kr">type</span><span class="w"> </span><span class="nx">TPoint</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="nx">z</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
-<span class="c1">// Errors in code</span><span class="w"></span>
-<span class="c1">// Duplicate identifier &#39;TPoint&#39;.</span><span class="w"></span>
-<span class="c1">// Duplicate identifier &#39;TPoint&#39;.</span><span class="w"></span>
+<span class="kr">type</span><span class="w"> </span><span class="nx">TPoint</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">z</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="p">}</span>
+<span class="c1">// Errors in code</span>
+<span class="c1">// Duplicate identifier &#39;TPoint&#39;.</span>
+<span class="c1">// Duplicate identifier &#39;TPoint&#39;.</span>
 </code></pre></div>
 <p>type 用于条件类型</p>
-<div class="highlight"><pre><span></span><code><span class="kr">type</span><span class="w"> </span><span class="nx">NameOrId</span><span class="o">&lt;</span><span class="nx">T</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="kt">number</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kt">string</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">T</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="kt">number</span><span class="w"></span>
-<span class="w">  </span><span class="o">?</span><span class="w"> </span><span class="nx">IdLabel</span><span class="w"></span>
-<span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="kt">NameLabel</span><span class="p">;</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="kr">type</span><span class="w"> </span><span class="nx">NameOrId</span><span class="o">&lt;</span><span class="nx">T</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="kt">number</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kt">string</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">T</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="kt">number</span>
+<span class="w">  </span><span class="o">?</span><span class="w"> </span><span class="nx">IdLabel</span>
+<span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="kt">NameLabel</span><span class="p">;</span>
 </code></pre></div>
 <p>在代码中应该使用哪种方式呢？</p>
 <ol>
@@ -101,16 +101,16 @@
 </ol>
 </li>
 </ol>
-<div class="highlight"><pre><span></span><code><span class="c1">// a libary</span><span class="w"></span>
-<span class="k">export</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="nx">AProps</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="nx">visible</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="c1">// a libary</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="nx">AProps</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">visible</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span>
+<span class="p">}</span>
 
-<span class="c1">// our project global.d.ts</span><span class="w"></span>
-<span class="k">import</span><span class="w"> </span><span class="kr">type</span><span class="w"> </span><span class="p">{</span><span class="nx">Aprops</span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;a-libary&#39;</span><span class="w"></span>
-<span class="kd">interface</span><span class="w"> </span><span class="nx">AExtends</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="nx">Aprops</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="nx">closed</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<span class="c1">// our project global.d.ts</span>
+<span class="k">import</span><span class="w"> </span><span class="kr">type</span><span class="w"> </span><span class="p">{</span><span class="nx">Aprops</span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;a-libary&#39;</span>
+<span class="kd">interface</span><span class="w"> </span><span class="nx">AExtends</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="nx">Aprops</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">closed</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span>
+<span class="p">}</span>
 </code></pre></div>
         </article>
         

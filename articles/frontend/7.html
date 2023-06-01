@@ -14,7 +14,7 @@
         <header class="masthead">
             <h1><a href="../../index.html">Oasis's Cloud</a></h1>
             
-                <p class="tagline">☁️🌵️☁️🌵️☁️🌵☁️🌵️☁️🌵️☁️🌵☁️🌵</p>
+                <p class="tagline">☁️☁️️☁️☁️️☁️☁️☁️☁️️☁️☁️️☁️☁️🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵</p>
             
             
             <nav class="menu">
@@ -37,40 +37,40 @@
             </header>
             <p>在 JavaScript 中可以通过 Proxy 创建一个对象的代理，从而实现基本操作的拦截和定义。主要包括：属性查找、赋值、枚举、函数调用等。</p>
 <h2>Proxy 语法</h2>
-<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Proxy</span><span class="p">(</span><span class="nx">target</span><span class="p">,</span><span class="w"> </span><span class="nx">handler</span><span class="p">)</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Proxy</span><span class="p">(</span><span class="nx">target</span><span class="p">,</span><span class="w"> </span><span class="nx">handler</span><span class="p">)</span>
 </code></pre></div>
 <p>target: 被代理的对象</p>
 <p>handler：一个对象，包含代理方法的对象。例如</p>
-<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">handler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="nx">get</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">obj</span><span class="p">,</span><span class="w"> </span><span class="nx">prop</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">prop</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nx">obj</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="nx">obj</span><span class="p">[</span><span class="nx">prop</span><span class="p">]</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;from proxy handler&#39;</span><span class="w"></span>
-<span class="w">    </span><span class="p">}</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
-<span class="kd">const</span><span class="w"> </span><span class="nx">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Proxy</span><span class="p">({},</span><span class="w"> </span><span class="nx">handler</span><span class="p">)</span><span class="w"></span>
-<span class="nx">p</span><span class="p">.</span><span class="nx">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;a&#39;</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">handler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">get</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">obj</span><span class="p">,</span><span class="w"> </span><span class="nx">prop</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">prop</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nx">obj</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="nx">obj</span><span class="p">[</span><span class="nx">prop</span><span class="p">]</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;from proxy handler&#39;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Proxy</span><span class="p">({},</span><span class="w"> </span><span class="nx">handler</span><span class="p">)</span>
+<span class="nx">p</span><span class="p">.</span><span class="nx">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;a&#39;</span>
 
-<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">p</span><span class="p">.</span><span class="nx">a</span><span class="p">)</span><span class="w"></span>
-<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">p</span><span class="p">.</span><span class="nx">b</span><span class="p">)</span><span class="w"> </span><span class="c1">// &#39;from proxy handler&#39;</span><span class="w"></span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">p</span><span class="p">.</span><span class="nx">a</span><span class="p">)</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">p</span><span class="p">.</span><span class="nx">b</span><span class="p">)</span><span class="w"> </span><span class="c1">// &#39;from proxy handler&#39;</span>
 </code></pre></div>
 <h2>Enums 枚举</h2>
 <p>在 TypeScript 中提供了 Enums ，它可以让程序开发人员定义一组命名常量，从而增强代码的可读性。</p>
-<div class="highlight"><pre><span></span><code><span class="kd">enum</span><span class="w"> </span><span class="nx">E</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="nx">Up</span><span class="p">,</span><span class="w"></span>
-<span class="w">    </span><span class="nx">Down</span><span class="p">,</span><span class="w"></span>
-<span class="w">    </span><span class="nx">Left</span><span class="p">,</span><span class="w"></span>
-<span class="w">    </span><span class="nx">Right</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="kd">enum</span><span class="w"> </span><span class="nx">E</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Up</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">Down</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">Left</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">Right</span>
+<span class="p">}</span>
 </code></pre></div>
 <p>然而 JavaScript 中还不支持 Enums，通常可以借助常量或在工程中加入 TypeScript 来使用 Enums。除此之外也可以借助 Proxy
 的特性来实现 Enums。</p>
 <h2>字符串枚举 JavaScript 实现</h2>
-<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">stringEnums</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Proxy</span><span class="p">({},</span><span class="w"> </span><span class="p">{</span><span class="nx">get</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">name</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">name</span><span class="p">.</span><span class="nx">toUpperCase</span><span class="p">()})</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">stringEnums</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Proxy</span><span class="p">({},</span><span class="w"> </span><span class="p">{</span><span class="nx">get</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">_</span><span class="p">,</span><span class="w"> </span><span class="nx">name</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">name</span><span class="p">.</span><span class="nx">toUpperCase</span><span class="p">()})</span>
+<span class="p">}</span>
 
-<span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="nx">Up</span><span class="p">,</span><span class="w"> </span><span class="nx">Down</span><span class="p">,</span><span class="w"> </span><span class="nx">Left</span><span class="p">,</span><span class="w"> </span><span class="nx">Right</span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">stringEnums</span><span class="p">()</span><span class="w"></span>
-<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">Up</span><span class="p">)</span><span class="w"> </span><span class="c1">// &#39;UP&#39;</span><span class="w"></span>
-<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">Down</span><span class="p">)</span><span class="w"> </span><span class="c1">// &#39;DOWN&#39;</span><span class="w"></span>
+<span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="nx">Up</span><span class="p">,</span><span class="w"> </span><span class="nx">Down</span><span class="p">,</span><span class="w"> </span><span class="nx">Left</span><span class="p">,</span><span class="w"> </span><span class="nx">Right</span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">stringEnums</span><span class="p">()</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">Up</span><span class="p">)</span><span class="w"> </span><span class="c1">// &#39;UP&#39;</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">Down</span><span class="p">)</span><span class="w"> </span><span class="c1">// &#39;DOWN&#39;</span>
 </code></pre></div>
 <h2>字符串枚举 TypeScript 实现</h2>
 <div class="highlight"><pre><span></span><code>enum E {
@@ -85,15 +85,15 @@ console.log(E.Down) // &#39;DOWN&#39;
 <h2>枚举重新赋值对比</h2>
 <div class="highlight"><pre><span></span><code><span class="cm">/*</span>
 <span class="cm">* 假设代码由 TypeScript 实现，Up 重置操作在编译时报错，运行时也报错。</span>
-<span class="cm">* */</span><span class="w"></span>
-<span class="nx">Up</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;reset&#39;</span><span class="w"> </span><span class="c1">// Cannot assign to &#39;Up&#39; because it is a constant.</span><span class="w"></span>
-<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;Up&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">Up</span><span class="p">)</span><span class="w"></span>
+<span class="cm">* */</span>
+<span class="nx">Up</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;reset&#39;</span><span class="w"> </span><span class="c1">// Cannot assign to &#39;Up&#39; because it is a constant.</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;Up&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">Up</span><span class="p">)</span>
 
 <span class="cm">/*</span>
 <span class="cm">* 假设代码由 TypeScript 实现，E.Up 重置操作在编译时报错，运行时不报错。</span>
-<span class="cm">* */</span><span class="w"></span>
-<span class="nx">E</span><span class="p">.</span><span class="nx">Up</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;reset&#39;</span><span class="w"> </span><span class="c1">// Cannot assign to &#39;Up&#39; because it is a read-only property.</span><span class="w"></span>
-<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;E.Up&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">E</span><span class="p">.</span><span class="nx">Up</span><span class="p">)</span><span class="w"></span>
+<span class="cm">* */</span>
+<span class="nx">E</span><span class="p">.</span><span class="nx">Up</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;reset&#39;</span><span class="w"> </span><span class="c1">// Cannot assign to &#39;Up&#39; because it is a read-only property.</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;E.Up&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">E</span><span class="p">.</span><span class="nx">Up</span><span class="p">)</span>
 </code></pre></div>
 <p>本来论述内容来源：https://github.com/chasefleming/enum-xyz</p>
         </article>

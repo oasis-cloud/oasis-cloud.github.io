@@ -14,7 +14,7 @@
         <header class="masthead">
             <h1><a href="../../index.html">Oasis's Cloud</a></h1>
             
-                <p class="tagline">☁️🌵️☁️🌵️☁️🌵☁️🌵️☁️🌵️☁️🌵☁️🌵</p>
+                <p class="tagline">☁️☁️️☁️☁️️☁️☁️☁️☁️️☁️☁️️☁️☁️🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵</p>
             
             
             <nav class="menu">
@@ -40,15 +40,17 @@
 <li>python 项目通过一个名字为 <code>requirements.txt</code> 的文件记录项目中的依赖包。</li>
 <li>python 的项目依赖的包可以使用 <code>pip</code> 进行安装，<code>pip install</code></li>
 <li>pip 可能提示不存在，因为没有加载 PATH 中。而且 Python 的不同版本的可执行文件名是不一致的，我通过 brew install python 后，python 的版本是 3.9,可执行文件名字是 python3</li>
-<li>如果要在终端通过 python 处理文件，需要设置 alias
-<div class="highlight"><pre><span></span><code><span class="nb">alias</span> <span class="nv">python</span><span class="o">=</span>/usr/bin/python3
-<span class="nb">alias</span> <span class="nv">pip</span><span class="o">=</span>/usr/bin/pip3
-</code></pre></div></li>
-<li>pip 可以安装可执行文件的包，安装路径是在 sites_packages 的目录中有一份源代码，在 bin 目录中是可执行文件。</li>
-<li>如果要执行通过 pip 安装的可执行文件，需要将它加入 PATH 中
-<div class="highlight"><pre><span></span><code><span class="nb">export</span> <span class="nv">PATH</span><span class="o">=</span><span class="s2">&quot;/Users/oasis/Library/Python/3.9/bin:</span><span class="nv">$PATH</span><span class="s2">&quot;</span>
-</code></pre></div></li>
+<li>如果要在终端通过 python 处理文件，需要设置 alias</li>
 </ol>
+<div class="highlight"><pre><span></span><code><span class="nb">alias</span><span class="w"> </span><span class="nv">python</span><span class="o">=</span>/usr/bin/python3
+<span class="nb">alias</span><span class="w"> </span><span class="nv">pip</span><span class="o">=</span>/usr/bin/pip3
+</code></pre></div>
+<ol>
+<li>pip 可以安装可执行文件的包，安装路径是在 sites_packages 的目录中有一份源代码，在 bin 目录中是可执行文件。</li>
+<li>如果要执行通过 pip 安装的可执行文件，需要将它加入 PATH 中</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="s2">&quot;/Users/oasis/Library/Python/3.9/bin:</span><span class="nv">$PATH</span><span class="s2">&quot;</span>
+</code></pre></div>
 <p>概念解释：</p>
 <ol>
 <li>

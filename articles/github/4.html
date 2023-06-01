@@ -14,7 +14,7 @@
         <header class="masthead">
             <h1><a href="../../index.html">Oasis's Cloud</a></h1>
             
-                <p class="tagline">☁️🌵️☁️🌵️☁️🌵☁️🌵️☁️🌵️☁️🌵☁️🌵</p>
+                <p class="tagline">☁️☁️️☁️☁️️☁️☁️☁️☁️️☁️☁️️☁️☁️🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵🌵</p>
             
             
             <nav class="menu">
@@ -78,7 +78,7 @@ files_response=$(curl -sSL -H &quot;Authorization: token ${{ secrets.GITHUB_TOKE
 <div class="highlight"><pre><span></span><code><span class="nv">shellVariable</span><span class="o">=</span><span class="m">1</span>
 </code></pre></div></p>
 <p>调用变量的方式形如：</p>
-<div class="highlight"><pre><span></span><code><span class="nb">echo</span> <span class="s2">&quot;</span><span class="nv">$shellVariable</span><span class="s2">&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$shellVariable</span><span class="s2">&quot;</span>
 </code></pre></div>
 <p>到这里我们已经获取到了 GitHub API 返回的结果，接下来需要对结果进行处理，即提取变更文件。</p>
 <div class="highlight"><pre><span></span><code>files_changed=$(echo &quot;$files_response&quot; | jq -r &#39;.[].filename&#39;)
@@ -88,18 +88,18 @@ npm test -- $component
 </code></pre></div>
 <p>因为 GitHub API 返回的是 JSON 格式：</p>
 <div class="highlight"><pre><span></span><code><span class="o">[</span>
-  <span class="o">{</span>
-    <span class="s2">&quot;sha&quot;</span>: <span class="s2">&quot;bbcd538c8e72b8c175046e27cc8f907076331401&quot;</span>,
-    <span class="s2">&quot;filename&quot;</span>: <span class="s2">&quot;src/packages/button/button.tsx&quot;</span>,
-    <span class="s2">&quot;status&quot;</span>: <span class="s2">&quot;added&quot;</span>,
-    <span class="s2">&quot;additions&quot;</span>: <span class="m">103</span>,
-    <span class="s2">&quot;deletions&quot;</span>: <span class="m">21</span>,
-    <span class="s2">&quot;changes&quot;</span>: <span class="m">124</span>,
-    <span class="s2">&quot;blob_url&quot;</span>: <span class="s2">&quot;https://github.com/octocat/Hello-World/blob/6dcb09b5b57875f334f61aebed695e2e4193db5e/file1.txt&quot;</span>,
-    <span class="s2">&quot;raw_url&quot;</span>: <span class="s2">&quot;https://github.com/octocat/Hello-World/raw/6dcb09b5b57875f334f61aebed695e2e4193db5e/file1.txt&quot;</span>,
-    <span class="s2">&quot;contents_url&quot;</span>: <span class="s2">&quot;https://api.github.com/repos/octocat/Hello-World/contents/file1.txt?ref=6dcb09b5b57875f334f61aebed695e2e4193db5e&quot;</span>,
-    <span class="s2">&quot;patch&quot;</span>: <span class="s2">&quot;@@ -132,7 +132,7 @@ module Test @@ -1000,7 +1000,7 @@ module Test&quot;</span>
-  <span class="o">}</span>
+<span class="w">  </span><span class="o">{</span>
+<span class="w">    </span><span class="s2">&quot;sha&quot;</span>:<span class="w"> </span><span class="s2">&quot;bbcd538c8e72b8c175046e27cc8f907076331401&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;filename&quot;</span>:<span class="w"> </span><span class="s2">&quot;src/packages/button/button.tsx&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;status&quot;</span>:<span class="w"> </span><span class="s2">&quot;added&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;additions&quot;</span>:<span class="w"> </span><span class="m">103</span>,
+<span class="w">    </span><span class="s2">&quot;deletions&quot;</span>:<span class="w"> </span><span class="m">21</span>,
+<span class="w">    </span><span class="s2">&quot;changes&quot;</span>:<span class="w"> </span><span class="m">124</span>,
+<span class="w">    </span><span class="s2">&quot;blob_url&quot;</span>:<span class="w"> </span><span class="s2">&quot;https://github.com/octocat/Hello-World/blob/6dcb09b5b57875f334f61aebed695e2e4193db5e/file1.txt&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;raw_url&quot;</span>:<span class="w"> </span><span class="s2">&quot;https://github.com/octocat/Hello-World/raw/6dcb09b5b57875f334f61aebed695e2e4193db5e/file1.txt&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;contents_url&quot;</span>:<span class="w"> </span><span class="s2">&quot;https://api.github.com/repos/octocat/Hello-World/contents/file1.txt?ref=6dcb09b5b57875f334f61aebed695e2e4193db5e&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;patch&quot;</span>:<span class="w"> </span><span class="s2">&quot;@@ -132,7 +132,7 @@ module Test @@ -1000,7 +1000,7 @@ module Test&quot;</span>
+<span class="w">  </span><span class="o">}</span>
 <span class="o">]</span>
 </code></pre></div>
 <p>所以我们通过 jq 从 GitHub API 返回的结果中提取我们需要的数据，即第一行代码中的 <code>jq -r '.[].filename</code>，这句代码的意思是取 <code>filename</code> 字段的值，然后以原始文本形式返回。对于上面的 JSON 数据，jq 的处理结果是：<code>src/packages/button/button.tsx</code>。（<a href="https://www.tutorialspoint.com/guide-to-linux-jq-command-for-json-processing">jq 介绍</a>）</p>
