@@ -27,6 +27,7 @@ subTitle: 目录
 
 ---
 
+* [Brew 包管理器的工作流程分析](@root/articles/frontend/13.html)
 * [源码分析——async-validator](@root/articles/frontend/12.html)
 * [通过 jscodeshift 向类型文件增加注释](@root/articles/frontend/11.html)
 * [Node.js 的 preserve-symlinks](@root/articles/frontend/9.html)
