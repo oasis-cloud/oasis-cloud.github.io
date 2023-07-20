@@ -7,6 +7,12 @@ subTitle: 目录
 
 ---
 
+* [人工智能概念](@root/articles/artificial-intelligence/1.html)
+* [人工智能中的表达形式和问题求解方法](@root/articles/artificial-intelligence/2.html)
+* [人工智能中的问题求解方法](@root/articles/artificial-intelligence/3.html)
+
+---
+
 * [系统编程](@root/articles/software-design/1.html)
 * [异步编程](@root/articles/software-design/2.html)
 * [单元测试](@root/articles/software-design/3.html)
