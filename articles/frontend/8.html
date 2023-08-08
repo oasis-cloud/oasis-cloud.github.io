@@ -87,5 +87,19 @@
 <p>上面主要介绍了 Checkbox 的几个关键的处理点，如果大家在使用 NutUI-React 过程中，发现此组件的问题可以直接通过 Issues 提问或者直接 PR 给我们。</p>
         </article>
         
+        <div id="container"></div>
+        <link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">
+        <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+        <script>
+        var gitment = new Gitment({
+            owner: 'oasis-cloud',
+            repo: 'https://github.com/oasis-cloud/blog-comments.git',
+            oauth: {
+                client_id: '6f203768df8764b902e3',
+                client_secret: '5ea9afece3169dd62abe0b6d057bdc04c0dc463a',
+            },
+        })
+        gitment.render('container')
+        </script>
     </body>
 </html>

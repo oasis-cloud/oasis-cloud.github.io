@@ -64,5 +64,19 @@ const Parent = () =&gt; {
 <p>运行下面代码，点击 Click 的元素，点击次数并为增加，主要是因为 count 函数的引用没变，count 中的 state 因为闭包，保存了以前的值。所以需要给 useCallback 增加 state 的依赖。</p>
         </article>
         
+        <div id="container"></div>
+        <link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">
+        <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+        <script>
+        var gitment = new Gitment({
+            owner: 'oasis-cloud',
+            repo: 'https://github.com/oasis-cloud/blog-comments.git',
+            oauth: {
+                client_id: '6f203768df8764b902e3',
+                client_secret: '5ea9afece3169dd62abe0b6d057bdc04c0dc463a',
+            },
+        })
+        gitment.render('container')
+        </script>
     </body>
 </html>

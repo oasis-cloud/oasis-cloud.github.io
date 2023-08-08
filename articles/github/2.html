@@ -65,5 +65,19 @@
 <p>这段代码创建了一个名为 test 的工作流，当对 main 分支进行 push 的时候会触发此工作流的执行。工作流中有一个名为 test 的 Job，运行在 ubuntn 容器中，输出 <code>Hello World</code>。(<a href="https://docs.github.com/zh/actions/using-workflows/workflow-syntax-for-github-actions">更多语法可参考这里</a>)</p>
         </article>
         
+        <div id="container"></div>
+        <link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">
+        <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+        <script>
+        var gitment = new Gitment({
+            owner: 'oasis-cloud',
+            repo: 'https://github.com/oasis-cloud/blog-comments.git',
+            oauth: {
+                client_id: '6f203768df8764b902e3',
+                client_secret: '5ea9afece3169dd62abe0b6d057bdc04c0dc463a',
+            },
+        })
+        gitment.render('container')
+        </script>
     </body>
 </html>

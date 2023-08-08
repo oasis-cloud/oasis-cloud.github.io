@@ -88,5 +88,19 @@
 <p>async-validator 提供了声明式的校验规则描述，在被校验数据和规则之间划分了清晰的边界。async-validator 通过规则（Rules）和校验（Validate）两个元件构成。规则（Rules）用于描述数据应该如何校验，我们可以通过类型（Type）、信息（Message）两个抽象概念来描述规则。校验（Validate）通过输入规则和数据，产生校验结果，比如错误信息等。</p>
         </article>
         
+        <div id="container"></div>
+        <link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">
+        <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+        <script>
+        var gitment = new Gitment({
+            owner: 'oasis-cloud',
+            repo: 'https://github.com/oasis-cloud/blog-comments.git',
+            oauth: {
+                client_id: '6f203768df8764b902e3',
+                client_secret: '5ea9afece3169dd62abe0b6d057bdc04c0dc463a',
+            },
+        })
+        gitment.render('container')
+        </script>
     </body>
 </html>
