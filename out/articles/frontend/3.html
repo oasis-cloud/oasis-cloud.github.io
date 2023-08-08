@@ -99,5 +99,19 @@ pages
 <p>在项目中会引入其他人或组织开发的库，而且有些库并未支持 ts，所以需要在项目中对这些库增加 d.ts 。增加的 d.ts 需要在 include 的范围内，否则在编译过程中会提示找不到类型。</p>
         </article>
         
+        <div id="container"></div>
+        <link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">
+        <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+        <script>
+        var gitment = new Gitment({
+            owner: 'oasis-cloud',
+            repo: 'https://github.com/oasis-cloud/blog-comments.git',
+            oauth: {
+                client_id: '6f203768df8764b902e3',
+                client_secret: '5ea9afece3169dd62abe0b6d057bdc04c0dc463a',
+            },
+        })
+        gitment.render('container')
+        </script>
     </body>
 </html>

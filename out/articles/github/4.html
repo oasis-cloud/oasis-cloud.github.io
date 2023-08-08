@@ -110,5 +110,19 @@ npm test -- $component
 <p>总的来说，GitHub 提供了 Actions 来帮助我们做自动化的处理，并且允许我们通过 yml 格式的脚本来进行配置，针对 yml 的脚本，GitHub 提供了内置的变量，通过插值方式提供给开发者使用，而且 run 命令提供给开发者使用 shell 的便捷性。</p>
         </article>
         
+        <div id="container"></div>
+        <link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">
+        <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+        <script>
+        var gitment = new Gitment({
+            owner: 'oasis-cloud',
+            repo: 'https://github.com/oasis-cloud/blog-comments.git',
+            oauth: {
+                client_id: '6f203768df8764b902e3',
+                client_secret: '5ea9afece3169dd62abe0b6d057bdc04c0dc463a',
+            },
+        })
+        gitment.render('container')
+        </script>
     </body>
 </html>

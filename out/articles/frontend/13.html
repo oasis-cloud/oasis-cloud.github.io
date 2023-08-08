@@ -105,5 +105,19 @@ Formula 目录下文件非常多，找个我比较熟悉的包看看，比如 aw
 <p>通过 ChatGPT 可以轻松地对信息进行聚合，减少自己去 google 的时间。而且还能锻炼自己提出更好的问题。</p>
         </article>
         
+        <div id="container"></div>
+        <link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">
+        <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+        <script>
+        var gitment = new Gitment({
+            owner: 'oasis-cloud',
+            repo: 'https://github.com/oasis-cloud/blog-comments.git',
+            oauth: {
+                client_id: '6f203768df8764b902e3',
+                client_secret: '5ea9afece3169dd62abe0b6d057bdc04c0dc463a',
+            },
+        })
+        gitment.render('container')
+        </script>
     </body>
 </html>
