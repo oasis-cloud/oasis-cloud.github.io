@@ -3,10 +3,12 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Brew 包管理器的工作流程分析</title>
+        <title>brew</title>
         <link rel="stylesheet" href="../../assets/fonts.css">
         <link rel="stylesheet" href="../../assets/graphite.css">
         <link rel="stylesheet" href="../../assets/pygments.css">
+        
+            <meta name="description" content="brew实现原理">
         
         
     </head>
@@ -50,11 +52,11 @@
 <p>在这个回答中，我比较关心 brew 是在哪里下载的，所以我又问 ChatGPT：brew 是怎么知道某个包的下载地址？</p>
 <p>Brew是通过自己的中央仓库来获取软件包的下载地址的。当用户使用Brew安装某个软件包时，Brew会根据用户提供的软件包名称，从自己的中央仓库中查找相应的软件包信息，包括软件包的下载地址和其他相关信息。Brew的中央仓库包含了大量的软件包信息，这些软件包都是经过Brew团队认证和测试过的，保证了软件包的安全性和质量。如果Brew的中央仓库中没有用户需要的软件包信息，Brew还可以通过用户提供的自定义仓库地址来获取软件包的下载地址。总的来说，Brew是通过自己的中央仓库和用户提供的自定义仓库地址来获取软件包的下载地址的。</p>
 <p>在这个回答中，我比较关心中央仓库的地址，于是我接着问了下地址，得到了如下链接：https://github.com/Homebrew/homebrew-core
-<img alt="https://github.com/oasis-cloud/oss/blob/main/6401.png" src="https://github.com/oasis-cloud/oss/blob/main/6401.png" /></p>
+<img alt="https://github.com/oasis-cloud/oss/blob/main/6401.png?raw=true" src="https://github.com/oasis-cloud/oss/blob/main/6401.png?raw=true" /></p>
 <p>图中是仓库的目录结构，从上往下点开看一下。Aliases 中的文件，指向了 Formula 目录中的文件。例如：
-<img alt="https://github.com/oasis-cloud/oss/blob/main/6402.png" src="https://github.com/oasis-cloud/oss/blob/main/6402.png" />
+<img alt="https://github.com/oasis-cloud/oss/blob/main/6402.png?raw=true" src="https://github.com/oasis-cloud/oss/blob/main/6402.png?raw=true" />
 因为 Aliases 中的文件是指向 Formula 中的文件的，所以可以不用关心 Aliases 目录中的文件了。接着去看 Formula 。
-<img alt="https://github.com/oasis-cloud/oss/blob/main/6403.png" src="https://github.com/oasis-cloud/oss/blob/main/6403.png" />
+<img alt="https://github.com/oasis-cloud/oss/blob/main/6403.png?raw=true" src="https://github.com/oasis-cloud/oss/blob/main/6403.png?raw=true" />
 Formula 目录下文件非常多，找个我比较熟悉的包看看，比如 awk。
 <div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Awk</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="no">Formula</span>
 <span class="w">  </span><span class="n">desc</span><span class="w"> </span><span class="s2">&quot;Text processing scripting language&quot;</span>
