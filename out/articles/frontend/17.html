@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>NutUI React 安全区组件的实现</title>
+        <link rel="stylesheet" href="../../assets/fonts.css">
+        <link rel="stylesheet" href="../../assets/graphite.css">
+        <link rel="stylesheet" href="../../assets/pygments.css">
+        
+        
+    </head>
+    <body class="node-articles-frontend-17 node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>NutUI React 安全区组件的实现</h1>
+                
+                <hr>
+            </header>
+            <blockquote>
+<p>NutUI 是一款京东风格的移动端组件库。NutUI 目前支持 Vue 和 React技术栈，支持Taro多端适配。</p>
+</blockquote>
+<p>期待您早日成为我们共建大军中的一员！</p>
+<p>咚咚群号：1025679314微信群：hanyuxinting（暗号：NutUI-React）</p>
+<p>官网GitHub: <a href="https://github.com/jdf2e/nutui-react">点击进入</a></p>
+<p>欢迎共建、使用！</p>
+<p>NutUI React 2.x 版本新增了 SafeArea（安全区）组件。本文主要介绍 SafeArea 组件的实现思路。</p>
+<h2>背景</h2>
+<p>开发者在使用 Cascader 或 Picker 组件的时候，由于各个组件自己实现安全区域，导致代码重复，而且有些带有弹出交互的组件并没有添加安全区域的逻辑，导致展示问题。所以针对这样的问题，NutUI React 在 2.x 的版本中增加 SafreArea 组件，并统一应用于需要安全区域的组件上。</p>
+<h2>实现逻辑</h2>
+<p>安全区域组件需要考虑安全区域出现的位置，所以这里给安全区域暴露了 position 属性，用来控制安全区域的生效位置。除了对外暴露控制属性外，还需要考虑组件的使用。</p>
+<p>声明式的组件使用主要包括两种类型：父子节点和兄弟节点。</p>
+<p><div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">SafeArea</span><span class="p">&gt;</span>
+   <span class="p">&lt;</span><span class="nt">DemoComponent</span> <span class="p">/&gt;</span>
+<span class="p">&lt;/</span><span class="nt">SafeArea</span><span class="p">&gt;</span>
+</code></pre></div>
+或</p>
+<div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">DemoComponent</span> <span class="p">/&gt;</span>
+<span class="p">&lt;</span><span class="nt">SafeArea</span> <span class="p">/&gt;</span>
+</code></pre></div>
+<p>在实现上我们采用了兄弟节点的方式。SafeArea 组件通常情况下和其他组件不会有状态或逻辑上的耦合，而且降低嵌套层级，不但可降低组件的实现复杂度，还能提高性能。除此之外，兄弟节点的方式可以更自然的映射到 UI 结构。</p>
+<p>确定了使用方式之后，就到了具体组件的逻辑开发。对于 SafeArea 组件来说，逻辑非常简单，只需在 div 上设置一些 css 样式即可。</p>
+<div class="highlight"><pre><span></span><code>export interface SafeAreaProps extends BasicComponent {
+    position: &#39;top&#39; | &#39;bottom&#39;
+}
+const classPrefix = &#39;nut-safe-area&#39;
+export const SafeArea: FC&lt;SafeAreaProps&gt; = (props) =&gt; {
+    return (
+        &lt;div
+            className={classNames(
+                classPrefix,
+                `${classPrefix}-position-${props.position}`
+            )}
+        /&gt;
+    )
+}
+</code></pre></div>
+<p>在样式中我们提供了 css 变量，可以通过 css 变量来调整安全区域的高度。</p>
+<div class="highlight"><pre><span></span><code><span class="nc">.nut-safe-area</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">display</span><span class="nd">:</span><span class="w"> </span><span class="nt">block</span><span class="o">;</span>
+<span class="w">  </span><span class="nt">width</span><span class="nd">:</span><span class="w"> </span><span class="nt">100</span><span class="err">%</span><span class="o">;</span>
+<span class="w">  </span><span class="k">&amp;</span><span class="nt">-position-top</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">padding-top</span><span class="nd">:</span><span class="w"> </span><span class="nt">calc</span><span class="o">(</span>
+<span class="w">      </span><span class="nt">env</span><span class="o">(</span><span class="nt">safe-area-inset-top</span><span class="o">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nt">var</span><span class="o">(</span><span class="nt">--nutui-safe-area-multiple</span><span class="o">,</span><span class="w"> </span><span class="nt">1</span><span class="o">)</span>
+<span class="w">    </span><span class="o">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="k">&amp;</span><span class="nt">-position-bottom</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">padding-bottom</span><span class="nd">:</span><span class="w"> </span><span class="nt">calc</span><span class="o">(</span>
+<span class="w">      </span><span class="nt">env</span><span class="o">(</span><span class="nt">safe-area-inset-bottom</span><span class="o">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nt">var</span><span class="o">(</span><span class="nt">--nutui-safe-area-multiple</span><span class="o">,</span><span class="w"> </span><span class="nt">1</span><span class="o">)</span>
+<span class="w">    </span><span class="o">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>到这里 SafeArea 组件的实现思路就讲述完了。总的来说我们拿了一个简单的组件，阐述了 React 中声明式组件两种使用方式的差别，以及选择何种使用方式来实现组件的考量点。希望能抛砖引玉，得到大家对于组件设计的一些思路和独门诀窍。</p>
+<h2>加入我们</h2>
+<p>再次期待您早日成为我们共建大军中的一员！</p>
+<p>一起共建，一起使用！</p>
+<p>做站内<strong>最优秀</strong>的开源组件库！</p>
+<p>咚咚群号：1025679314赶紧加入我们吧！！</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>

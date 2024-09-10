@@ -5,13 +5,24 @@ React
  react hooks
 
 React hooks的使用
+////////
+React 状态管理
 
 git协作能力
-
+////
  父组件如何调用子组件的方法
 
  useCallback 和 useMemo
 
+//
+ts 组件类型声明 ？如何做成可选，怎么继承 HTML 属性
+
+type 和 interface 区别？
+
+any 和 unkonw 类型差异
+
+泛型是什么？什么场景使用， 函数重载和
+/////
 # mysql
 锁和事务
 
