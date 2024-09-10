@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Pets</title>
+        <link rel="stylesheet" href="../assets/fonts.css">
+        <link rel="stylesheet" href="../assets/graphite.css">
+        <link rel="stylesheet" href="../assets/pygments.css">
+        
+        
+    </head>
+    <body class="node-articles-pets node-articles node">
+        <header class="masthead">
+            <h1><a href="../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>Pets</h1>
+                
+                <hr>
+            </header>
+            <style>
+.cardList {
+  list-style: none;
+}
+.card {
+  display: flex;
+  border: 1px solid #f0f0f0;
+}
+.avatar {
+  margin: 20px;
+}
+.card-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.pet-times p:first-child {
+  margin-top: 10px;
+  margin-bottom:10px;
+}
+.pet-times p:nth-child(2) {
+  margin-top:10px;
+}
+</style>
+<ul class="cardList">
+  <li class="card">
+    <img width="100" height="auto" class="avatar" src="" />
+    <div class="card-content">
+      <div class="pet-name">红白地图</div>
+      <div class="pet-times">
+        <p>编码: <span>2024/6/12</span>-<em>250</em></p>
+      </div>
+    </div>
+  </li>
+  <li class="card">
+    <img width="100" height="auto" class="avatar" src="" />
+    <div class="card-content">
+      <div class="pet-name">红白地图</div>
+      <div class="pet-times">
+        <p>编码: <span>2024/8/12</span>-<em>250</em></p>
+      </div>
+    </div>
+  </li>
+</ul>
+<script>
+  const pets = document.querySelectorAll('.pet-times span')
+  for(i = 0; i < pets.length; i++) {
+    const pet = pets[i];
+    const homeTime = pet.innerText
+    const date = +new Date(homeTime)
+    const now = +new Date()
+    const days = Math.round((now - date) / 1000 / 86400)
+    pet.parentNode.querySelector('em').innerText = days
+  }
+</script>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>
