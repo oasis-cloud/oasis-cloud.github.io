@@ -1,47 +1,19 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Pets</title>
-        <link rel="stylesheet" href="../assets/fonts.css">
-        <link rel="stylesheet" href="../assets/graphite.css">
-        <link rel="stylesheet" href="../assets/pygments.css">
-        
-        
-    </head>
-    <body class="node-articles-pets node-articles node">
-        <header class="masthead">
-            <h1><a href="../index.html">Oasis's Cloud</a></h1>
-            
-                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
-            
-            
-            <nav class="menu">
-                <input id="menu-check" type="checkbox"/>
-                <label id="menu-label" for="menu-check" class="unselectable">
-                    <span class="icon close-icon">✕</span>
-                    <span class="icon open-icon">☰</span>
-                    <span class="text">Menu</span>
-                </label>
-                <ul>
-<li><a href="../index.html">首页</a></li>
-</ul>
-            </nav>
-        </header>
-        <article class="main">
-            <header class="title">
-                <h1>Pets</h1>
-                
-                <hr>
-            </header>
-            <style>
+---
+title: Pets
+---
+<style>
 .cardList {
   list-style: none;
 }
 .card {
   display: flex;
-  border: 1px solid #f0f0f0;
+  padding-left: 20px;
+  border: 1px solid #76F562;
+  background: #76F562;
+}
+.dead {
+  border: 1px solid #5e5e5e;
+  background: #5e5e5e;
 }
 .avatar {
   margin: 20px;
@@ -51,6 +23,9 @@
   flex-direction: column;
   justify-content: center;
 }
+.pet-name {
+  margin-top: 10px;
+}
 .pet-times p:first-child {
   margin-top: 10px;
   margin-bottom:10px;
@@ -58,10 +33,16 @@
 .pet-times p:nth-child(2) {
   margin-top:10px;
 }
+.pet-dead p:first-child {
+  margin-top: 10px;
+  margin-bottom:10px;
+}
+.pet-dead p:nth-child(2) {
+  margin-top:10px;
+}
 </style>
 <ul class="cardList">
   <li class="card">
-    <img width="100" height="auto" class="avatar" src="" />
     <div class="card-content">
       <div class="pet-name">黑地图</div>
       <div class="pet-times">
@@ -70,7 +51,6 @@
     </div>
   </li>
   <li class="card">
-    <img width="100" height="auto" class="avatar" src="" />
     <div class="card-content">
       <div class="pet-name">白地图</div>
       <div class="pet-times">
@@ -78,17 +58,18 @@
       </div>
     </div>
   </li>
-  <li class="card">
-    <img width="100" height="auto" class="avatar" src="" />
+  <li class="card dead">
     <div class="card-content">
       <div class="pet-name">龙凤鲤</div>
       <div class="pet-times">
         <p>编码: <span>2024/2/19</span>-<em></em></p>
       </div>
+      <div class="pet-dead">
+        <p>注销: <span>2024/9/9</span>-<em></em></p>
+      </div>
     </div>
   </li>
   <li class="card">
-    <img width="100" height="auto" class="avatar" src="" />
     <div class="card-content">
       <div class="pet-name">银龙</div>
       <div class="pet-times">
@@ -97,7 +78,6 @@
     </div>
   </li>
   <li class="card">
-    <img width="100" height="auto" class="avatar" src="" />
     <div class="card-content">
       <div class="pet-name">七彩阿莲卡</div>
       <div class="pet-times">
@@ -106,7 +86,6 @@
     </div>
   </li>
   <li class="card">
-    <img width="100" height="auto" class="avatar" src="" />
     <div class="card-content">
       <div class="pet-name">七彩红松</div>
       <div class="pet-times">
@@ -114,17 +93,18 @@
       </div>
     </div>
   </li>
-  <li class="card">
-    <img width="100" height="auto" class="avatar" src="" />
+  <li class="card dead">
     <div class="card-content">
       <div class="pet-name">天使</div>
       <div class="pet-times">
         <p>编码: <span>2023/11/05</span>-<em></em></p>
       </div>
+      <div class="pet-dead">
+        <p>注销: <span>2024/9/9</span>-<em></em></p>
+      </div>
     </div>
   </li>
   <li class="card">
-    <img width="100" height="auto" class="avatar" src="" />
     <div class="card-content">
       <div class="pet-name">红鲤</div>
       <div class="pet-times">
@@ -133,7 +113,6 @@
     </div>
   </li>
   <li class="card">
-    <img width="100" height="auto" class="avatar" src="" />
     <div class="card-content">
       <div class="pet-name">单顶</div>
       <div class="pet-times">
@@ -142,7 +121,6 @@
     </div>
   </li>
   <li class="card">
-    <img width="100" height="auto" class="avatar" src="" />
     <div class="card-content">
       <div class="pet-name">古典昭和</div>
       <div class="pet-times">
@@ -151,7 +129,6 @@
     </div>
   </li>
   <li class="card">
-    <img width="100" height="auto" class="avatar" src="" />
     <div class="card-content">
       <div class="pet-name">金狐</div>
       <div class="pet-times">
@@ -160,7 +137,6 @@
     </div>
   </li>
   <li class="card">
-    <img width="100" height="auto" class="avatar" src="" />
     <div class="card-content">
       <div class="pet-name">银狐</div>
       <div class="pet-times">
@@ -169,7 +145,6 @@
     </div>
   </li>
   <li class="card">
-    <img width="100" height="auto" class="avatar" src="" />
     <div class="card-content">
       <div class="pet-name">错甲</div>
       <div class="pet-times">
@@ -178,7 +153,6 @@
     </div>
   </li>
   <li class="card">
-    <img width="100" height="auto" class="avatar" src="" />
     <div class="card-content">
       <div class="pet-name">甜甜圈</div>
       <div class="pet-times">
@@ -187,7 +161,6 @@
     </div>
   </li>
   <li class="card">
-    <img width="100" height="auto" class="avatar" src="" />
     <div class="card-content">
       <div class="pet-name">南石</div>
       <div class="pet-times">
@@ -207,22 +180,3 @@
     pet.parentNode.querySelector('em').innerText = days
   }
 </script>
-        </article>
-        
-        <script src="https://giscus.app/client.js"
-                data-repo="oasis-cloud/blog-comments"
-                data-repo-id="R_kgDOKEliHA"
-                data-category="General"
-                data-category-id="DIC_kwDOKEliHM4CYb6e"
-                data-mapping="pathname"
-                data-strict="0"
-                data-reactions-enabled="1"
-                data-emit-metadata="0"
-                data-input-position="bottom"
-                data-theme="preferred_color_scheme"
-                data-lang="zh-CN"
-                crossorigin="anonymous"
-                async>
-        </script>
-    </body>
-</html>
