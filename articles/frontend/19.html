@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Oasis's Cloud</title>
+        <link rel="stylesheet" href="../../assets/fonts.css">
+        <link rel="stylesheet" href="../../assets/graphite.css">
+        <link rel="stylesheet" href="../../assets/pygments.css">
+        
+        
+    </head>
+    <body class="node-articles-frontend-19 node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1></h1>
+                
+                <hr>
+            </header>
+            <h1>taro</h1>
+<h2>分析 taro build &ndash;type weapp 的执行过程</h2>
+<p><img alt="1.png" src="/images/frontend/1.png" /></p>
+<p>基于代码分析，主要涉及以下几个关键类和模块：
+1. Config 类 (packages/taro-service/src/Config.ts)
+2. Weapp 平台类 (packages/taro-platform-weapp/src/program.ts)
+3. MiniCombination 类 (packages/taro-webpack5-runner/src/webpack/MiniCombination.ts)
+4. React/Vue3 框架插件</p>
+<p>关键步骤说明</p>
+<ol>
+<li>配置初始化</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="k">async</span><span class="w"> </span><span class="nx">init</span><span class="w"> </span><span class="p">(</span><span class="nx">configEnv</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">mode</span><span class="o">:</span><span class="w"> </span><span class="nx">string</span>
+<span class="w">    </span><span class="nx">command</span><span class="o">:</span><span class="w"> </span><span class="nx">string</span>
+<span class="w">  </span><span class="p">})</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">initialConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">initialGlobalConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">isInitSuccess</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">configPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">resolveScriptPath</span><span class="p">(</span><span class="nx">path</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">appPath</span><span class="p">,</span><span class="w"> </span><span class="nx">CONFIG_DIR_NAME</span><span class="p">,</span><span class="w"> </span><span class="nx">DEFAULT_CONFIG_FILE</span><span class="p">))</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">fs</span><span class="p">.</span><span class="nx">existsSync</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">configPath</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">disableGlobalConfig</span><span class="p">)</span><span class="w"> </span><span class="k">return</span>
+<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">initGlobalConfig</span><span class="p">()</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">createSwcRegister</span><span class="p">({</span>
+<span class="w">        </span><span class="nx">only</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">          </span><span class="nx">filePath</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">filePath</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="nx">path</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">appPath</span><span class="p">,</span><span class="w"> </span><span class="nx">CONFIG_DIR_NAME</span><span class="p">))</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mf">0</span>
+<span class="w">        </span><span class="p">]</span>
+<span class="w">      </span><span class="p">})</span>
+<span class="w">      </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">userExport</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">getModuleDefaultExport</span><span class="p">(</span><span class="nx">require</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">configPath</span><span class="p">))</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">initialConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">typeof</span><span class="w"> </span><span class="nx">userExport</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;function&#39;</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">userExport</span><span class="p">(</span><span class="nx">merge</span><span class="p">,</span><span class="w"> </span><span class="nx">configEnv</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">userExport</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">isInitSuccess</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">      </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">err</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+</code></pre></div>
+<ol>
+<li>
+<p>平台初始化
+   packages/taro-platform-weapp/src/program.ts
+<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="kr">constructor</span><span class="w"> </span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">config</span><span class="p">,</span><span class="w"> </span><span class="nx">pluginOptions</span><span class="o">?:</span><span class="w"> </span><span class="nx">IOptions</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">super</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">config</span><span class="p">)</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">template</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">Template</span><span class="p">(</span><span class="nx">pluginOptions</span><span class="p">)</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">setupTransaction</span><span class="p">.</span><span class="nx">addWrapper</span><span class="p">({</span>
+<span class="w">      </span><span class="nx">close</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">modifyTemplate</span><span class="p">(</span><span class="nx">pluginOptions</span><span class="p">)</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">modifyWebpackConfig</span><span class="p">()</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">})</span>
+<span class="w">  </span><span class="p">}</span>
+</code></pre></div></p>
+</li>
+<li>
+<p>框架插件处理
+packages/taro-framework-react/src/index.ts
+<div class="highlight"><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="k">default</span><span class="w"> </span><span class="p">(</span><span class="nx">ctx</span><span class="o">:</span><span class="w"> </span><span class="nx">IPluginContext</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">framework</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;react&#39;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ctx</span><span class="p">.</span><span class="nx">initialConfig</span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">isReactLike</span><span class="p">(</span><span class="nx">framework</span><span class="p">))</span><span class="w"> </span><span class="k">return</span>
+
+<span class="w">  </span><span class="nx">ctx</span><span class="p">.</span><span class="nx">modifyWebpackChain</span><span class="p">(({</span><span class="w"> </span><span class="nx">chain</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 通用</span>
+<span class="w">    </span><span class="nx">setAlias</span><span class="p">(</span><span class="nx">framework</span><span class="p">,</span><span class="w"> </span><span class="nx">chain</span><span class="p">)</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">TARO_PLATFORM</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;web&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="c1">// H5</span>
+<span class="w">      </span><span class="nx">modifyH5WebpackChain</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">framework</span><span class="p">,</span><span class="w"> </span><span class="nx">chain</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">TARO_PLATFORM</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;harmony&#39;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">TARO_ENV</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;harmony&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="c1">// 鸿蒙</span>
+<span class="w">      </span><span class="nx">modifyHarmonyWebpackChain</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">framework</span><span class="p">,</span><span class="w"> </span><span class="nx">chain</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="c1">// 小程序</span>
+<span class="w">      </span><span class="nx">modifyMiniWebpackChain</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">framework</span><span class="p">,</span><span class="w"> </span><span class="nx">chain</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">})</span>
+</code></pre></div></p>
+</li>
+<li>构建配置处理 
+packages/taro-webpack5-runner/src/webpack/MiniCombination.ts
+<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nx">process</span><span class="w"> </span><span class="p">(</span><span class="nx">config</span><span class="o">:</span><span class="w"> </span><span class="nx">Partial</span><span class="o">&lt;</span><span class="nx">IMiniBuildConfig</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">baseConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">MiniBaseConfig</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">appPath</span><span class="p">,</span><span class="w"> </span><span class="nx">config</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">chain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">chain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">baseConfig</span><span class="p">.</span><span class="nx">chain</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">entry</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{},</span>
+<span class="w">      </span><span class="nx">output</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{},</span>
+<span class="w">      </span><span class="nx">mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;production&#39;</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">globalObject</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;wx&#39;</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">sourceMapType</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;cheap-module-source-map&#39;</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">fileType</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">style</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;.wxss&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">config</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;.json&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">script</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;.js&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">templ</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;.wxml&#39;</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="cm">/** special mode */</span>
+<span class="w">      </span><span class="nx">isBuildPlugin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">      </span><span class="cm">/** hooks */</span>
+<span class="w">      </span><span class="nx">modifyComponentConfig</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">optimizeMainPackage</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">config</span>
+
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">fileType</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">fileType</span>
+
+<span class="w">    </span><span class="nx">modifyComponentConfig</span><span class="o">?</span><span class="p">.(</span><span class="nx">componentConfig</span><span class="p">,</span><span class="w"> </span><span class="nx">config</span><span class="p">)</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">isBuildPlugin</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="c1">// 编译目标 - 小程序原生插件</span>
+<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">isBuildPlugin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">buildNativePlugin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">BuildNativePlugin</span><span class="p">.</span><span class="nx">getPlugin</span><span class="p">(</span><span class="k">this</span><span class="p">)</span>
+<span class="w">      </span><span class="nx">chain</span><span class="p">.</span><span class="nx">merge</span><span class="p">({</span>
+<span class="w">        </span><span class="nx">context</span><span class="o">:</span><span class="w"> </span><span class="nx">path</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="nx">process</span><span class="p">.</span><span class="nx">cwd</span><span class="p">(),</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">sourceRoot</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;plugin&#39;</span><span class="p">)</span>
+<span class="w">      </span><span class="p">})</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">optimizeMainPackage</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">optimizeMainPackage</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">optimizeMainPackage</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">webpackEntry</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">getEntry</span><span class="p">(</span><span class="nx">entry</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">webpackOutput</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">getOutput</span><span class="p">({</span>
+<span class="w">      </span><span class="nx">publicPath</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;/&#39;</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">globalObject</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">isBuildPlugin</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">output</span>
+<span class="w">    </span><span class="p">})</span>
+</code></pre></div>
+主要配置合并过程：</li>
+<li>基础配置：来自 config/index.ts</li>
+<li>平台配置：由 Weapp 平台类提供</li>
+<li>框架配置：由框架插件注入</li>
+<li>构建配置：由 webpack5-runner 处理</li>
+</ol>
+<p>环境变量设置：</p>
+<p>packages/taro-vite-runner/src/mini/config.ts
+<div class="highlight"><pre><span></span><code><span class="w">    </span><span class="nx">env</span><span class="p">.</span><span class="nx">FRAMEWORK</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">framework</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">env</span><span class="p">.</span><span class="nx">TARO_ENV</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">buildAdapter</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">env</span><span class="p">.</span><span class="nx">TARO_PLATFORM</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">TARO_PLATFORM</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">PLATFORM_TYPE</span><span class="p">.</span><span class="nx">MINI</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">env</span><span class="p">.</span><span class="nx">NODE_ENV</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">NODE_ENV</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">env</span><span class="p">.</span><span class="nx">SUPPORT_TARO_POLYFILL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">env</span><span class="p">.</span><span class="nx">SUPPORT_TARO_POLYFILL</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">&#39;&quot;disabled&quot;&#39;</span>
+</code></pre></div></p>
+<p>这个构建过程体现了 Taro 的插件化架构，通过配置、平台、框架、构建工具的分层设计，实现了跨平台开发的统一构建体系。每一层都可以通过插件进行扩展，使得整个系统具有很好的可扩展性。</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>

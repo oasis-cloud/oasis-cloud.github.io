@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Oasis's Cloud</title>
+        <link rel="stylesheet" href="../../assets/fonts.css">
+        <link rel="stylesheet" href="../../assets/graphite.css">
+        <link rel="stylesheet" href="../../assets/pygments.css">
+        
+        
+    </head>
+    <body class="node-articles-frontend-20 node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1></h1>
+                
+                <hr>
+            </header>
+            <h1>taro</h1>
+<h2>分析入口文件的处理逻辑，以及小程序模板是如何编译出来的，像编译出来的 base.xml</h2>
+<ol>
+<li>入口文件处理流程</li>
+</ol>
+<p>入口文件处理主要在 Config 类中进行：
+packages/taro-service/src/Config.ts
+<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nx">getConfigWithNamed</span><span class="w"> </span><span class="p">(</span><span class="nx">platform</span><span class="p">,</span><span class="w"> </span><span class="nx">configName</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">initialConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">initialConfig</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">sourceDirName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">initialConfig</span><span class="p">.</span><span class="nx">sourceRoot</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">SOURCE_DIR</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">outputDirName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">initialConfig</span><span class="p">.</span><span class="nx">outputRoot</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">OUTPUT_DIR</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">sourceDir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">path</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">appPath</span><span class="p">,</span><span class="w"> </span><span class="nx">sourceDirName</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">entryName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ENTRY</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">entryFilePath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">resolveScriptPath</span><span class="p">(</span><span class="nx">path</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="nx">sourceDir</span><span class="p">,</span><span class="w"> </span><span class="nx">entryName</span><span class="p">))</span>
+
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">entry</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="p">[</span><span class="nx">entryName</span><span class="p">]</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="nx">entryFilePath</span><span class="p">]</span>
+<span class="w">    </span><span class="p">}</span>
+</code></pre></div>
+这段代码展示了入口文件的处理逻辑：
+- 获取源码目录 (默认 src)
+- 获取入口文件路径 (默认 app)
+- 构建 webpack entry 配置</p>
+<ol>
+<li>平台模板处理</li>
+</ol>
+<p>微信小程序平台的模板处理在 Weapp 类中：
+packages/taro-platform-weapp/src/program.ts
+<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="kr">constructor</span><span class="w"> </span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">config</span><span class="p">,</span><span class="w"> </span><span class="nx">pluginOptions</span><span class="o">?:</span><span class="w"> </span><span class="nx">IOptions</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">super</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">config</span><span class="p">)</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">template</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">Template</span><span class="p">(</span><span class="nx">pluginOptions</span><span class="p">)</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">setupTransaction</span><span class="p">.</span><span class="nx">addWrapper</span><span class="p">({</span>
+<span class="w">      </span><span class="nx">close</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">modifyTemplate</span><span class="p">(</span><span class="nx">pluginOptions</span><span class="p">)</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">modifyWebpackConfig</span><span class="p">()</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">})</span>
+<span class="w">  </span><span class="p">}</span>
+</code></pre></div></p>
+<ol>
+<li>模板编译流程</li>
+</ol>
+<div class="highlight"><pre><span></span><code>flowchart TD
+    A[入口文件] --&gt; B[解析配置]
+    B --&gt; C[初始化平台]
+    C --&gt; D[处理模板]
+    D --&gt; E[生成文件]
+
+    D --&gt; D1[解析组件]
+    D --&gt; D2[处理样式]
+    D --&gt; D3[处理脚本]
+
+    E --&gt; E1[wxml/axml等]
+    E --&gt; E2[wxss/acss等]
+    E --&gt; E3[js文件]
+    E --&gt; E4[json配置]
+</code></pre></div>
+<ol>
+<li>环境变量和常量定义</li>
+</ol>
+<p>webpack 构建时的环境变量处理
+packages/taro-webpack5-runner/src/webpack/MiniWebpackPlugin.ts
+<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nx">getDefinePlugin</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">env</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{},</span>
+<span class="w">      </span><span class="nx">runtime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">Record</span><span class="o">&lt;</span><span class="nx">string</span><span class="p">,</span><span class="w"> </span><span class="kr">boolean</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">defineConstants</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{},</span>
+<span class="w">      </span><span class="nx">framework</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;react&#39;</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">buildAdapter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">PLATFORMS</span><span class="p">.</span><span class="nx">WEAPP</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">combination</span><span class="p">.</span><span class="nx">config</span>
+
+<span class="w">    </span><span class="nx">env</span><span class="p">.</span><span class="nx">FRAMEWORK</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">framework</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">env</span><span class="p">.</span><span class="nx">TARO_ENV</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">buildAdapter</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">env</span><span class="p">.</span><span class="nx">TARO_PLATFORM</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">TARO_PLATFORM</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">PLATFORM_TYPE</span><span class="p">.</span><span class="nx">MINI</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">env</span><span class="p">.</span><span class="nx">SUPPORT_TARO_POLYFILL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">env</span><span class="p">.</span><span class="nx">SUPPORT_TARO_POLYFILL</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">&#39;&quot;disabled&quot;&#39;</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">envConstants</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Object</span><span class="p">.</span><span class="nx">keys</span><span class="p">(</span><span class="nx">env</span><span class="p">).</span><span class="nx">reduce</span><span class="p">((</span><span class="nx">target</span><span class="p">,</span><span class="w"> </span><span class="nx">key</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">target</span><span class="p">[</span><span class="sb">`process.env.</span><span class="si">${</span><span class="nx">key</span><span class="si">}</span><span class="sb">`</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">env</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="nx">target</span>
+<span class="w">    </span><span class="p">},</span><span class="w"> </span><span class="p">{})</span>
+
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">runtimeConstants</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">ENABLE_INNER_HTML</span><span class="o">:</span><span class="w"> </span><span class="nx">runtime</span><span class="p">.</span><span class="nx">enableInnerHTML</span><span class="w"> </span><span class="o">??</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">ENABLE_ADJACENT_HTML</span><span class="o">:</span><span class="w"> </span><span class="nx">runtime</span><span class="p">.</span><span class="nx">enableAdjacentHTML</span><span class="w"> </span><span class="o">??</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">ENABLE_SIZE_APIS</span><span class="o">:</span><span class="w"> </span><span class="nx">runtime</span><span class="p">.</span><span class="nx">enableSizeAPIs</span><span class="w"> </span><span class="o">??</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">ENABLE_TEMPLATE_CONTENT</span><span class="o">:</span><span class="w"> </span><span class="nx">runtime</span><span class="p">.</span><span class="nx">enableTemplateContent</span><span class="w"> </span><span class="o">??</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">ENABLE_CLONE_NODE</span><span class="o">:</span><span class="w"> </span><span class="nx">runtime</span><span class="p">.</span><span class="nx">enableCloneNode</span><span class="w"> </span><span class="o">??</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">ENABLE_CONTAINS</span><span class="o">:</span><span class="w"> </span><span class="nx">runtime</span><span class="p">.</span><span class="nx">enableContains</span><span class="w"> </span><span class="o">??</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">ENABLE_MUTATION_OBSERVER</span><span class="o">:</span><span class="w"> </span><span class="nx">runtime</span><span class="p">.</span><span class="nx">enableMutationObserver</span><span class="w"> </span><span class="o">??</span><span class="w"> </span><span class="kc">false</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">WebpackPlugin</span><span class="p">.</span><span class="nx">getDefinePlugin</span><span class="p">([</span><span class="nx">envConstants</span><span class="p">,</span><span class="w"> </span><span class="nx">defineConstants</span><span class="p">,</span><span class="w"> </span><span class="nx">runtimeConstants</span><span class="p">])</span>
+<span class="w">  </span><span class="p">}</span>
+</code></pre></div></p>
+<p>这里定义了：
+- 框架类型
+- 运行时环境
+- 平台相关常量
+- 功能开关</p>
+<ol>
+<li>框架适配层
+以 React 为例
+   packages/taro-webpack5-runner/src/webpack/MiniWebpackPlugin.ts
+<div class="highlight"><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="k">default</span><span class="w"> </span><span class="p">(</span><span class="nx">ctx</span><span class="o">:</span><span class="w"> </span><span class="nx">IPluginContext</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">framework</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;react&#39;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ctx</span><span class="p">.</span><span class="nx">initialConfig</span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">isReactLike</span><span class="p">(</span><span class="nx">framework</span><span class="p">))</span><span class="w"> </span><span class="k">return</span>
+
+<span class="w">  </span><span class="nx">ctx</span><span class="p">.</span><span class="nx">modifyWebpackChain</span><span class="p">(({</span><span class="w"> </span><span class="nx">chain</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 通用</span>
+<span class="w">    </span><span class="nx">setAlias</span><span class="p">(</span><span class="nx">framework</span><span class="p">,</span><span class="w"> </span><span class="nx">chain</span><span class="p">)</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">TARO_PLATFORM</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;web&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="c1">// H5</span>
+<span class="w">      </span><span class="nx">modifyH5WebpackChain</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">framework</span><span class="p">,</span><span class="w"> </span><span class="nx">chain</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">TARO_PLATFORM</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;harmony&#39;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">TARO_ENV</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;harmony&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="c1">// 鸿蒙</span>
+<span class="w">      </span><span class="nx">modifyHarmonyWebpackChain</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">framework</span><span class="p">,</span><span class="w"> </span><span class="nx">chain</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="c1">// 小程序</span>
+<span class="w">      </span><span class="nx">modifyMiniWebpackChain</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">framework</span><span class="p">,</span><span class="w"> </span><span class="nx">chain</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">})</span>
+</code></pre></div>
+主要逻辑</li>
+<li>注入框架特定配置</li>
+<li>修改 webpack 配置</li>
+<li>
+<p>处理平台差异</p>
+</li>
+<li>
+<p>构建配置合并</p>
+</li>
+</ol>
+<p>在 MiniCombination 中进行最终的构建配置处理：packages/taro-webpack5-runner/src/webpack/MiniCombination.ts</p>
+<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nx">process</span><span class="w"> </span><span class="p">(</span><span class="nx">config</span><span class="o">:</span><span class="w"> </span><span class="nx">Partial</span><span class="o">&lt;</span><span class="nx">IMiniBuildConfig</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">baseConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">MiniBaseConfig</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">appPath</span><span class="p">,</span><span class="w"> </span><span class="nx">config</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">chain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">chain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">baseConfig</span><span class="p">.</span><span class="nx">chain</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">entry</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{},</span>
+<span class="w">      </span><span class="nx">output</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{},</span>
+<span class="w">      </span><span class="nx">mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;production&#39;</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">globalObject</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;wx&#39;</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">sourceMapType</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;cheap-module-source-map&#39;</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">fileType</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">style</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;.wxss&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">config</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;.json&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">script</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;.js&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">templ</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;.wxml&#39;</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="cm">/** special mode */</span>
+<span class="w">      </span><span class="nx">isBuildPlugin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">      </span><span class="cm">/** hooks */</span>
+<span class="w">      </span><span class="nx">modifyComponentConfig</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">optimizeMainPackage</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">config</span>
+
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">fileType</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">fileType</span>
+
+<span class="w">    </span><span class="nx">modifyComponentConfig</span><span class="o">?</span><span class="p">.(</span><span class="nx">componentConfig</span><span class="p">,</span><span class="w"> </span><span class="nx">config</span><span class="p">)</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">isBuildPlugin</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="c1">// 编译目标 - 小程序原生插件</span>
+<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">isBuildPlugin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">buildNativePlugin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">BuildNativePlugin</span><span class="p">.</span><span class="nx">getPlugin</span><span class="p">(</span><span class="k">this</span><span class="p">)</span>
+<span class="w">      </span><span class="nx">chain</span><span class="p">.</span><span class="nx">merge</span><span class="p">({</span>
+<span class="w">        </span><span class="nx">context</span><span class="o">:</span><span class="w"> </span><span class="nx">path</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="nx">process</span><span class="p">.</span><span class="nx">cwd</span><span class="p">(),</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">sourceRoot</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;plugin&#39;</span><span class="p">)</span>
+<span class="w">      </span><span class="p">})</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">optimizeMainPackage</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">optimizeMainPackage</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">optimizeMainPackage</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">webpackEntry</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">getEntry</span><span class="p">(</span><span class="nx">entry</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">webpackOutput</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">getOutput</span><span class="p">({</span>
+<span class="w">      </span><span class="nx">publicPath</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;/&#39;</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">globalObject</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">isBuildPlugin</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">output</span>
+<span class="w">    </span><span class="p">})</span>
+</code></pre></div>
+<p>处理内容包括：
+1. 基础配置
+2. 文件类型配置 
+3. 插件配置
+4. 入口输出配置</p>
+<ol>
+<li>base.xml 的生成过程
+packages/taro-webpack5-runner/src/webpack/MiniWebpackPlugin.ts</li>
+<li>模板初始化
+<div class="highlight"><pre><span></span><code><span class="kd">class</span><span class="w"> </span><span class="nx">Template</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kr">constructor</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">voidElements</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Set</span><span class="p">()</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">focusComponents</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Set</span><span class="p">()</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">components</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Map</span><span class="p">()</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></li>
+<li>组件注册
+<div class="highlight"><pre><span></span><code><span class="nx">modifyTemplate</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">template</span><span class="p">.</span><span class="nx">mergeComponents</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">components</span><span class="p">)</span>
+<span class="w">  </span><span class="nx">template</span><span class="p">.</span><span class="nx">voidElements</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="s1">&#39;voip-room&#39;</span><span class="p">)</span>
+<span class="w">  </span><span class="nx">template</span><span class="p">.</span><span class="nx">focusComponents</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="s1">&#39;editor&#39;</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div></li>
+<li>模板生成
+<div class="highlight"><pre><span></span><code><span class="nx">buildTemplate</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 1. 基础组件</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">baseComponents</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">getBaseTemplate</span><span class="p">()</span>
+
+<span class="w">  </span><span class="c1">// 2. 自定义组件</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">customComponents</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">getCustomComponents</span><span class="p">()</span>
+
+<span class="w">  </span><span class="c1">// 3. 合并模板</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">mergeTemplate</span><span class="p">(</span><span class="nx">baseComponents</span><span class="p">,</span><span class="w"> </span><span class="nx">customComponents</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div></li>
+<li>文件输出
+<div class="highlight"><pre><span></span><code><span class="nx">writeFile</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">template</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">buildTemplate</span><span class="p">()</span>
+<span class="w">  </span><span class="nx">fs</span><span class="p">.</span><span class="nx">writeFileSync</span><span class="p">(</span>
+<span class="w">    </span><span class="nx">path</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="nx">outputPath</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;base.wxml&#39;</span><span class="p">),</span>
+<span class="w">    </span><span class="nx">template</span>
+<span class="w">  </span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div></li>
+</ol>
+<h2>生成的 base.xml 中的各个模板的类型是在哪里定义的</h2>
+<ul>
+<li>
+<p>首先在平台类中定义文件类型
+  packages/taro-platform-weapp/src/program.ts
+<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nx">fileType</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">templ</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;.wxml&#39;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">style</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;.wxss&#39;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">config</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;.json&#39;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">script</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;.js&#39;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">xs</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;.wxs&#39;</span>
+<span class="w">  </span><span class="p">}</span>
+</code></pre></div>
+不同平台有自己的文件扩展名</p>
+</li>
+<li>
+<p>模板类继承自 UnRecursiveTemplate
+  packages/taro-weapp/types/index.d.ts</p>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="nx">declare</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nx">Template</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="nx">UnRecursiveTemplate</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">pluginOptions</span><span class="o">:</span><span class="w"> </span><span class="nx">IOptions</span><span class="p">;</span>
+<span class="w">    </span><span class="nx">supportXS</span><span class="o">:</span><span class="w"> </span><span class="kr">boolean</span><span class="p">;</span>
+<span class="w">    </span><span class="nx">Adapter</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="o">:</span><span class="w"> </span><span class="nx">string</span><span class="p">;</span>
+<span class="w">        </span><span class="k">else</span><span class="o">:</span><span class="w"> </span><span class="nx">string</span><span class="p">;</span>
+<span class="w">        </span><span class="nx">elseif</span><span class="o">:</span><span class="w"> </span><span class="nx">string</span><span class="p">;</span>
+<span class="w">        </span><span class="k">for</span><span class="o">:</span><span class="w"> </span><span class="nx">string</span><span class="p">;</span>
+<span class="w">        </span><span class="nx">forItem</span><span class="o">:</span><span class="w"> </span><span class="nx">string</span><span class="p">;</span>
+<span class="w">        </span><span class="nx">forIndex</span><span class="o">:</span><span class="w"> </span><span class="nx">string</span><span class="p">;</span>
+<span class="w">        </span><span class="nx">key</span><span class="o">:</span><span class="w"> </span><span class="nx">string</span><span class="p">;</span>
+<span class="w">        </span><span class="nx">xs</span><span class="o">:</span><span class="w"> </span><span class="nx">string</span><span class="p">;</span>
+<span class="w">        </span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="nx">string</span><span class="p">;</span>
+<span class="w">    </span><span class="p">};</span>
+<span class="w">    </span><span class="nx">transferComponents</span><span class="o">:</span><span class="w"> </span><span class="nx">Record</span><span class="o">&lt;</span><span class="nx">string</span><span class="p">,</span><span class="w"> </span><span class="nx">Record</span><span class="o">&lt;</span><span class="nx">string</span><span class="p">,</span><span class="w"> </span><span class="nx">string</span><span class="o">&gt;&gt;</span><span class="p">;</span>
+<span class="w">    </span><span class="kr">constructor</span><span class="p">(</span><span class="nx">pluginOptions</span><span class="o">?:</span><span class="w"> </span><span class="nx">IOptions</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">buildXsTemplate</span><span class="p">(</span><span class="nx">filePath</span><span class="o">?:</span><span class="w"> </span><span class="nx">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">string</span><span class="p">;</span>
+<span class="w">    </span><span class="nx">createMiniComponents</span><span class="p">(</span><span class="nx">components</span><span class="o">:</span><span class="w"> </span><span class="nx">any</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">any</span><span class="p">;</span>
+<span class="w">    </span><span class="nx">replacePropName</span><span class="p">(</span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="nx">string</span><span class="p">,</span><span class="w"> </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="nx">string</span><span class="p">,</span><span class="w"> </span><span class="nx">componentName</span><span class="o">:</span><span class="w"> </span><span class="nx">string</span><span class="p">,</span><span class="w"> </span><span class="nx">componentAlias</span><span class="o">:</span><span class="w"> </span><span class="nx">any</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">string</span><span class="p">;</span>
+<span class="w">    </span><span class="nx">buildXSTepFocus</span><span class="p">(</span><span class="nx">nn</span><span class="o">:</span><span class="w"> </span><span class="nx">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">string</span><span class="p">;</span>
+<span class="w">    </span><span class="nx">modifyTemplateResult</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">res</span><span class="o">:</span><span class="w"> </span><span class="nx">string</span><span class="p">,</span><span class="w"> </span><span class="nx">nodeName</span><span class="o">:</span><span class="w"> </span><span class="nx">string</span><span class="p">,</span><span class="w"> </span><span class="nx">_</span><span class="o">:</span><span class="w"> </span><span class="nx">any</span><span class="p">,</span><span class="w"> </span><span class="nx">children</span><span class="o">:</span><span class="w"> </span><span class="nx">any</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">string</span><span class="p">;</span>
+<span class="w">    </span><span class="nx">buildPageTemplate</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">baseTempPath</span><span class="o">:</span><span class="w"> </span><span class="nx">string</span><span class="p">,</span><span class="w"> </span><span class="nx">page</span><span class="o">:</span><span class="w"> </span><span class="nx">any</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">string</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>这个类定义了模板的基本结构和处理方法，包括：
+ - buildXsTemplate 构建 wxs 模板
+ - createMiniComponents： 创建小程序组件
+ - buildPageTemplate 构建页面模板</p>
+<ol>
+<li>
+<p>在平台类的构造函数中初始化模板
+ packages/taro-platform-weapp/src/program.ts
+<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="kr">constructor</span><span class="w"> </span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">config</span><span class="p">,</span><span class="w"> </span><span class="nx">pluginOptions</span><span class="o">?:</span><span class="w"> </span><span class="nx">IOptions</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">super</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">config</span><span class="p">)</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">template</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">Template</span><span class="p">(</span><span class="nx">pluginOptions</span><span class="p">)</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">setupTransaction</span><span class="p">.</span><span class="nx">addWrapper</span><span class="p">({</span>
+<span class="w">        </span><span class="nx">close</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">this</span><span class="p">.</span><span class="nx">modifyTemplate</span><span class="p">(</span><span class="nx">pluginOptions</span><span class="p">)</span>
+<span class="w">            </span><span class="k">this</span><span class="p">.</span><span class="nx">modifyWebpackConfig</span><span class="p">()</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">})</span>
+<span class="p">}</span>
+</code></pre></div></p>
+</li>
+<li>
+<p>通过 modifyTemplate 方法注册和修改组件
+packages/taro-platform-weapp/src/program.ts
+<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nx">modifyTemplate</span><span class="w"> </span><span class="p">(</span><span class="nx">pluginOptions</span><span class="o">?:</span><span class="w"> </span><span class="nx">IOptions</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">template</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">template</span>
+<span class="w">    </span><span class="nx">template</span><span class="p">.</span><span class="nx">mergeComponents</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">components</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">template</span><span class="p">.</span><span class="nx">voidElements</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="s1">&#39;voip-room&#39;</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">template</span><span class="p">.</span><span class="nx">focusComponents</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="s1">&#39;editor&#39;</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">pluginOptions</span><span class="o">?</span><span class="p">.</span><span class="nx">enablekeyboardAccessory</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">template</span><span class="p">.</span><span class="nx">voidElements</span><span class="p">.</span><span class="ow">delete</span><span class="p">(</span><span class="s1">&#39;input&#39;</span><span class="p">)</span>
+<span class="w">      </span><span class="nx">template</span><span class="p">.</span><span class="nx">voidElements</span><span class="p">.</span><span class="ow">delete</span><span class="p">(</span><span class="s1">&#39;textarea&#39;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+</code></pre></div></p>
+</li>
+<li>在构建过程中，通过 MiniWebpackPlugin 处理模板相关的配置：
+   packages/taro-webpack5-runner/src/webpack/MiniWebpackPlugin.ts</li>
+</ol>
+<p>模板类型的确定流程是</p>
+<div class="highlight"><pre><span></span><code><span class="nx">graph</span><span class="w"> </span><span class="nx">TD</span>
+<span class="w">    </span><span class="nx">A</span><span class="p">[</span><span class="nx">平台初始化</span><span class="p">]</span><span class="w"> </span><span class="o">--&gt;</span><span class="w"> </span><span class="nx">B</span><span class="p">[</span><span class="nx">定义文件类型fileType</span><span class="p">]</span>
+<span class="w">    </span><span class="nx">B</span><span class="w"> </span><span class="o">--&gt;</span><span class="w"> </span><span class="nx">C</span><span class="p">[</span><span class="nx">初始化Template类</span><span class="p">]</span>
+<span class="w">    </span><span class="nx">C</span><span class="w"> </span><span class="o">--&gt;</span><span class="w"> </span><span class="nx">D</span><span class="p">[</span><span class="nx">注册基础组件</span><span class="p">]</span>
+<span class="w">    </span><span class="nx">D</span><span class="w"> </span><span class="o">--&gt;</span><span class="w"> </span><span class="nx">E</span><span class="p">[</span><span class="nx">处理自定义组件</span><span class="p">]</span>
+<span class="w">    </span><span class="nx">E</span><span class="w"> </span><span class="o">--&gt;</span><span class="w"> </span><span class="nx">F</span><span class="p">[</span><span class="nx">生成base模板文件</span><span class="p">]</span>
+
+<span class="w">    </span><span class="nx">B</span><span class="w"> </span><span class="o">--&gt;</span><span class="w"> </span><span class="nx">B1</span><span class="p">[.</span><span class="nx">wxml</span><span class="o">/</span><span class="p">.</span><span class="nx">axml</span><span class="o">/</span><span class="p">.</span><span class="nx">hml等</span><span class="p">]</span>
+<span class="w">    </span><span class="nx">C</span><span class="w"> </span><span class="o">--&gt;</span><span class="w"> </span><span class="nx">C1</span><span class="p">[</span><span class="nx">UnRecursiveTemplate</span><span class="p">]</span>
+<span class="w">    </span><span class="nx">D</span><span class="w"> </span><span class="o">--&gt;</span><span class="w"> </span><span class="nx">D1</span><span class="p">[</span><span class="nx">内置组件</span><span class="p">]</span>
+<span class="w">    </span><span class="nx">D</span><span class="w"> </span><span class="o">--&gt;</span><span class="w"> </span><span class="nx">D2</span><span class="p">[</span><span class="nx">平台组件</span><span class="p">]</span>
+<span class="w">    </span><span class="nx">E</span><span class="w"> </span><span class="o">--&gt;</span><span class="w"> </span><span class="nx">E1</span><span class="p">[</span><span class="nx">项目组件</span><span class="p">]</span>
+<span class="w">    </span><span class="nx">F</span><span class="w"> </span><span class="o">--&gt;</span><span class="w"> </span><span class="nx">F1</span><span class="p">[</span><span class="nx">base</span><span class="p">.</span><span class="nx">wxml等</span><span class="p">]</span>
+</code></pre></div>
+<p>packages/taro-webpack5-runner/src/plugins/MiniPlugin.ts 负责生成小程序相关文件。</p>
+<h2>AST 的收集</h2>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>
