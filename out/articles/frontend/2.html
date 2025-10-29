@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>TypeScript 中的 type 和 interface 比较</title>
+        <link rel="stylesheet" href="../../assets/fonts.css">
+        <link rel="stylesheet" href="../../assets/graphite.css">
+        <link rel="stylesheet" href="../../assets/pygments.css">
+        
+        
+    </head>
+    <body class="node-articles-frontend-2 node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>TypeScript 中的 type 和 interface 比较</h1>
+                
+                <hr>
+            </header>
+            <p>TypeScript 中定义一个命名类型，有两个选择，可以使用 type 或 interface。</p>
+<div class="highlight"><pre><span></span><code><span class="kr">type</span><span class="w"> </span><span class="nx">P</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="p">}</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nx">P</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>type 用于定义类型别名</p>
+<div class="highlight"><pre><span></span><code><span class="kr">type</span><span class="w"> </span><span class="nx">Simple</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kt">number</span>
+<span class="kr">type</span><span class="w"> </span><span class="nx">Point</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">x</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="w">    </span><span class="nx">y</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>通过使用类型别名可以提高代码的可读性，例如：</p>
+<div class="highlight"><pre><span></span><code><span class="kr">type</span><span class="w"> </span><span class="nx">TotalSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">number</span>
+<span class="kr">type</span><span class="w"> </span><span class="nx">Price</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">number</span>
+<span class="kr">type</span><span class="w"> </span><span class="nx">Quantity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">number</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">calculateTotalSize</span><span class="p">(</span><span class="nx">x</span><span class="o">:</span><span class="kt">Price</span><span class="p">,</span><span class="w"> </span><span class="nx">y</span><span class="o">:</span><span class="kt">Quantity</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">TotalSize</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">y</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>interface 用于定义对象类型</p>
+<div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nx">Point</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">x</span><span class="o">:</span><span class="kt">number</span>
+<span class="w">    </span><span class="nx">y</span><span class="o">:</span><span class="kt">number</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>interface 可以重新打开类型，添加新属性，type 则不可。</p>
+<div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nx">Point</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">x</span><span class="o">:</span><span class="kt">number</span>
+<span class="w">    </span><span class="nx">y</span><span class="o">:</span><span class="kt">number</span>
+<span class="p">}</span>
+
+<span class="kd">interface</span><span class="w"> </span><span class="nx">Point</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">z</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="p">}</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="kr">type</span><span class="w"> </span><span class="nx">TPoint</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">x</span><span class="o">:</span><span class="kt">number</span>
+<span class="w">    </span><span class="nx">y</span><span class="o">:</span><span class="kt">number</span>
+<span class="p">}</span>
+
+<span class="kr">type</span><span class="w"> </span><span class="nx">TPoint</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">z</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="p">}</span>
+<span class="c1">// Errors in code</span>
+<span class="c1">// Duplicate identifier &#39;TPoint&#39;.</span>
+<span class="c1">// Duplicate identifier &#39;TPoint&#39;.</span>
+</code></pre></div>
+<p>type 用于条件类型</p>
+<div class="highlight"><pre><span></span><code><span class="kr">type</span><span class="w"> </span><span class="nx">NameOrId</span><span class="o">&lt;</span><span class="nx">T</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="kt">number</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kt">string</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">T</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="kt">number</span>
+<span class="w">  </span><span class="o">?</span><span class="w"> </span><span class="nx">IdLabel</span>
+<span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="kt">NameLabel</span><span class="p">;</span>
+</code></pre></div>
+<p>在代码中应该使用哪种方式呢？</p>
+<ol>
+<li>从代码库维护层面来讲，如果维护的代码库统一采用 interface，那应该代码库风格保持一致</li>
+<li>从代码重构角度来讲，interface 的可扩展性更加简单和可读。<ol>
+<li>例如对外提供的 API，当 API 发生变化时，通过 interface 合并新字段可能对你的用户有帮助。</li>
+<li>再项目内部使用类型，声明合并很可能是一个错误，这时使用 type 更合适。</li>
+</ol>
+</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1">// a libary</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="nx">AProps</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">visible</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span>
+<span class="p">}</span>
+
+<span class="c1">// our project global.d.ts</span>
+<span class="k">import</span><span class="w"> </span><span class="kr">type</span><span class="w"> </span><span class="p">{</span><span class="nx">Aprops</span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;a-libary&#39;</span>
+<span class="kd">interface</span><span class="w"> </span><span class="nx">AExtends</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="nx">Aprops</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">closed</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span>
+<span class="p">}</span>
+</code></pre></div>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>

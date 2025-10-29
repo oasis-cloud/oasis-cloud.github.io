@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>TypeScript config 文件中的 extends</title>
+        <link rel="stylesheet" href="../../assets/fonts.css">
+        <link rel="stylesheet" href="../../assets/graphite.css">
+        <link rel="stylesheet" href="../../assets/pygments.css">
+        
+        
+    </head>
+    <body class="node-articles-frontend-3 node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>TypeScript config 文件中的 extends</h1>
+                
+                <hr>
+            </header>
+            <p>extends 的作用是继承另外的一个配置文件，对继承的配置文件进行合并或覆盖。例如：在一个项目中有多个页面，每个页面的 ts 配置文件希望做一些特殊的配置。可以采用上面的 extends 来实现。</p>
+<p>在设计 extends 的时候，我们应该进行依赖反转的设计，将依赖关系放到每个页面维度处理，而不是放在公共的配置文件中进行处理。</p>
+<p>举例说明：</p>
+<p>一个功能包含 A、B 两个页面，A、B 希望在构建时让 tsc 处理自己实际依赖的文件，这里处理实际依赖的文件有一个前提条件，每个页面的结构较为稳定。</p>
+<div class="highlight"><pre><span></span><code>component
+    A
+    B
+pages
+    A
+    B
+</code></pre></div>
+<p>pages/A 导入来 component/A，如何让 tsc 能只处理 pages/A 呢？</p>
+<p>1.设置两个 tsconfig.json 文件，通过 include 来进行配置</p>
+<p>设置多个 config 文件的方案维护起来比较麻烦，而且新增或删减都需要手工进行维护。但它也有一定的好处，可以应用灵活的配置。</p>
+<p>在上述稳定结构的支撑下，是否可以将多个 config 文件的方案进行简化呢？</p>
+<p>简化的含义是什么？这里的简化主要包含：从多个配置文件减少到一个或两个，从手动维护差异点改为自动化处理。最关键的点是差异管理。</p>
+<p>好在 ts 提供了 extends 支持继承，这样可以将公共配置提取到 base config 中，同时借助 npm scripts 的能力，在 tsc 命令执行之前修改 tsconfig 文件为对应的项目配置文件。</p>
+<p>例如提取如下公共配置</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;compilerOptions&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;target&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;es5&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;lib&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dom&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;dom.iterable&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;esnext&quot;</span><span class="p">],</span>
+<span class="w">    </span><span class="nt">&quot;baseUrl&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;.&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;allowJs&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;skipLibCheck&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;esModuleInterop&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;allowSyntheticDefaultImports&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;strict&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;noImplicitAny&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;removeComments&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;experimentalDecorators&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;forceConsistentCasingInFileNames&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;noFallthroughCasesInSwitch&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;module&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;esnext&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;moduleResolution&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;node&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;resolveJsonModule&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;isolatedModules&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;noEmit&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;jsx&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;react-jsx&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;paths&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;@/*&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;../src/*&quot;</span><span class="p">]</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;include&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;src&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;exclude&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;node_modules&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;build&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;public&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;postcss.config.js&quot;</span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>差异化配置：</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;extends&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./configs/tsconfig.base&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;include&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">&quot;typings&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;src/utils&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;src/api/common&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;src/components/common&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;src/pages/${page}&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;src/components/${page}&quot;</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>其中 paths 的路径是相对于 base config 文件的。</p>
+<p>在项目中会引入其他人或组织开发的库，而且有些库并未支持 ts，所以需要在项目中对这些库增加 d.ts 。增加的 d.ts 需要在 include 的范围内，否则在编译过程中会提示找不到类型。</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>编程格调</title>
+        <link rel="stylesheet" href="../assets/fonts.css">
+        <link rel="stylesheet" href="../assets/graphite.css">
+        <link rel="stylesheet" href="../assets/pygments.css">
+        
+        
+    </head>
+    <body class="node-articles-1 node-articles node">
+        <header class="masthead">
+            <h1><a href="../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>编程格调</h1>
+                
+                    <p class="subtitle">Programming Style</p>
+                
+                <hr>
+            </header>
+            <h2>表达</h2>
+<ol>
+<li>如何表达每一个语句很大程度上决定了程序本身是否易于理解，语句的完美表达是用任何注释、格式规范或补充文档都无法替代的。</li>
+<li>简单直接地表达你要说的意思</li>
+<li>使用库函数</li>
+<li>避免使用临时变量</li>
+<li>代码要清晰，不要为了“效率”牺牲可读性</li>
+<li>让机器干脏活</li>
+<li>用函数调用替代重复的表达式</li>
+<li>加括号来避免歧义</li>
+<li>选择不会被混淆的变量名</li>
+<li>避免不必要的冲突</li>
+<li>使用语言好的特性，避免使用不好的特性</li>
+<li>不要使用条件分支来代替一个逻辑表达式</li>
+<li>用“电话测试”来检查可读性</li>
+</ol>
+<h2>控制结构</h2>
+<ol>
+<li>用 <code>IFELSE</code> 强调两个操作只有一个被执行</li>
+<li>用 <code>DO</code> 和 <code>DOWHILE</code> 来强调循环的存在</li>
+<li>确保你的程序是自顶向下阅读的</li>
+<li>使用 <code>IF...ELSEIF...ELSEIF...ELSE</code> 来实现多路分支</li>
+<li>使用基本的控制结构</li>
+<li>先用容易理解的伪语言编写代码，然后再翻译成你需要使用的语言</li>
+<li>避免使用 <code>ELSEGOTO</code> 和 <code>ELSERETURN</code></li>
+<li>判断要尽可能挨着与之相关的操作</li>
+<li>使用数组来避免重复的控制流</li>
+<li>选择可以简化程序的数据表示方法</li>
+<li>不要止步于第一遍的代码草稿</li>
+</ol>
+<h2>程序结构</h2>
+<ol>
+<li><strong>模块化，使用子例程</strong></li>
+<li><strong>让模块之间的耦合变得可见</strong></li>
+<li><strong>每一个模块都应该做好一件事</strong></li>
+<li><strong>确保每一个模块都隐藏好一些东西</strong></li>
+<li><strong>以数据为向导来构建程序的结构</strong></li>
+<li>不要修补蓝代码————重写它</li>
+<li>分块编写和测试大的程序</li>
+<li>对于递归定义的数据结构使用递归过程</li>
+</ol>
+<h2>输入输出</h2>
+<ol>
+<li>校验输入的合法性和合理性</li>
+<li>保证输入的数据不会违背程序的限制</li>
+<li>利用文件结束符或结束标志来终止输入，不要让用户去计数</li>
+<li>识别出非法输入数据，如果可能则纠正之</li>
+<li>使用统一的形式处理文件结束条件</li>
+<li>让输入数据易于准备，并让输出数据意义不言自明</li>
+<li><strong>使用统一的输入格式</strong></li>
+<li><strong>让输入数据易于校对</strong></li>
+<li><strong>尽可能选择自由格式输入</strong></li>
+<li>使用含义自明的输入，指定默认值，将以上二者输出</li>
+<li>将输入与输出局限在子例程中</li>
+<li>确保所有的变量在使用之前都被初始化</li>
+<li>不要停留在一个 bug 上</li>
+<li>在边界值上测试程序</li>
+<li>预防性编程</li>
+<li><code>0.1+0.2 ！= 0.3</code></li>
+<li>不要比较浮点数是否相等</li>
+<li>先做对，再做快</li>
+<li>再提高程序运行速度时，要保持其正确性</li>
+<li>先把程序改得更简洁，再提高其运行速度</li>
+<li>不要为了“效率”上的蝇头小利而牺牲程序的间接性</li>
+<li>让编译器执行平凡优化</li>
+<li>不要勉强地复用代码，应该进行改编</li>
+<li>保证特殊情况真的有特殊性</li>
+<li>保持简单性，反而会更快</li>
+<li>不要为了提高速度而画蛇添足————寻找更好的算法</li>
+<li>在程序中放置测试语句，“增效”之前执行测试</li>
+</ol>
+<h2>文档</h2>
+<ol>
+<li>确保注释和代码一致</li>
+<li>不要用注释复述代码做的事情，每个注释都要有实际意义</li>
+<li>不要注释糟糕的代码————重写它</li>
+<li>使用含有意义的变量名</li>
+<li>使用含有意义的语句</li>
+<li>程序的格式要有助于读者的理解</li>
+<li>用缩进来体现程序的逻辑结构</li>
+<li>记录你的数据规划</li>
+<li>不要过度注释</li>
+</ol>
+<h2>总结</h2>
+<ol>
+<li>从数据的角度来构造程序</li>
+<li>既要保证程序效率又要保证可读性，变量和函数应该指明是什么，而不是怎么做</li>
+<li>在程序结构章节中主要体现单一职责，利用抽象隐藏细节</li>
+<li>输入输出要保持统一，格式尽可能自由，避免让用户（使用 API 的程序开发人员）记格式</li>
+<li>好的代码便是文档，好的命名和好的代码结构尤其重要。主要考虑避免重复，自上而下的方法编写程序。</li>
+</ol>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>

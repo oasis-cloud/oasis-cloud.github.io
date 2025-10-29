@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>NutUI React CI/CD -- 自动化测试</title>
+        <link rel="stylesheet" href="../../assets/fonts.css">
+        <link rel="stylesheet" href="../../assets/graphite.css">
+        <link rel="stylesheet" href="../../assets/pygments.css">
+        
+        
+    </head>
+    <body class="node-articles-github-5 node-articles-github node-articles node">
+        <header class="masthead">
+            <h1><a href="../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>NutUI React CI/CD -- 自动化测试</h1>
+                
+                <hr>
+            </header>
+            <h2>背景</h2>
+<p>最近 NUtUI React 在进行从 1.x 到 2.x 的改造升级工作。在这个过程中，每个 PR 都需要进行 Review，除了对代码的规范进行 Review 外，还需要对每个组件的单元测试进行 Review。通常情况下，我们通过在 CI/CD 中跑整体的单元测试来验证组件库的单元测试情况。但在单独组件进行改造的时候，有可能会关联修改其他组件，而没有修改其他组件的单元测试。所以基于这样的情况，我们想优先跑 PR 所修改组件的单元测试。</p>
+<p>NutUI React 的 PR 自动化测试主要依赖与 GitHub Actions。所以接下来，我们先看一下 GitHub Actions 的基础使用，然后在深入到 NutUI React 的 PR 自动化测试的实现。</p>
+<h2>GitHub Actions 介绍</h2>
+<p>GitHub Actions 是 GitHub 提供的一项功能，可以用来在 GitHub 上创建、测试、部署应用程序。它是一个自动化工作流程平台，可以通过触发事件来执行一系列操作，例如自动化测试，打包构建等。</p>
+<p>GitHub Actions 有几个核心的概念：</p>
+<ol>
+<li>Workflows（工作流）：CI/CD 从开始到结束这个周期可以理解为一个工作流。工作流可以通过 yml 脚本配置，并且一个工作流可以包含一个 Job 或 多个 Job。</li>
+<li>Events（事件）：触发 Workflows 的特定操作，例如：PR 创建，代码 Push 等。</li>
+<li>Jobs（任务）：一个 Job 由一系列的步骤组成，其中每个步骤可以标注步骤名称，执行的脚本等。</li>
+<li>Actions（动作）：每个步骤可以执行的处理，可以是一个或多个。</li>
+<li>Runners（执行器）：workflows 运行的容器。</li>
+</ol>
+<h2>上手 GitHub Actions</h2>
+<p>在仓库中创建 <code>.github/workflows</code> 文件。</p>
+<p>在 <code>.github/workflows</code> 目录中，创建 <code>test.yml</code>，这里只是举例，文件可以定义其他名字。</p>
+<div class="highlight"><pre><span></span><code><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">test</span>
+
+<span class="nt">on</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">push</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">branches</span><span class="p">:</span><span class="w"> </span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">main</span>
+
+<span class="nt">jobs</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">test</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu-latest</span>
+<span class="w">    </span><span class="nt">steps</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">echo something</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">echo &#39;Hello World&#39;</span><span class="w">    </span>
+</code></pre></div>
+<p>这段代码创建了一个名为 test 的工作流，当对 main 分支进行 push 的时候会触发此工作流的执行。工作流中有一个名为 test 的 Job，运行在 ubuntn 容器中，输出 <code>Hello World</code>。(<a href="https://docs.github.com/zh/actions/using-workflows/workflow-syntax-for-github-actions">更多语法可参考这里</a>)</p>
+<h2>自动化测试实践</h2>
+<p>单元测试可以分为两种方式处理：通过 Jest 处理全部的单元测试；通过识别变更文件，执行相关组件的单元测试。NutUI React 现在采用的是识别变更文件的方式来处理单元测试。</p>
+<p>识别变更文件的方案需要借助 GitHub API 解析出变更文件，之后对变更文件的特征进行处理，识别出组件，执行单元测试。</p>
+<p>GitHub 提供了 <a href="https://docs.github.com/zh/rest/pulls/pulls?apiVersion=2022-11-28#list-pull-requests-files"><code>/repos/{owner}/{repo}/pulls/{pull_number}/files</code></a> API 用于查询 Pull Request 的相关内容。</p>
+<p>要使用此 API ，我们需要提供 owner、repo、pull number 这三个参数的内容。owner、repo 和 pull number 可以通过 GitHub Action 中的<a href="https://docs.github.com/zh/actions/learn-github-actions/contexts#github-context">上下文</a>来获取：</p>
+<div class="highlight"><pre><span></span><code>name: CI
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Get PR info
+        run: |
+          echo &quot;PR Message github.event.number: ${{ github.event.number }}&quot;
+          echo &quot;PR Message github.repository: ${{ github.repository }}&quot;
+</code></pre></div>
+<p>这里给出了一段 GitHub Action 的脚本，在 <code>Get PR info</code> 任务中，借助 linux 的 echo 命令，打印来 github.event.number 和 github.repository。想要对这段脚本进行测试，可将其提交到 <code>.github/workflows/test.yml</code> 中，然后通过其他分支向目标分支创建 PR。（备注：<code>github.event.number</code>来自<a href="https://docs.github.com/zh/webhooks-and-events/webhooks/webhook-events-and-payloads#pull_request">Webhook 的共有属性</a>）</p>
+<p>通过执行上述代码，我们可以看到输出的 PR 的 ID 和 repository。接下来要使用他们调用 GitHub 提供的 API。这段代码使用 curl 调用的 GitHub API：</p>
+<div class="highlight"><pre><span></span><code>pr_number=${{ github.event.number }}
+files_url=&quot;https://api.github.com/repos/${{ github.repository }}/pulls/$pr_number/files&quot;
+files_response=$(curl -sSL -H &quot;Authorization: token ${{ secrets.GITHUB_TOKEN }}&quot; $files_url)
+</code></pre></div>
+<p>这段代码中即有 <code>${{ xx }}</code> 又有 <code>$xx</code>，我们需要先区分什么时候使用什么形式。<code>${{}}</code> 是 GitHub 提供的插值表达式，在 GitHub Actions 执行的时候会对这种表达式进行求值。<code>$xx</code> 是 Linux shell 的变量调用的方式，在这段 GitHub Actions 中我们实际执行的主要是 Linux shell。</p>
+<p>shell 声明变量的方式如下：
+<div class="highlight"><pre><span></span><code><span class="nv">shellVariable</span><span class="o">=</span><span class="m">1</span>
+</code></pre></div></p>
+<p>调用变量的方式如下：</p>
+<div class="highlight"><pre><span></span><code><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$shellVariable</span><span class="s2">&quot;</span>
+</code></pre></div>
+<p>通过 curl 获取到 GitHub API 返回的结果后，需要对结果进行处理，即提取变更文件。</p>
+<div class="highlight"><pre><span></span><code>files_changed=$(echo &quot;$files_response&quot; | jq -r &#39;.[].filename&#39;)
+echo &quot;PR files: $files_changed&quot;
+component=$(echo &quot;$files_changed&quot; |  grep -E -i &#39;src\/packages\/([a-z]+)(\/[a-z_\.]*)*&#39; | sed -E &#39;s/src\/packages\/([a-z]+)(\/[a-z_\.]*)*/\1/i&#39; | awk &#39;END{print}&#39;)
+npm test -- $component
+</code></pre></div>
+<p>因为 GitHub API 返回的是 JSON 格式：</p>
+<div class="highlight"><pre><span></span><code><span class="o">[</span>
+<span class="w">  </span><span class="o">{</span>
+<span class="w">    </span><span class="s2">&quot;sha&quot;</span>:<span class="w"> </span><span class="s2">&quot;bbcd538c8e72b8c175046e27cc8f907076331401&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;filename&quot;</span>:<span class="w"> </span><span class="s2">&quot;src/packages/button/button.tsx&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;status&quot;</span>:<span class="w"> </span><span class="s2">&quot;added&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;additions&quot;</span>:<span class="w"> </span><span class="m">103</span>,
+<span class="w">    </span><span class="s2">&quot;deletions&quot;</span>:<span class="w"> </span><span class="m">21</span>,
+<span class="w">    </span><span class="s2">&quot;changes&quot;</span>:<span class="w"> </span><span class="m">124</span>,
+<span class="w">    </span><span class="s2">&quot;blob_url&quot;</span>:<span class="w"> </span><span class="s2">&quot;https://github.com/octocat/Hello-World/blob/6dcb09b5b57875f334f61aebed695e2e4193db5e/file1.txt&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;raw_url&quot;</span>:<span class="w"> </span><span class="s2">&quot;https://github.com/octocat/Hello-World/raw/6dcb09b5b57875f334f61aebed695e2e4193db5e/file1.txt&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;contents_url&quot;</span>:<span class="w"> </span><span class="s2">&quot;https://api.github.com/repos/octocat/Hello-World/contents/file1.txt?ref=6dcb09b5b57875f334f61aebed695e2e4193db5e&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;patch&quot;</span>:<span class="w"> </span><span class="s2">&quot;@@ -132,7 +132,7 @@ module Test @@ -1000,7 +1000,7 @@ module Test&quot;</span>
+<span class="w">  </span><span class="o">}</span>
+<span class="o">]</span>
+</code></pre></div>
+<p>所以我们通过 jq 从 GitHub API 返回的结果中提取我们需要的数据，即第一行代码中的 <code>jq -r '.[].filename</code>，这句代码的意思是取 <code>filename</code> 字段的值，然后以原始文本形式返回。对于上面的 JSON 数据，jq 的处理结果是：<code>src/packages/button/button.tsx</code>。（<a href="https://www.tutorialspoint.com/guide-to-linux-jq-command-for-json-processing">jq 介绍</a>）</p>
+<p>获取变更文件后，还需要将<code>src/packages/button/button.tsx</code>中的 button 提取出来，以便传递给 npm 脚本。对于变更文件的处理，主要借助 Linux 中的 grep、sed、awk。</p>
+<p><code>grep -E -i</code> 表示使用正则表达式，并且忽略大小写。
+<code>sed -E</code> 同样表示使用正则表达式，但是它的忽略大小写是写到后面的参数中。</p>
+<p>到这就完成了 NutUI React PR 自动化测试的 workflow，想要了解上面技术中更多的细节，可以加入我们的咚咚群进行交流。</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>

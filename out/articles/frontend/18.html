@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Taro——目标，找到 Taro 如何处理运行时</title>
+        <link rel="stylesheet" href="../../assets/fonts.css">
+        <link rel="stylesheet" href="../../assets/graphite.css">
+        <link rel="stylesheet" href="../../assets/pygments.css">
+        
+        
+    </head>
+    <body class="node-articles-frontend-18 node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>Taro——目标，找到 Taro 如何处理运行时</h1>
+                
+                <hr>
+            </header>
+            <p>dir: Desktop/read_taro</p>
+<p>https://mermaid.live/</p>
+<p>小程序的 app.js 文件内容如下：
+<div class="highlight"><pre><span></span><code>App({
+    onLaunch() {}
+})
+</code></pre></div></p>
+<p>Pages 的文件内容如下：</p>
+<div class="highlight"><pre><span></span><code>Page({
+    data: {},
+    onLoad() {},
+    onShow() {},
+    onReady() {},
+})
+</code></pre></div>
+<p>小程序运行需要上面的这种结构和 API。所以 Taro 工程在编译后应该也具备 App，Page 这些内容。</p>
+<p>所以这里的关键要看 Taro 如何构建出 App、Page 等内容。这是从工程编译上看。</p>
+<p>在看运行时。</p>
+<p>小程序的模板如下：</p>
+<p>js
+<div class="highlight"><pre><span></span><code>Page({
+  data: {
+    demo: {
+      motto: &#39;Hello World&#39;,
+      oasis: &#39;!!!&#39;
+    }
+  },
+})
+</code></pre></div></p>
+<div class="highlight"><pre><span></span><code>&lt;template name=&quot;odd&quot;&gt;
+  &lt;view&gt; {{ demo.motto }} &lt;/view&gt;
+&lt;/template&gt;
+&lt;template name=&quot;even&quot;&gt;
+  &lt;view&gt; {{ demo.oasis }} &lt;/view&gt;
+&lt;/template&gt;
+
+&lt;block wx:for=&quot;{{[1, 2, 3, 4, 5]}}&quot;&gt;
+  &lt;template is=&quot;{{item % 2 == 0 ? &#39;even&#39; : &#39;odd&#39;}}&quot; data=&quot;{{ demo }}&quot;/&gt;
+&lt;/block&gt;
+</code></pre></div>
+<h2>Taro 编译后的运行情况</h2>
+<p>源项目中的 pages/index.jsx 中的元素嵌套关系</p>
+<p><img alt="img_1.png" src="/images/frontend/img_1.png" /></p>
+<p>先看编译后的 root 数据：
+<img alt="img.png" src="/images/frontend/img.png" /></p>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">cn</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">cl</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;index&#39;</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">cn</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">                </span><span class="p">{</span>
+<span class="w">                    </span><span class="nx">cn</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">                        </span><span class="p">{</span>
+<span class="w">                            </span><span class="nx">nn</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;8&#39;</span><span class="p">,</span>
+<span class="w">                            </span><span class="nx">sid</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;_AG&#39;</span><span class="p">,</span>
+<span class="w">                            </span><span class="nx">v</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Hello world!&#39;</span>
+<span class="w">                        </span><span class="p">}</span>
+<span class="w">                    </span><span class="p">],</span>
+<span class="w">                    </span><span class="nx">nn</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;4&#39;</span><span class="p">,</span>
+<span class="w">                    </span><span class="nx">sid</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;_AH&#39;</span>
+<span class="w">                </span><span class="p">}</span>
+<span class="w">            </span><span class="p">],</span>
+<span class="w">            </span><span class="nx">nn</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;2&#39;</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">sid</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;_AI&#39;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>这里可以看做虚拟节点树，实际最终要把这棵树的渲染映射到小程序 xml 模板上。</p>
+<p>用最简化的例子，来看， pages 下的 index 页面中的 xml 文件加载 base.xml 中的模板，采用编译后的数据 root，进行数据的传递，在通过 xs 计算映射的模板后，最终映射到 tmpl_0_8 </p>
+<div class="highlight"><pre><span></span><code>&lt;template name=&quot;tmpl_0_8&quot;&gt;
+  &lt;block&gt;{{i.v}}&lt;/block&gt;
+&lt;/template&gt;
+</code></pre></div>
+<h2>接下来找一个渲染触发的入口</h2>
+<p>实际编译后小程序项目中  pages/index.js 文件内容：</p>
+<div class="highlight"><pre><span></span><code>import { createPageConfig } from &#39;@tarojs/runtime&#39;
+import component from &quot;!!../../../node_modules/.pnpm/@tarojs+taro-loader@4.0.0_webpack@5.91.0_@swc+core@1.3.96_/node_modules/@tarojs/taro-loader/lib/entry-cache.js?name=pages/index/index!./index.jsx&quot;
+var config = {&quot;navigationBarTitleText&quot;:&quot;首页&quot;};
+
+
+var inst = Page(createPageConfig(component, &#39;pages/index/index&#39;, {root:{cn:[]}}, config || {}))
+
+
+export default component
+</code></pre></div>
+<p>components/index.js 实际上是 
+<img alt="img_2.png" src="/images/frontend/img_2.png" /></p>
+<p>createPageConfig，来自 @tarojs/runtime</p>
+<p>这里创建 page json 的静态结构, 在这个步骤中，只初始化了 root 数据，实际的数据处理在哪？这个问题比较重要。</p>
+<p>useState 来自 webpack/container/remote/react</p>
+<p>这里在前面创建的数据基础上，由 React 来驱动数据更新。</p>
+<h4>这里既要考虑 小程序渲染模板树的收集，又要考虑 react 如何驱动渲染。</h4>
+<h5>小程序渲染树 root 的收集</h5>
+<p>这里主要看 react 渲染机制如何在小程序渲染机制的上层建立</p>
+<h5>react 如何驱动数据更新， useState</h5>
+<p>这里只要看与 root 数据的关系，react jsx 与 小程序 template 的关系</p>
+<p>Taro 小程序采用了 react 创建组件，但是渲染采用了基于 react-reconciler 创建的自定义渲染器 <code>const TaroReconciler = Reconciler(hostConfig)</code></p>
+<p><code>TaroReconciler</code> 在封装 render 方法时候，会在 taro-framework-react 的 connect.ts 中调用</p>
+<p>createReactApp setReconciler 层的目的是实现解耦，让 react 层插件化。</p>
+<p>renderReactRoot</p>
+<p>这里需要把 react </p>
+<p>createReactApp</p>
+<hr />
+<p>createPageConfig
+connectReactPage</p>
+<p>createTaroHook -&gt; @tarojs/plugin-framework-react 框架插件</p>
+<p>class Entry extends R.Component</p>
+<p>&ldquo;webpack/container/remote/@tarojs/plugin-platform-weapp/dist/runtime&rdquo;);</p>
+<p>webpack/container/remote/@tarojs/plugin-framework-react/dist/runtime</p>
+<p>taro-platform-weapp 会重新设计 react-reconciler
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">mergeInternalComponents</span><span class="p">,</span><span class="w"> </span><span class="nx">mergeReconciler</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;@tarojs/shared&#39;</span>
+
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">components</span><span class="p">,</span><span class="w"> </span><span class="nx">hostConfig</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;./runtime-utils&#39;</span>
+
+<span class="nx">mergeReconciler</span><span class="p">(</span><span class="nx">hostConfig</span><span class="p">)</span>
+<span class="nx">mergeInternalComponents</span><span class="p">(</span><span class="nx">components</span><span class="p">)</span>
+</code></pre></div></p>
+<p>taro-framework-react 中会把 react相关的内容进行 alias 映射
+<div class="highlight"><pre><span></span><code>alias.set(&#39;react-reconciler$&#39;, &#39;react-reconciler/cjs/react-reconciler.production.min.js&#39;)
+alias.set(/^(?!.*mobx-react$).*react$/, newFilePath)
+alias.set(&#39;react/jsx-runtime$&#39;, &#39;react/cjs/react-jsx-runtime.production.min.js&#39;)
+</code></pre></div></p>
+<p>扩展阅读：
+Taro3可以大致理解为解释型架构，这个工作就主要是在运行时&rdquo;对代码进行解释&rdquo;，怎么理解呢？升级为Taro后你可以发现package.json文件里面多了个（当然不止这一个）@taro/runtime的依赖，打开包所在目录：</p>
+<p>惊奇的发现了我们在web中才会有的bom跟dom相关的关键字，原来Taro3自己实现了一套类似浏览器的BOM/DOM那一套API，通过webpack的plugin注入到小程序的逻辑层，打包编译后，你最终的代码都是基于BOM/DOM这几个API来实现你的具体功能，比如：不管什么平台，都有自己一套元素dom的规则，都有各自平台的类似bom的全局api规则，Taro3做的就是整合这些厂家的规则封装为类似BOM/DOM的思想去用，也就是说，我不管你开发时用的什么框架，我只要保证你运行时能帮你适配到各个平台即可。</p>
+<p>这样做的最直观的好处就是前面说到的，不再受限制与框架本身了，理论上来说，Taro不仅可以支持Vue和React，也能用jquery、Angular等等的库进行跨端开发。站在React的使用者角度：通过taro2和taro3两个项目开发经验来说还有一点最直观的感受，taro3中写JSX更加舒服了！其实就更加友好的支持JSX这一点，应该是顺理成章的，因为taro的架构其实就是无限接近于React的开发体验，适配的工作是通过运行时的BOM/DOM去完成的，而不是像之前版本一样，通过穷举 的方式对 JSX 的写法进行适配。</p>
+<p>有个关键点：既然Taro3自己实现了BOM/DOM这一套api，而react的中的渲染器，如react-dom中调用的是浏览器的BOM/DOM的api，那taro肯定会有自己一套渲染器来链接react的协调器（reconciler，diff算法所在阶段）和taro-runtime 的 BOM/DOM api。源码路径：@tarojs/react,description里面的描述如下：&rdquo;like react-dom, but for mini apps.&rdquo;</p>
+<p>Root 数据的初始化在 createReactApp 中完成
+数据更新由 TaroRootElement 负责管理
+实际渲染由 ReactDOM 的 Root 类处理
+最终通过小程序的 setData 实现真实 DOM 更新</p>
+<hr />
+<h3>createReactApp 方法是 Taro 框架的一个核心方法，用于创建 React 应用并将其适配到小程序环境。</h3>
+<p>主要功能和实现细节：
+初始化设置：
+接收主要参数：App 组件、React 实例、ReactDOM 实例和配置对象
+设置 React 相关的全局引用
+创建应用实例的引用
+AppWrapper 核心组件：
+继承自 React.Component
+管理页面的生命周期
+维护页面数组和元素数组
+提供页面挂载和卸载的方法
+页面管理：
+mount 方法：负责新页面的挂载
+unmount 方法：处理页面的卸载
+使用 connectReactPage 连接 React 组件与小程序页面
+渲染机制：
+使用 React 18 的新 API 或降级使用旧版本的渲染方式
+处理页面栈的管理和渲染
+支持异步的页面加载和卸载
+生命周期适配：
+将 React 的生命周期与小程序的生命周期进行对接
+处理页面切换和状态管理
+这个实现的主要目的是：
+让 React 组件能够在小程序环境中正常运行
+处理好小程序的页面栈管理
+确保 React 组件的生命周期能够正确响应小程序的事件
+提供统一的页面管理机制
+通过这种方式，开发者可以使用熟悉的 React 组件开发方式来开发小程序，而 Taro 框架则负责处理底层的适配工作。</p>
+<p>TaroRootElement 中的performUpdated 会收集 data 数据，并调用小程序的 setData 更新数据。</p>
+<h3>TaroRootElement 是如何收集节点树上的数据的？</h3>
+<ol>
+<li>在 TaroNode 类中定义了基础的节点操作
+<div class="highlight"><pre><span></span><code><span class="w">        </span><span class="nx">TaroNode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nx">_TaroNode</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="nx">TaroEventTarget</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">updateChildNodes</span><span class="p">(</span><span class="nx">isClean</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="kd">const</span><span class="w"> </span><span class="nx">cleanChildNodes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()=&gt;[];</span>
+<span class="w">                </span><span class="kd">const</span><span class="w"> </span><span class="nx">rerenderChildNodes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()=&gt;{</span>
+<span class="w">                    </span><span class="kd">const</span><span class="w"> </span><span class="nx">childNodes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">childNodes</span><span class="p">.</span><span class="nx">filter</span><span class="p">((</span><span class="nx">node</span><span class="p">)=&gt;</span><span class="o">!</span><span class="nx">isComment</span><span class="p">(</span><span class="nx">node</span><span class="p">));</span>
+<span class="w">                    </span><span class="k">return</span><span class="w"> </span><span class="nx">childNodes</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">hydrate</span><span class="p">);</span>
+<span class="w">                </span><span class="p">};</span>
+<span class="w">                </span><span class="k">this</span><span class="p">.</span><span class="nx">enqueueUpdate</span><span class="p">({</span>
+<span class="w">                    </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="sb">`</span><span class="si">${</span><span class="k">this</span><span class="p">.</span><span class="nx">_path</span><span class="si">}</span><span class="sb">.</span><span class="si">${</span><span class="nx">CHILDNODES</span><span class="si">}</span><span class="sb">`</span><span class="p">,</span>
+<span class="w">                    </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="nx">isClean</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="nx">cleanChildNodes</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">rerenderChildNodes</span>
+<span class="w">                </span><span class="p">});</span>
+<span class="w">            </span><span class="p">}</span>
+</code></pre></div>
+这里定义了 updateChildNodes 方法，它负责收集和更新子节点数据。当子节点发生变化时，会调用 hydrate 方法处理每个子节点。</li>
+<li>hydate 方法
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">hydrate</span><span class="p">(</span><span class="nx">node</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">var</span><span class="w"> </span><span class="nx">_a2</span><span class="p">;</span>
+<span class="w">    </span><span class="nx">componentsAlias2</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="p">(</span><span class="nx">componentsAlias2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">getComponentsAlias2</span><span class="p">());</span>
+<span class="w">    </span><span class="nx">SPECIAL_NODES</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="p">(</span><span class="nx">SPECIAL_NODES</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">_chunk_KEK4XUFF_js__WEBPACK_IMPORTED_MODULE_0__</span><span class="p">.</span><span class="nx">hooks</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="s2">&quot;getSpecialNodes&quot;</span><span class="p">));</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">nodeName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">node</span><span class="p">.</span><span class="nx">nodeName</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nx">compileModeName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">isText</span><span class="p">(</span><span class="nx">node</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">sid</span><span class="o">:</span><span class="w"> </span><span class="nx">node</span><span class="p">.</span><span class="nx">sid</span><span class="p">,</span>
+<span class="w">            </span><span class="p">[</span><span class="s2">&quot;v&quot;</span><span class="p">]</span><span class="o">:</span><span class="w"> </span><span class="nx">node</span><span class="p">.</span><span class="nx">nodeValue</span><span class="p">,</span>
+<span class="w">            </span><span class="p">[</span><span class="s2">&quot;nn&quot;</span><span class="p">]</span><span class="o">:</span><span class="w"> </span><span class="p">((</span><span class="nx">_a2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">componentsAlias2</span><span class="p">[</span><span class="nx">nodeName</span><span class="p">])</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">_a2</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="mf">0</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="mf">0</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">_a2</span><span class="p">.</span><span class="nx">_num</span><span class="p">)</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s2">&quot;8&quot;</span>
+<span class="w">        </span><span class="p">};</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="p">[</span><span class="s2">&quot;nn&quot;</span><span class="p">]</span><span class="o">:</span><span class="w"> </span><span class="nx">nodeName</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">sid</span><span class="o">:</span><span class="w"> </span><span class="nx">node</span><span class="p">.</span><span class="nx">sid</span>
+<span class="w">    </span><span class="p">};</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">node</span><span class="p">.</span><span class="nx">uid</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="nx">node</span><span class="p">.</span><span class="nx">sid</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">data</span><span class="p">.</span><span class="nx">uid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">node</span><span class="p">.</span><span class="nx">uid</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">node</span><span class="p">.</span><span class="nx">isAnyEventBinded</span><span class="p">()</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">SPECIAL_NODES</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="nx">nodeName</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="o">-</span><span class="mf">1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">data</span><span class="p">[</span><span class="s2">&quot;nn&quot;</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="sb">`static-</span><span class="si">${</span><span class="nx">nodeName</span><span class="si">}</span><span class="sb">`</span><span class="p">;</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">nodeName</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">VIEW</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">!</span><span class="nx">isHasExtractProp</span><span class="p">(</span><span class="nx">node</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">data</span><span class="p">[</span><span class="s2">&quot;nn&quot;</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">PURE_VIEW</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">props</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">node</span><span class="p">;</span>
+</code></pre></div>
+这个方法负责将节点转换为小程序可以理解的数据格式，包括：</li>
+<li>节点 ID（sid）</li>
+<li>节点名称（nn）</li>
+<li>节点值（v）</li>
+<li>特殊节点的处理</li>
+<li>节点的插入和删除操作
+<div class="highlight"><pre><span></span><code><span class="w">       </span><span class="o">*</span><span class="err">/ insertBefore(newChild, refChild, isReplace) {</span>
+<span class="w">                </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">newChild</span><span class="p">.</span><span class="nx">nodeName</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">DOCUMENT_FRAGMENT</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">                </span><span class="p">...</span>
+
+<span class="w">                </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">_root</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">refChild</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                        </span><span class="kd">const</span><span class="w"> </span><span class="nx">isOnlyChild</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">childNodesLength</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="mf">1</span><span class="p">;</span>
+<span class="w">                        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">isOnlyChild</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                            </span><span class="k">this</span><span class="p">.</span><span class="nx">updateChildNodes</span><span class="p">();</span>
+<span class="w">                        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                            </span><span class="k">this</span><span class="p">.</span><span class="nx">enqueueUpdate</span><span class="p">({</span>
+<span class="w">                                </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="nx">newChild</span><span class="p">.</span><span class="nx">_path</span><span class="p">,</span>
+<span class="w">                                </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">hydrate</span><span class="p">(</span><span class="nx">newChild</span><span class="p">)</span>
+<span class="w">                            </span><span class="p">});</span>
+<span class="w">                        </span><span class="p">}</span>
+<span class="w">                    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">isReplace</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                        </span><span class="k">this</span><span class="p">.</span><span class="nx">enqueueUpdate</span><span class="p">({</span>
+<span class="w">                            </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="nx">newChild</span><span class="p">.</span><span class="nx">_path</span><span class="p">,</span>
+<span class="w">                            </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">hydrate</span><span class="p">(</span><span class="nx">newChild</span><span class="p">)</span>
+<span class="w">                        </span><span class="p">});</span>
+<span class="w">                    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                        </span><span class="kd">const</span><span class="w"> </span><span class="nx">mark</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">childNodesLength</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">2</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">3</span><span class="p">;</span>
+<span class="w">                        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">mark</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="nx">index</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                            </span><span class="k">this</span><span class="p">.</span><span class="nx">updateChildNodes</span><span class="p">();</span>
+<span class="w">                        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                            </span><span class="k">this</span><span class="p">.</span><span class="nx">updateSingleChild</span><span class="p">(</span><span class="nx">index</span><span class="p">);</span>
+<span class="w">                        </span><span class="p">}</span>
+<span class="w">                    </span><span class="p">}</span>
+<span class="w">                </span><span class="p">}</span>
+<span class="w">                </span><span class="nx">MutationObserver2</span><span class="p">.</span><span class="nx">record</span><span class="p">({</span>
+<span class="w">                    </span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;childList&quot;</span><span class="p">,</span>
+<span class="w">                    </span><span class="nx">target</span><span class="o">:</span><span class="w"> </span><span class="k">this</span><span class="p">,</span>
+<span class="w">                    </span><span class="nx">addedNodes</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">                        </span><span class="nx">newChild</span>
+<span class="w">                    </span><span class="p">],</span>
+<span class="w">                    </span><span class="nx">removedNodes</span><span class="o">:</span><span class="w"> </span><span class="nx">isReplace</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="p">[</span>
+<span class="w">                        </span><span class="nx">refChild</span>
+<span class="w">                    </span><span class="p">]</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">                    </span><span class="nx">nextSibling</span><span class="o">:</span><span class="w"> </span><span class="nx">isReplace</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="nx">refChild</span><span class="p">.</span><span class="nx">nextSibling</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">refChild</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">                    </span><span class="cm">/** insertBefore &amp; appendChild */</span><span class="w"> </span><span class="nx">previousSibling</span><span class="o">:</span><span class="w"> </span><span class="nx">newChild</span><span class="p">.</span><span class="nx">previousSibling</span>
+<span class="w">                </span><span class="p">});</span>
+<span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="nx">newChild</span><span class="p">;</span>
+<span class="w">            </span><span class="p">}</span>
+</code></pre></div>
+在 insertBefore 方法中，会根据不同情况选择更新策略：</li>
+<li>如果是唯一子节点，更新整个子节点树</li>
+<li>如果有参考节点，更新单个节点</li>
+<li>根据节点位置决定是更新整个树还是单个节点</li>
+<li>数据更新的入队
+<div class="highlight"><pre><span></span><code><span class="w">            </span><span class="nx">enqueueUpdate</span><span class="p">(</span><span class="nx">payload</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">var</span><span class="w"> </span><span class="nx">_a2</span><span class="p">;</span>
+<span class="w">    </span><span class="p">(</span><span class="nx">_a2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">_root</span><span class="p">)</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">_a2</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="mf">0</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="mf">0</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">_a2</span><span class="p">.</span><span class="nx">enqueueUpdate</span><span class="p">(</span><span class="nx">payload</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+所有节点的更新都会通过 enqueueUpdate 方法进入更新队列</li>
+<li>最终在 performUpdate 中处理更新
+<div class="highlight"><pre><span></span><code><span class="w">            </span><span class="nx">performUpdate</span><span class="p">(</span><span class="nx">initRender</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nx">prerender</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="k">this</span><span class="p">.</span><span class="nx">pendingUpdate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span>
+<span class="w">                </span><span class="kd">const</span><span class="w"> </span><span class="nx">ctx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">_chunk_KEK4XUFF_js__WEBPACK_IMPORTED_MODULE_0__</span><span class="p">.</span><span class="nx">hooks</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="s2">&quot;proxyToRaw&quot;</span><span class="p">,</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">ctx</span><span class="p">);</span>
+<span class="w">                </span><span class="nx">setTimeout</span><span class="p">(()=&gt;{</span>
+<span class="w">                    </span><span class="kd">const</span><span class="w"> </span><span class="nx">setDataMark</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="sb">`</span><span class="si">${</span><span class="nx">SET_DATA</span><span class="si">}</span><span class="sb"> \u5F00\u59CB\u65F6\u95F4\u6233 </span><span class="si">${</span><span class="nb">Date</span><span class="p">.</span><span class="nx">now</span><span class="p">()</span><span class="si">}</span><span class="sb">`</span><span class="p">;</span>
+<span class="w">                    </span><span class="nx">perf</span><span class="p">.</span><span class="nx">start</span><span class="p">(</span><span class="nx">setDataMark</span><span class="p">);</span>
+<span class="w">                    </span><span class="kd">const</span><span class="w"> </span><span class="nx">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="cm">/* @__PURE__ */</span><span class="w"> </span><span class="nb">Object</span><span class="p">.</span><span class="nx">create</span><span class="p">(</span><span class="kc">null</span><span class="p">);</span>
+<span class="w">                    </span><span class="kd">const</span><span class="w"> </span><span class="nx">resetPaths</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Set</span><span class="p">(</span><span class="nx">initRender</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="p">[</span>
+<span class="w">                        </span><span class="s2">&quot;root.cn.[0]&quot;</span><span class="p">,</span>
+<span class="w">                        </span><span class="s2">&quot;root.cn[0]&quot;</span>
+<span class="w">                    </span><span class="p">]</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">[]);</span>
+<span class="w">                    </span><span class="k">while</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">updatePayloads</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0</span><span class="p">){</span>
+<span class="w">                        </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">path</span><span class="p">,</span><span class="w"> </span><span class="nx">value</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">updatePayloads</span><span class="p">.</span><span class="nx">shift</span><span class="p">();</span>
+<span class="w">                        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">path</span><span class="p">.</span><span class="nx">endsWith</span><span class="p">(</span><span class="s2">&quot;cn&quot;</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                            </span><span class="nx">resetPaths</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">path</span><span class="p">);</span>
+<span class="w">                        </span><span class="p">}</span>
+<span class="w">                        </span><span class="nx">data</span><span class="p">[</span><span class="nx">path</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">value</span><span class="p">;</span>
+<span class="w">                    </span><span class="p">}</span>
+<span class="w">                    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;performUpdate data:&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">data</span><span class="p">);</span>
+<span class="w">                    </span><span class="k">for</span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">path</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nx">data</span><span class="p">){</span>
+<span class="w">                        </span><span class="nx">resetPaths</span><span class="p">.</span><span class="nx">forEach</span><span class="p">((</span><span class="nx">p</span><span class="p">)=&gt;{</span>
+<span class="w">                            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">path</span><span class="p">.</span><span class="nx">includes</span><span class="p">(</span><span class="nx">p</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">path</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="nx">p</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                                </span><span class="ow">delete</span><span class="w"> </span><span class="nx">data</span><span class="p">[</span><span class="nx">path</span><span class="p">];</span>
+<span class="w">                            </span><span class="p">}</span>
+<span class="w">                        </span><span class="p">});</span>
+<span class="w">                        </span><span class="kd">const</span><span class="w"> </span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">data</span><span class="p">[</span><span class="nx">path</span><span class="p">];</span>
+<span class="w">                        </span><span class="k">if</span><span class="w"> </span><span class="p">((</span><span class="mf">0</span><span class="p">,</span><span class="nx">_chunk_KEK4XUFF_js__WEBPACK_IMPORTED_MODULE_0__</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">)(</span><span class="nx">value</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                            </span><span class="nx">data</span><span class="p">[</span><span class="nx">path</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">value</span><span class="p">();</span>
+<span class="w">                        </span><span class="p">}</span>
+<span class="w">                    </span><span class="p">}</span>
+<span class="w">                    </span><span class="k">if</span><span class="w"> </span><span class="p">((</span><span class="mf">0</span><span class="p">,</span><span class="nx">_chunk_KEK4XUFF_js__WEBPACK_IMPORTED_MODULE_0__</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">)(</span><span class="nx">prerender</span><span class="p">))</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="nx">prerender</span><span class="p">(</span><span class="nx">data</span><span class="p">);</span>
+<span class="w">                    </span><span class="k">this</span><span class="p">.</span><span class="nx">pendingUpdate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span>
+<span class="w">                    </span><span class="kd">let</span><span class="w"> </span><span class="nx">normalUpdate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{};</span>
+<span class="w">                    </span><span class="kd">const</span><span class="w"> </span><span class="nx">customWrapperMap</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="cm">/* @__PURE__ */</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Map</span><span class="p">();</span>
+<span class="w">                    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">initRender</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                        </span><span class="nx">normalUpdate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">data</span><span class="p">;</span>
+<span class="w">                    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                        </span><span class="k">for</span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nx">data</span><span class="p">){</span>
+<span class="w">                            </span><span class="kd">const</span><span class="w"> </span><span class="nx">dataPathArr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">p</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">);</span>
+<span class="w">                            </span><span class="kd">const</span><span class="w"> </span><span class="nx">found</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">findCustomWrapper</span><span class="p">(</span><span class="k">this</span><span class="p">,</span><span class="w"> </span><span class="nx">dataPathArr</span><span class="p">);</span>
+<span class="w">                            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">found</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                                </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">customWrapper</span><span class="p">,</span><span class="w"> </span><span class="nx">splitedPath</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">found</span><span class="p">;</span>
+<span class="w">                                </span><span class="nx">customWrapperMap</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="nx">customWrapper</span><span class="p">,</span><span class="w"> </span><span class="nb">Object</span><span class="p">.</span><span class="nx">assign</span><span class="p">(</span><span class="nb">Object</span><span class="p">.</span><span class="nx">assign</span><span class="p">({},</span><span class="w"> </span><span class="nx">customWrapperMap</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">customWrapper</span><span class="p">)</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="p">{}),</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                                    </span><span class="p">[</span><span class="sb">`i.</span><span class="si">${</span><span class="nx">splitedPath</span><span class="si">}</span><span class="sb">`</span><span class="p">]</span><span class="o">:</span><span class="w"> </span><span class="nx">data</span><span class="p">[</span><span class="nx">p</span><span class="p">]</span>
+<span class="w">                                </span><span class="p">}));</span>
+<span class="w">                            </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                                </span><span class="nx">normalUpdate</span><span class="p">[</span><span class="nx">p</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">data</span><span class="p">[</span><span class="nx">p</span><span class="p">];</span>
+<span class="w">                            </span><span class="p">}</span>
+<span class="w">                        </span><span class="p">}</span>
+<span class="w">                    </span><span class="p">}</span>
+<span class="w">                    </span><span class="kd">const</span><span class="w"> </span><span class="nx">customWrapperCount</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">customWrapperMap</span><span class="p">.</span><span class="nx">size</span><span class="p">;</span>
+<span class="w">                    </span><span class="kd">const</span><span class="w"> </span><span class="nx">isNeedNormalUpdate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Object</span><span class="p">.</span><span class="nx">keys</span><span class="p">(</span><span class="nx">normalUpdate</span><span class="p">).</span><span class="nx">length</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0</span><span class="p">;</span>
+<span class="w">                    </span><span class="kd">const</span><span class="w"> </span><span class="nx">updateArrLen</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">customWrapperCount</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="nx">isNeedNormalUpdate</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="mf">1</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="p">);</span>
+<span class="w">                    </span><span class="kd">let</span><span class="w"> </span><span class="nx">executeTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0</span><span class="p">;</span>
+<span class="w">                    </span><span class="kd">const</span><span class="w"> </span><span class="nx">cb</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()=&gt;{</span>
+<span class="w">                        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">++</span><span class="nx">executeTime</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">updateArrLen</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                            </span><span class="nx">perf</span><span class="p">.</span><span class="nx">stop</span><span class="p">(</span><span class="nx">setDataMark</span><span class="p">);</span>
+<span class="w">                            </span><span class="k">this</span><span class="p">.</span><span class="nx">flushUpdateCallback</span><span class="p">();</span>
+<span class="w">                            </span><span class="nx">initRender</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">perf</span><span class="p">.</span><span class="nx">stop</span><span class="p">(</span><span class="nx">PAGE_INIT</span><span class="p">);</span>
+<span class="w">                        </span><span class="p">}</span>
+<span class="w">                    </span><span class="p">};</span>
+<span class="w">                    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">customWrapperCount</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                        </span><span class="nx">customWrapperMap</span><span class="p">.</span><span class="nx">forEach</span><span class="p">((</span><span class="nx">data2</span><span class="p">,</span><span class="w"> </span><span class="nx">ctx2</span><span class="p">)=&gt;{</span>
+<span class="w">                            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">options</span><span class="p">.</span><span class="nx">debug</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                                </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;custom wrapper setData: &quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">data2</span><span class="p">);</span>
+<span class="w">                            </span><span class="p">}</span>
+<span class="w">                            </span><span class="nx">ctx2</span><span class="p">.</span><span class="nx">setData</span><span class="p">(</span><span class="nx">data2</span><span class="p">,</span><span class="w"> </span><span class="nx">cb</span><span class="p">);</span>
+<span class="w">                        </span><span class="p">});</span>
+<span class="w">                    </span><span class="p">}</span>
+<span class="w">                    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">isNeedNormalUpdate</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">options</span><span class="p">.</span><span class="nx">debug</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                            </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;page setData:&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">normalUpdate</span><span class="p">);</span>
+<span class="w">                        </span><span class="p">}</span>
+<span class="w">                        </span><span class="nx">ctx</span><span class="p">.</span><span class="nx">setData</span><span class="p">(</span><span class="nx">normalUpdate</span><span class="p">,</span><span class="w"> </span><span class="nx">cb</span><span class="p">);</span>
+<span class="w">                    </span><span class="p">}</span>
+<span class="w">                </span><span class="p">},</span><span class="w"> </span><span class="mf">0</span><span class="p">);</span>
+</code></pre></div>
+这个方法会：</li>
+<li>收集所有待更新的数据</li>
+<li>处理更新路径</li>
+<li>区分普通更新和自定义组件更新</li>
+<li>最终通过 setData 更新到视图层
+整个过程形成了一个完整的数据收集链路：</li>
+<li>节点变化触发更新</li>
+<li>更新进入队列 </li>
+<li>hydrate 处理节点数据</li>
+<li>performUpdate 统一处理更新</li>
+<li>setData 更新到视图层
+这样的设计确保了 React 组件树的变化能够被正确地收集和同步到小程序的数据层。</li>
+</ol>
+<h3>createReactApp 和 Page 中的数据是如何通信的</h3>
+<p>从代码中可以看出，createReactApp 和 Page 的数据通信主要通过以下几个关键步骤：
+1. 在 createReactApp 中创建 AppWrapper 组件，它负责管理所有页面：
+<div class="highlight"><pre><span></span><code><span class="w">    </span><span class="kd">class</span><span class="w"> </span><span class="nx">AppWrapper</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="nx">react</span><span class="p">.</span><span class="nx">Component</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">mount</span><span class="p">(</span><span class="nx">pageComponent</span><span class="p">,</span><span class="w"> </span><span class="nx">id</span><span class="p">,</span><span class="w"> </span><span class="nx">cb</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="kd">const</span><span class="w"> </span><span class="nx">pageWrapper</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">connectReactPage</span><span class="p">(</span><span class="nx">react</span><span class="p">,</span><span class="w"> </span><span class="nx">id</span><span class="p">)(</span><span class="nx">pageComponent</span><span class="p">);</span>
+<span class="w">            </span><span class="kd">const</span><span class="w"> </span><span class="nx">key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">id</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">pageKeyId</span><span class="p">();</span>
+<span class="w">            </span><span class="kd">const</span><span class="w"> </span><span class="nx">page</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()=&gt;</span><span class="nx">h$1</span><span class="p">(</span><span class="nx">pageWrapper</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="nx">key</span><span class="p">,</span>
+<span class="w">                    </span><span class="nx">tid</span><span class="o">:</span><span class="w"> </span><span class="nx">id</span>
+<span class="w">                </span><span class="p">});</span>
+<span class="w">            </span><span class="k">this</span><span class="p">.</span><span class="nx">pages</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">page</span><span class="p">);</span>
+<span class="w">            </span><span class="k">this</span><span class="p">.</span><span class="nx">forceUpdate</span><span class="p">((...</span><span class="nx">args</span><span class="p">)=&gt;{</span>
+<span class="w">                </span><span class="nx">_chunk_R2V3WQ7B_js__WEBPACK_IMPORTED_MODULE_0__</span><span class="p">.</span><span class="nx">perf</span><span class="p">.</span><span class="nx">stop</span><span class="p">(</span><span class="nx">_chunk_R2V3WQ7B_js__WEBPACK_IMPORTED_MODULE_0__</span><span class="p">.</span><span class="nx">PAGE_INIT</span><span class="p">);</span>
+<span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="nx">cb</span><span class="p">(...</span><span class="nx">args</span><span class="p">);</span>
+<span class="w">            </span><span class="p">});</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="nx">unmount</span><span class="p">(</span><span class="nx">id</span><span class="p">,</span><span class="w"> </span><span class="nx">cb</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="kd">const</span><span class="w"> </span><span class="nx">elements</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">elements</span><span class="p">;</span>
+<span class="w">            </span><span class="kd">const</span><span class="w"> </span><span class="nx">idx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">elements</span><span class="p">.</span><span class="nx">findIndex</span><span class="p">((</span><span class="nx">item</span><span class="p">)=&gt;</span><span class="nx">item</span><span class="p">.</span><span class="nx">props</span><span class="p">.</span><span class="nx">tid</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">id</span><span class="p">);</span>
+<span class="w">            </span><span class="nx">elements</span><span class="p">.</span><span class="nx">splice</span><span class="p">(</span><span class="nx">idx</span><span class="p">,</span><span class="w"> </span><span class="mf">1</span><span class="p">);</span>
+<span class="w">            </span><span class="k">this</span><span class="p">.</span><span class="nx">forceUpdate</span><span class="p">(</span><span class="nx">cb</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="nx">render</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">pages</span><span class="p">,</span><span class="w"> </span><span class="nx">elements</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">;</span>
+<span class="w">            </span><span class="k">while</span><span class="p">(</span><span class="nx">pages</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0</span><span class="p">){</span>
+<span class="w">                </span><span class="kd">const</span><span class="w"> </span><span class="nx">page</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">pages</span><span class="p">.</span><span class="nx">pop</span><span class="p">();</span>
+<span class="w">                </span><span class="nx">elements</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">page</span><span class="p">());</span>
+<span class="w">            </span><span class="p">}</span>
+</code></pre></div></p>
+<ol>
+<li>
+<p>当页面需要挂载时，通过 connectReactPage 创建页面包装器：
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">connectReactPage</span><span class="p">(</span><span class="nx">R</span><span class="p">,</span><span class="w"> </span><span class="nx">id</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="nx">Page</span><span class="p">)=&gt;{</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">isReactComponent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">isClassComponent</span><span class="p">(</span><span class="nx">R</span><span class="p">,</span><span class="w"> </span><span class="nx">Page</span><span class="p">);</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">inject</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">node</span><span class="p">)=&gt;</span><span class="nx">node</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="p">(</span><span class="mf">0</span><span class="p">,</span><span class="nx">_chunk_R2V3WQ7B_js__WEBPACK_IMPORTED_MODULE_0__</span><span class="p">.</span><span class="nx">injectPageInstance</span><span class="p">)(</span><span class="nx">node</span><span class="p">,</span><span class="w"> </span><span class="nx">id</span><span class="p">);</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">refs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">isReactComponent</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">ref</span><span class="o">:</span><span class="w"> </span><span class="nx">inject</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">forwardedRef</span><span class="o">:</span><span class="w"> </span><span class="nx">inject</span><span class="p">,</span>
+<span class="w">            </span><span class="c1">// 兼容 react-redux 7.20.1+</span>
+<span class="w">            </span><span class="nx">reactReduxForwardedRef</span><span class="o">:</span><span class="w"> </span><span class="nx">inject</span>
+<span class="w">        </span><span class="p">};</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">reactMeta</span><span class="p">.</span><span class="nx">PageContext</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">_chunk_KEK4XUFF_js__WEBPACK_IMPORTED_MODULE_1__</span><span class="p">.</span><span class="nx">EMPTY_OBJ</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">reactMeta</span><span class="p">.</span><span class="nx">PageContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">R</span><span class="p">.</span><span class="nx">createContext</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nx">PageWrapper</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="nx">R</span><span class="p">.</span><span class="nx">Component</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">static</span><span class="w"> </span><span class="nx">getDerivedStateFromError</span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="kd">var</span><span class="w"> </span><span class="nx">_a</span><span class="p">,</span><span class="w"> </span><span class="nx">_b</span><span class="p">;</span>
+<span class="w">                </span><span class="p">(</span><span class="nx">_b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">_a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">_chunk_R2V3WQ7B_js__WEBPACK_IMPORTED_MODULE_0__</span><span class="p">.</span><span class="nx">Current</span><span class="p">.</span><span class="nx">app</span><span class="p">)</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">_a</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="mf">0</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="mf">0</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">_a</span><span class="p">.</span><span class="nx">onError</span><span class="p">)</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">_b</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="mf">0</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="mf">0</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">_b</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">_a</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">.</span><span class="nx">message</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">error</span><span class="p">.</span><span class="nx">stack</span><span class="p">);</span>
+<span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="nx">hasError</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">                </span><span class="p">};</span>
+<span class="w">                </span><span class="p">};</span>
+<span class="w">            </span><span class="c1">// React 16 uncaught error 会导致整个应用 crash，</span>
+<span class="w">            </span><span class="c1">// 目前把错误缩小到页面</span>
+<span class="w">            </span><span class="nx">componentDidCatch</span><span class="p">(</span><span class="nx">error</span><span class="p">,</span><span class="w"> </span><span class="nx">info</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="kc">true</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="nx">console</span><span class="p">.</span><span class="nx">warn</span><span class="p">(</span><span class="nx">error</span><span class="p">);</span>
+<span class="w">                    </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="nx">info</span><span class="p">.</span><span class="nx">componentStack</span><span class="p">);</span>
+<span class="w">                </span><span class="p">}</span>
+<span class="w">                </span><span class="p">}</span>
+<span class="w">            </span><span class="nx">render</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="kd">const</span><span class="w"> </span><span class="nx">children</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">hasError</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="p">[]</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">h$1</span><span class="p">(</span><span class="nx">reactMeta</span><span class="p">.</span><span class="nx">PageContext</span><span class="p">.</span><span class="nx">Provider</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="nx">id</span>
+<span class="w">                </span><span class="p">},</span><span class="w"> </span><span class="nx">h$1</span><span class="p">(</span><span class="nx">Page</span><span class="p">,</span><span class="w"> </span><span class="nb">Object</span><span class="p">.</span><span class="nx">assign</span><span class="p">(</span><span class="nb">Object</span><span class="p">.</span><span class="nx">assign</span><span class="p">({},</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">),</span><span class="w"> </span><span class="nx">refs</span><span class="p">)));</span>
+<span class="w">                </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="kc">false</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="k">return</span><span class="w"> </span><span class="nx">h$1</span><span class="p">(</span><span class="s2">&quot;root&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                        </span><span class="nx">id</span>
+<span class="w">                    </span><span class="p">},</span><span class="w"> </span><span class="nx">children</span><span class="p">);</span>
+<span class="w">                </span><span class="p">}</span>
+<span class="w">                    </span><span class="p">},</span><span class="w"> </span><span class="nx">children</span><span class="p">);</span>
+<span class="w">            </span><span class="kr">constructor</span><span class="p">(){</span>
+<span class="w">                </span><span class="k">super</span><span class="p">(...</span><span class="nx">arguments</span><span class="p">);</span>
+<span class="w">                </span><span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="nx">hasError</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span>
+<span class="w">                </span><span class="p">};</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">                </span><span class="p">};</span>
+<span class="w">    </span><span class="p">};</span>
+</code></pre></div></p>
+</li>
+<li>
+<p>页面配置通过 createPageConfig 创建，在这里处理页面的生命周期和数据更新：
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">createPageConfig</span><span class="p">(</span><span class="nx">component</span><span class="p">,</span><span class="w"> </span><span class="nx">pageName</span><span class="p">,</span><span class="w"> </span><span class="nx">data</span><span class="p">,</span><span class="w"> </span><span class="nx">pageConfig</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">pageName</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">pageName</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="mf">0</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="nx">pageName</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="sb">`taro_page_</span><span class="si">${</span><span class="nx">pageId</span><span class="p">()</span><span class="si">}</span><span class="sb">`</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="p">[</span><span class="nx">ONLOAD</span><span class="p">,</span><span class="w"> </span><span class="nx">ONUNLOAD</span><span class="p">,</span><span class="w"> </span><span class="nx">ONREADY</span><span class="p">,</span><span class="w"> </span><span class="nx">ONSHOW</span><span class="p">,</span><span class="w"> </span><span class="nx">ONHIDE</span><span class="p">,</span><span class="w"> </span><span class="nx">LIFECYCLES</span><span class="p">,</span><span class="w"> </span><span class="nx">SIDE_EFFECT_LIFECYCLES</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">_chunk_KEK4XUFF_js__WEBPACK_IMPORTED_MODULE_0__</span><span class="p">.</span><span class="nx">hooks</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="s2">&quot;getMiniLifecycleImpl&quot;</span><span class="p">).</span><span class="nx">page</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nx">pageElement</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nx">unmounting</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nx">prepareMountList</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[];</span>
+<span class="w">    </span><span class="kd">function</span><span class="w"> </span><span class="nx">setCurrentRouter</span><span class="p">(</span><span class="nx">page</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">router</span><span class="w"> </span><span class="o">=</span><span class="w">  </span><span class="kc">false</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="mf">0</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">page</span><span class="p">.</span><span class="nx">route</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">page</span><span class="p">.</span><span class="nx">__route__</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">page</span><span class="p">.</span><span class="nx">$taroPath</span><span class="p">;</span>
+<span class="w">        </span><span class="nx">Current</span><span class="p">.</span><span class="nx">router</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">params</span><span class="o">:</span><span class="w"> </span><span class="nx">page</span><span class="p">.</span><span class="nx">$taroParams</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="nx">addLeadingSlash</span><span class="p">(</span><span class="nx">router</span><span class="p">),</span>
+<span class="w">            </span><span class="nx">$taroPath</span><span class="o">:</span><span class="w"> </span><span class="nx">page</span><span class="p">.</span><span class="nx">$taroPath</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">onReady</span><span class="o">:</span><span class="w"> </span><span class="nx">getOnReadyEventKey</span><span class="p">(</span><span class="nx">id</span><span class="p">),</span>
+<span class="w">            </span><span class="nx">onShow</span><span class="o">:</span><span class="w"> </span><span class="nx">getOnShowEventKey</span><span class="p">(</span><span class="nx">id</span><span class="p">),</span>
+<span class="w">            </span><span class="nx">onHide</span><span class="o">:</span><span class="w"> </span><span class="nx">getOnHideEventKey</span><span class="p">(</span><span class="nx">id</span><span class="p">)</span>
+<span class="w">        </span><span class="p">};</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="mf">0</span><span class="p">,</span><span class="nx">_chunk_KEK4XUFF_js__WEBPACK_IMPORTED_MODULE_0__</span><span class="p">.</span><span class="nx">isUndefined</span><span class="p">)(</span><span class="nx">page</span><span class="p">.</span><span class="nx">exitState</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">Current</span><span class="p">.</span><span class="nx">router</span><span class="p">.</span><span class="nx">exitState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">page</span><span class="p">.</span><span class="nx">exitState</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nx">loadResolver</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nx">hasLoaded</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="p">[</span><span class="nx">ONLOAD</span><span class="p">]</span><span class="w"> </span><span class="p">(</span><span class="nx">options2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{},</span><span class="w"> </span><span class="nx">cb</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">hasLoaded</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Promise</span><span class="p">((</span><span class="nx">resolve</span><span class="p">)=&gt;{</span>
+<span class="w">                </span><span class="nx">loadResolver</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">resolve</span><span class="p">;</span>
+<span class="w">            </span><span class="p">});</span>
+<span class="w">            </span><span class="nx">perf</span><span class="p">.</span><span class="nx">start</span><span class="p">(</span><span class="nx">PAGE_INIT</span><span class="p">);</span>
+<span class="w">            </span><span class="nx">Current</span><span class="p">.</span><span class="nx">page</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">;</span>
+<span class="w">            </span><span class="k">this</span><span class="p">.</span><span class="nx">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">pageConfig</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="p">{};</span>
+<span class="w">            </span><span class="kd">const</span><span class="w"> </span><span class="nx">uniqueOptions</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Object</span><span class="p">.</span><span class="nx">assign</span><span class="p">({},</span><span class="w"> </span><span class="nx">options2</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nx">$taroTimestamp</span><span class="o">:</span><span class="w"> </span><span class="nb">Date</span><span class="p">.</span><span class="nx">now</span><span class="p">()</span>
+<span class="w">            </span><span class="p">});</span>
+<span class="w">            </span><span class="kd">const</span><span class="w"> </span><span class="nx">$taroPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">$taroPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">getPath</span><span class="p">(</span><span class="nx">id</span><span class="p">,</span><span class="w"> </span><span class="nx">uniqueOptions</span><span class="p">);</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="kc">false</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">$taroParams</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="k">this</span><span class="p">.</span><span class="nx">$taroParams</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">uniqueOptions</span><span class="p">;</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">            </span><span class="nx">setCurrentRouter</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="kc">true</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nx">window2</span><span class="p">.</span><span class="nx">trigger</span><span class="p">(</span><span class="nx">CONTEXT_ACTIONS</span><span class="p">.</span><span class="nx">INIT</span><span class="p">,</span><span class="w"> </span><span class="nx">$taroPath</span><span class="p">);</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">            </span><span class="kd">const</span><span class="w"> </span><span class="nx">mount</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()=&gt;{</span>
+<span class="w">                </span><span class="nx">Current</span><span class="p">.</span><span class="nx">app</span><span class="p">.</span><span class="nx">mount</span><span class="p">(</span><span class="nx">component</span><span class="p">,</span><span class="w"> </span><span class="nx">$taroPath</span><span class="p">,</span><span class="w"> </span><span class="p">()=&gt;{</span>
+<span class="w">                    </span><span class="nx">pageElement</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">env</span><span class="p">.</span><span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="nx">$taroPath</span><span class="p">);</span>
+<span class="w">                    </span><span class="p">(</span><span class="mf">0</span><span class="p">,</span><span class="nx">_chunk_KEK4XUFF_js__WEBPACK_IMPORTED_MODULE_0__</span><span class="p">.</span><span class="nx">ensure</span><span class="p">)(</span><span class="nx">pageElement</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;\u6CA1\u6709\u627E\u5230\u9875\u9762\u5B9E\u4F8B\u3002&quot;</span><span class="p">);</span>
+<span class="w">                    </span><span class="nx">safeExecute</span><span class="p">(</span><span class="nx">$taroPath</span><span class="p">,</span><span class="w"> </span><span class="nx">ON_LOAD</span><span class="p">,</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">$taroParams</span><span class="p">);</span>
+<span class="w">                    </span><span class="nx">loadResolver</span><span class="p">();</span>
+<span class="w">                    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="kc">true</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                        </span><span class="nx">pageElement</span><span class="p">.</span><span class="nx">ctx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">;</span>
+<span class="w">                        </span><span class="nx">pageElement</span><span class="p">.</span><span class="nx">performUpdate</span><span class="p">(</span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nx">cb</span><span class="p">);</span>
+<span class="w">                    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{}</span>
+<span class="w">                </span><span class="p">});</span>
+<span class="w">            </span><span class="p">};</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">unmounting</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nx">prepareMountList</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">mount</span><span class="p">);</span>
+<span class="w">            </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nx">mount</span><span class="p">();</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
+</code></pre></div>
+主要通信流程是：</p>
+</li>
+<li>数据流向：</li>
+<li>AppWrapper 维护页面栈</li>
+<li>通过 mount/unmount 方法管理页面的加载和卸载</li>
+<li>页面实例通过 performUpdate 方法更新数据</li>
+<li>最终通过小程序的 setData 实现数据同步</li>
+<li>更新机制：</li>
+<li>页面更新时会调用 TaroRootElement 的 performUpdate：
+<div class="highlight"><pre><span></span><code><span class="w">            </span><span class="nx">performUpdate</span><span class="p">(</span><span class="nx">initRender</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nx">prerender</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="k">this</span><span class="p">.</span><span class="nx">pendingUpdate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span>
+<span class="w">                </span><span class="kd">const</span><span class="w"> </span><span class="nx">ctx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">_chunk_KEK4XUFF_js__WEBPACK_IMPORTED_MODULE_0__</span><span class="p">.</span><span class="nx">hooks</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="s2">&quot;proxyToRaw&quot;</span><span class="p">,</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">ctx</span><span class="p">);</span>
+<span class="w">                </span><span class="nx">setTimeout</span><span class="p">(()=&gt;{</span>
+<span class="w">                    </span><span class="kd">const</span><span class="w"> </span><span class="nx">setDataMark</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="sb">`</span><span class="si">${</span><span class="nx">SET_DATA</span><span class="si">}</span><span class="sb"> \u5F00\u59CB\u65F6\u95F4\u6233 </span><span class="si">${</span><span class="nb">Date</span><span class="p">.</span><span class="nx">now</span><span class="p">()</span><span class="si">}</span><span class="sb">`</span><span class="p">;</span>
+<span class="w">                    </span><span class="nx">perf</span><span class="p">.</span><span class="nx">start</span><span class="p">(</span><span class="nx">setDataMark</span><span class="p">);</span>
+<span class="w">                    </span><span class="kd">const</span><span class="w"> </span><span class="nx">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="cm">/* @__PURE__ */</span><span class="w"> </span><span class="nb">Object</span><span class="p">.</span><span class="nx">create</span><span class="p">(</span><span class="kc">null</span><span class="p">);</span>
+<span class="w">                    </span><span class="kd">const</span><span class="w"> </span><span class="nx">resetPaths</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Set</span><span class="p">(</span><span class="nx">initRender</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="p">[</span>
+<span class="w">                        </span><span class="s2">&quot;root.cn.[0]&quot;</span><span class="p">,</span>
+<span class="w">                        </span><span class="s2">&quot;root.cn[0]&quot;</span>
+<span class="w">                    </span><span class="p">]</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">[]);</span>
+<span class="w">                    </span><span class="k">while</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">updatePayloads</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0</span><span class="p">){</span>
+<span class="w">                        </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">path</span><span class="p">,</span><span class="w"> </span><span class="nx">value</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">updatePayloads</span><span class="p">.</span><span class="nx">shift</span><span class="p">();</span>
+<span class="w">                        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">path</span><span class="p">.</span><span class="nx">endsWith</span><span class="p">(</span><span class="s2">&quot;cn&quot;</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                            </span><span class="nx">resetPaths</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">path</span><span class="p">);</span>
+<span class="w">                        </span><span class="p">}</span>
+<span class="w">                        </span><span class="nx">data</span><span class="p">[</span><span class="nx">path</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">value</span><span class="p">;</span>
+<span class="w">                    </span><span class="p">}</span>
+<span class="w">                    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;performUpdate data:&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">data</span><span class="p">);</span>
+<span class="w">                    </span><span class="k">for</span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">path</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nx">data</span><span class="p">){</span>
+<span class="w">                        </span><span class="nx">resetPaths</span><span class="p">.</span><span class="nx">forEach</span><span class="p">((</span><span class="nx">p</span><span class="p">)=&gt;{</span>
+<span class="w">                            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">path</span><span class="p">.</span><span class="nx">includes</span><span class="p">(</span><span class="nx">p</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">path</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="nx">p</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                                </span><span class="ow">delete</span><span class="w"> </span><span class="nx">data</span><span class="p">[</span><span class="nx">path</span><span class="p">];</span>
+<span class="w">                            </span><span class="p">}</span>
+<span class="w">                        </span><span class="p">});</span>
+<span class="w">                        </span><span class="kd">const</span><span class="w"> </span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">data</span><span class="p">[</span><span class="nx">path</span><span class="p">];</span>
+<span class="w">                        </span><span class="k">if</span><span class="w"> </span><span class="p">((</span><span class="mf">0</span><span class="p">,</span><span class="nx">_chunk_KEK4XUFF_js__WEBPACK_IMPORTED_MODULE_0__</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">)(</span><span class="nx">value</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                            </span><span class="nx">data</span><span class="p">[</span><span class="nx">path</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">value</span><span class="p">();</span>
+<span class="w">                        </span><span class="p">}</span>
+<span class="w">                    </span><span class="p">}</span>
+<span class="w">                    </span><span class="k">if</span><span class="w"> </span><span class="p">((</span><span class="mf">0</span><span class="p">,</span><span class="nx">_chunk_KEK4XUFF_js__WEBPACK_IMPORTED_MODULE_0__</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">)(</span><span class="nx">prerender</span><span class="p">))</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="nx">prerender</span><span class="p">(</span><span class="nx">data</span><span class="p">);</span>
+<span class="w">                    </span><span class="k">this</span><span class="p">.</span><span class="nx">pendingUpdate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span>
+<span class="w">                    </span><span class="kd">let</span><span class="w"> </span><span class="nx">normalUpdate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{};</span>
+<span class="w">                    </span><span class="kd">const</span><span class="w"> </span><span class="nx">customWrapperMap</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="cm">/* @__PURE__ */</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Map</span><span class="p">();</span>
+<span class="w">                    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">initRender</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                        </span><span class="nx">normalUpdate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">data</span><span class="p">;</span>
+<span class="w">                    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                        </span><span class="k">for</span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nx">data</span><span class="p">){</span>
+<span class="w">                            </span><span class="kd">const</span><span class="w"> </span><span class="nx">dataPathArr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">p</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">);</span>
+<span class="w">                            </span><span class="kd">const</span><span class="w"> </span><span class="nx">found</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">findCustomWrapper</span><span class="p">(</span><span class="k">this</span><span class="p">,</span><span class="w"> </span><span class="nx">dataPathArr</span><span class="p">);</span>
+<span class="w">                            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">found</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                                </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">customWrapper</span><span class="p">,</span><span class="w"> </span><span class="nx">splitedPath</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">found</span><span class="p">;</span>
+<span class="w">                                </span><span class="nx">customWrapperMap</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="nx">customWrapper</span><span class="p">,</span><span class="w"> </span><span class="nb">Object</span><span class="p">.</span><span class="nx">assign</span><span class="p">(</span><span class="nb">Object</span><span class="p">.</span><span class="nx">assign</span><span class="p">({},</span><span class="w"> </span><span class="nx">customWrapperMap</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">customWrapper</span><span class="p">)</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="p">{}),</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                                    </span><span class="p">[</span><span class="sb">`i.</span><span class="si">${</span><span class="nx">splitedPath</span><span class="si">}</span><span class="sb">`</span><span class="p">]</span><span class="o">:</span><span class="w"> </span><span class="nx">data</span><span class="p">[</span><span class="nx">p</span><span class="p">]</span>
+<span class="w">                                </span><span class="p">}));</span>
+<span class="w">                            </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                                </span><span class="nx">normalUpdate</span><span class="p">[</span><span class="nx">p</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">data</span><span class="p">[</span><span class="nx">p</span><span class="p">];</span>
+<span class="w">                            </span><span class="p">}</span>
+<span class="w">                        </span><span class="p">}</span>
+<span class="w">                    </span><span class="p">}</span>
+<span class="w">                    </span><span class="kd">const</span><span class="w"> </span><span class="nx">customWrapperCount</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">customWrapperMap</span><span class="p">.</span><span class="nx">size</span><span class="p">;</span>
+<span class="w">                    </span><span class="kd">const</span><span class="w"> </span><span class="nx">isNeedNormalUpdate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Object</span><span class="p">.</span><span class="nx">keys</span><span class="p">(</span><span class="nx">normalUpdate</span><span class="p">).</span><span class="nx">length</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0</span><span class="p">;</span>
+<span class="w">                    </span><span class="kd">const</span><span class="w"> </span><span class="nx">updateArrLen</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">customWrapperCount</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="nx">isNeedNormalUpdate</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="mf">1</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="p">);</span>
+<span class="w">                    </span><span class="kd">let</span><span class="w"> </span><span class="nx">executeTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0</span><span class="p">;</span>
+<span class="w">                    </span><span class="kd">const</span><span class="w"> </span><span class="nx">cb</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()=&gt;{</span>
+<span class="w">                        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">++</span><span class="nx">executeTime</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">updateArrLen</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                            </span><span class="nx">perf</span><span class="p">.</span><span class="nx">stop</span><span class="p">(</span><span class="nx">setDataMark</span><span class="p">);</span>
+<span class="w">                            </span><span class="k">this</span><span class="p">.</span><span class="nx">flushUpdateCallback</span><span class="p">();</span>
+<span class="w">                            </span><span class="nx">initRender</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">perf</span><span class="p">.</span><span class="nx">stop</span><span class="p">(</span><span class="nx">PAGE_INIT</span><span class="p">);</span>
+<span class="w">                        </span><span class="p">}</span>
+<span class="w">                    </span><span class="p">};</span>
+<span class="w">                    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">customWrapperCount</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                        </span><span class="nx">customWrapperMap</span><span class="p">.</span><span class="nx">forEach</span><span class="p">((</span><span class="nx">data2</span><span class="p">,</span><span class="w"> </span><span class="nx">ctx2</span><span class="p">)=&gt;{</span>
+<span class="w">                            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">options</span><span class="p">.</span><span class="nx">debug</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                                </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;custom wrapper setData: &quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">data2</span><span class="p">);</span>
+<span class="w">                            </span><span class="p">}</span>
+<span class="w">                            </span><span class="nx">ctx2</span><span class="p">.</span><span class="nx">setData</span><span class="p">(</span><span class="nx">data2</span><span class="p">,</span><span class="w"> </span><span class="nx">cb</span><span class="p">);</span>
+<span class="w">                        </span><span class="p">});</span>
+<span class="w">                    </span><span class="p">}</span>
+<span class="w">                    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">isNeedNormalUpdate</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">options</span><span class="p">.</span><span class="nx">debug</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                            </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;page setData:&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">normalUpdate</span><span class="p">);</span>
+<span class="w">                        </span><span class="p">}</span>
+<span class="w">                        </span><span class="nx">ctx</span><span class="p">.</span><span class="nx">setData</span><span class="p">(</span><span class="nx">normalUpdate</span><span class="p">,</span><span class="w"> </span><span class="nx">cb</span><span class="p">);</span>
+<span class="w">                    </span><span class="p">}</span>
+<span class="w">                </span><span class="p">},</span><span class="w"> </span><span class="mf">0</span><span class="p">);</span>
+</code></pre></div></li>
+<li>事件处理</li>
+<li>React 事件通过 unstable_batchedUpdates 处理批量更新
+<div class="highlight"><pre><span></span><code><span class="kd">var</span><span class="w"> </span><span class="nx">unstable_batchedUpdates</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">fn</span><span class="p">,</span><span class="w"> </span><span class="nx">a</span><span class="p">)=&gt;{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">isInsideEventHandler</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">fn</span><span class="p">(</span><span class="nx">a</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">isInsideEventHandler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span>
+<span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">TaroReconciler</span><span class="p">.</span><span class="nx">batchedUpdates</span><span class="p">(</span><span class="nx">fn</span><span class="p">,</span><span class="w"> </span><span class="nx">a</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">finally</span><span class="p">{</span>
+<span class="w">        </span><span class="nx">isInsideEventHandler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span>
+<span class="w">        </span><span class="nx">finishEventHandler</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div>
+整个通信过程形成了一个完整的链路：</li>
+<li>createReactApp 创建应用实例</li>
+<li>connectReactPage 连接 React 组件与小程序页面</li>
+<li>createPageConfig 处理页面配置和生命周期</li>
+<li>performUpdate 统一处理数据更新</li>
+<li>setData 同步到小程序层
+这样的设计确保了 React 组件和小程序页面之间的数据能够保持同步，同时保持了各自的生命周期管理。</li>
+</ol>
+<h3>AppWrapper 是怎么维护页面栈的，小程序页面切换的时候，如何获取页面栈中的数据？这里有没有 app.js 和 page 的共享数据</h3>
+<p>从代码中可以分析出 AppWrapper 维护页面栈的机制：
+1. AppWrapper 通过两个数组维护页面状态：
+<div class="highlight"><pre><span></span><code><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nx">PageWrapper</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="nx">R</span><span class="p">.</span><span class="nx">Component</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">static</span><span class="w"> </span><span class="nx">getDerivedStateFromError</span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="kd">var</span><span class="w"> </span><span class="nx">_a</span><span class="p">,</span><span class="w"> </span><span class="nx">_b</span><span class="p">;</span>
+<span class="w">                </span><span class="p">(</span><span class="nx">_b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">_a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">_chunk_R2V3WQ7B_js__WEBPACK_IMPORTED_MODULE_0__</span><span class="p">.</span><span class="nx">Current</span><span class="p">.</span><span class="nx">app</span><span class="p">)</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">_a</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="mf">0</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="mf">0</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">_a</span><span class="p">.</span><span class="nx">onError</span><span class="p">)</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">_b</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="mf">0</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="mf">0</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">_b</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">_a</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">.</span><span class="nx">message</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">error</span><span class="p">.</span><span class="nx">stack</span><span class="p">);</span>
+<span class="w">                </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="nx">hasError</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">                </span><span class="p">};</span>
+<span class="w">                </span><span class="p">};</span>
+<span class="w">            </span><span class="c1">// React 16 uncaught error 会导致整个应用 crash，</span>
+<span class="w">            </span><span class="c1">// 目前把错误缩小到页面</span>
+<span class="w">            </span><span class="nx">componentDidCatch</span><span class="p">(</span><span class="nx">error</span><span class="p">,</span><span class="w"> </span><span class="nx">info</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="kc">true</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="nx">console</span><span class="p">.</span><span class="nx">warn</span><span class="p">(</span><span class="nx">error</span><span class="p">);</span>
+<span class="w">                    </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="nx">info</span><span class="p">.</span><span class="nx">componentStack</span><span class="p">);</span>
+<span class="w">                </span><span class="p">}</span>
+<span class="w">                </span><span class="p">}</span>
+<span class="w">            </span><span class="nx">render</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="kd">const</span><span class="w"> </span><span class="nx">children</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">hasError</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="p">[]</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">h$1</span><span class="p">(</span><span class="nx">reactMeta</span><span class="p">.</span><span class="nx">PageContext</span><span class="p">.</span><span class="nx">Provider</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="nx">id</span>
+<span class="w">                </span><span class="p">},</span><span class="w"> </span><span class="nx">h$1</span><span class="p">(</span><span class="nx">Page</span><span class="p">,</span><span class="w"> </span><span class="nb">Object</span><span class="p">.</span><span class="nx">assign</span><span class="p">(</span><span class="nb">Object</span><span class="p">.</span><span class="nx">assign</span><span class="p">({},</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">),</span><span class="w"> </span><span class="nx">refs</span><span class="p">)));</span>
+<span class="w">                </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="kc">false</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="k">return</span><span class="w"> </span><span class="nx">h$1</span><span class="p">(</span><span class="s2">&quot;root&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+</code></pre></div>
+this.pages: 存储待渲染的页面组件</p>
+<p>this.elements: 存储已渲染的页面元素
+2. 页面切换时的数据处理：
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">createPageConfig</span><span class="p">(</span><span class="nx">component</span><span class="p">,</span><span class="w"> </span><span class="nx">pageName</span><span class="p">,</span><span class="w"> </span><span class="nx">data</span><span class="p">,</span><span class="w"> </span><span class="nx">pageConfig</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">pageName</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">pageName</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="mf">0</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="nx">pageName</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="sb">`taro_page_</span><span class="si">${</span><span class="nx">pageId</span><span class="p">()</span><span class="si">}</span><span class="sb">`</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="p">[</span><span class="nx">ONLOAD</span><span class="p">,</span><span class="w"> </span><span class="nx">ONUNLOAD</span><span class="p">,</span><span class="w"> </span><span class="nx">ONREADY</span><span class="p">,</span><span class="w"> </span><span class="nx">ONSHOW</span><span class="p">,</span><span class="w"> </span><span class="nx">ONHIDE</span><span class="p">,</span><span class="w"> </span><span class="nx">LIFECYCLES</span><span class="p">,</span><span class="w"> </span><span class="nx">SIDE_EFFECT_LIFECYCLES</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">_chunk_KEK4XUFF_js__WEBPACK_IMPORTED_MODULE_0__</span><span class="p">.</span><span class="nx">hooks</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="s2">&quot;getMiniLifecycleImpl&quot;</span><span class="p">).</span><span class="nx">page</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nx">pageElement</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nx">unmounting</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nx">prepareMountList</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[];</span>
+<span class="w">    </span><span class="kd">function</span><span class="w"> </span><span class="nx">setCurrentRouter</span><span class="p">(</span><span class="nx">page</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">router</span><span class="w"> </span><span class="o">=</span><span class="w">  </span><span class="kc">false</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="mf">0</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">page</span><span class="p">.</span><span class="nx">route</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">page</span><span class="p">.</span><span class="nx">__route__</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">page</span><span class="p">.</span><span class="nx">$taroPath</span><span class="p">;</span>
+<span class="w">        </span><span class="nx">Current</span><span class="p">.</span><span class="nx">router</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">params</span><span class="o">:</span><span class="w"> </span><span class="nx">page</span><span class="p">.</span><span class="nx">$taroParams</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="nx">addLeadingSlash</span><span class="p">(</span><span class="nx">router</span><span class="p">),</span>
+<span class="w">            </span><span class="nx">$taroPath</span><span class="o">:</span><span class="w"> </span><span class="nx">page</span><span class="p">.</span><span class="nx">$taroPath</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">onReady</span><span class="o">:</span><span class="w"> </span><span class="nx">getOnReadyEventKey</span><span class="p">(</span><span class="nx">id</span><span class="p">),</span>
+<span class="w">            </span><span class="nx">onShow</span><span class="o">:</span><span class="w"> </span><span class="nx">getOnShowEventKey</span><span class="p">(</span><span class="nx">id</span><span class="p">),</span>
+<span class="w">            </span><span class="nx">onHide</span><span class="o">:</span><span class="w"> </span><span class="nx">getOnHideEventKey</span><span class="p">(</span><span class="nx">id</span><span class="p">)</span>
+<span class="w">        </span><span class="p">};</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="mf">0</span><span class="p">,</span><span class="nx">_chunk_KEK4XUFF_js__WEBPACK_IMPORTED_MODULE_0__</span><span class="p">.</span><span class="nx">isUndefined</span><span class="p">)(</span><span class="nx">page</span><span class="p">.</span><span class="nx">exitState</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">Current</span><span class="p">.</span><span class="nx">router</span><span class="p">.</span><span class="nx">exitState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">page</span><span class="p">.</span><span class="nx">exitState</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nx">loadResolver</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nx">hasLoaded</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="p">[</span><span class="nx">ONLOAD</span><span class="p">]</span><span class="w"> </span><span class="p">(</span><span class="nx">options2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{},</span><span class="w"> </span><span class="nx">cb</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">hasLoaded</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Promise</span><span class="p">((</span><span class="nx">resolve</span><span class="p">)=&gt;{</span>
+<span class="w">                </span><span class="nx">loadResolver</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">resolve</span><span class="p">;</span>
+<span class="w">            </span><span class="p">});</span>
+<span class="w">            </span><span class="nx">perf</span><span class="p">.</span><span class="nx">start</span><span class="p">(</span><span class="nx">PAGE_INIT</span><span class="p">);</span>
+<span class="w">            </span><span class="nx">Current</span><span class="p">.</span><span class="nx">page</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">;</span>
+<span class="w">            </span><span class="k">this</span><span class="p">.</span><span class="nx">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">pageConfig</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="p">{};</span>
+<span class="w">            </span><span class="kd">const</span><span class="w"> </span><span class="nx">uniqueOptions</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Object</span><span class="p">.</span><span class="nx">assign</span><span class="p">({},</span><span class="w"> </span><span class="nx">options2</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nx">$taroTimestamp</span><span class="o">:</span><span class="w"> </span><span class="nb">Date</span><span class="p">.</span><span class="nx">now</span><span class="p">()</span>
+<span class="w">            </span><span class="p">});</span>
+<span class="w">            </span><span class="kd">const</span><span class="w"> </span><span class="nx">$taroPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">$taroPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">getPath</span><span class="p">(</span><span class="nx">id</span><span class="p">,</span><span class="w"> </span><span class="nx">uniqueOptions</span><span class="p">);</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="kc">false</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">$taroParams</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="k">this</span><span class="p">.</span><span class="nx">$taroParams</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">uniqueOptions</span><span class="p">;</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">            </span><span class="nx">setCurrentRouter</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="kc">true</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nx">window2</span><span class="p">.</span><span class="nx">trigger</span><span class="p">(</span><span class="nx">CONTEXT_ACTIONS</span><span class="p">.</span><span class="nx">INIT</span><span class="p">,</span><span class="w"> </span><span class="nx">$taroPath</span><span class="p">);</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">            </span><span class="kd">const</span><span class="w"> </span><span class="nx">mount</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()=&gt;{</span>
+<span class="w">                </span><span class="nx">Current</span><span class="p">.</span><span class="nx">app</span><span class="p">.</span><span class="nx">mount</span><span class="p">(</span><span class="nx">component</span><span class="p">,</span><span class="w"> </span><span class="nx">$taroPath</span><span class="p">,</span><span class="w"> </span><span class="p">()=&gt;{</span>
+<span class="w">                    </span><span class="nx">pageElement</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">env</span><span class="p">.</span><span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="nx">$taroPath</span><span class="p">);</span>
+<span class="w">                    </span><span class="p">(</span><span class="mf">0</span><span class="p">,</span><span class="nx">_chunk_KEK4XUFF_js__WEBPACK_IMPORTED_MODULE_0__</span><span class="p">.</span><span class="nx">ensure</span><span class="p">)(</span><span class="nx">pageElement</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;\u6CA1\u6709\u627E\u5230\u9875\u9762\u5B9E\u4F8B\u3002&quot;</span><span class="p">);</span>
+<span class="w">                    </span><span class="nx">safeExecute</span><span class="p">(</span><span class="nx">$taroPath</span><span class="p">,</span><span class="w"> </span><span class="nx">ON_LOAD</span><span class="p">,</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">$taroParams</span><span class="p">);</span>
+<span class="w">                    </span><span class="nx">loadResolver</span><span class="p">();</span>
+<span class="w">                    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="kc">true</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                        </span><span class="nx">pageElement</span><span class="p">.</span><span class="nx">ctx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">;</span>
+<span class="w">                        </span><span class="nx">pageElement</span><span class="p">.</span><span class="nx">performUpdate</span><span class="p">(</span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nx">cb</span><span class="p">);</span>
+<span class="w">                    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{}</span>
+<span class="w">                </span><span class="p">});</span>
+<span class="w">            </span><span class="p">};</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">unmounting</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nx">prepareMountList</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">mount</span><span class="p">);</span>
+<span class="w">            </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nx">mount</span><span class="p">();</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
+</code></pre></div>
+在 createPageConfig 中，通过 Current 对象维护当前页面的状态：
+- Current.page: 当前页面实例
+- Current.router: 当前路由信息
+- Current.app: 应用实例
+3. 页面间共享数据的方式：
+   a. 通过 Current 对象：
+<div class="highlight"><pre><span></span><code><span class="w">    </span><span class="kd">function</span><span class="w"> </span><span class="nx">setCurrentRouter</span><span class="p">(</span><span class="nx">page</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">router</span><span class="w"> </span><span class="o">=</span><span class="w">  </span><span class="kc">false</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="mf">0</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">page</span><span class="p">.</span><span class="nx">route</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">page</span><span class="p">.</span><span class="nx">__route__</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">page</span><span class="p">.</span><span class="nx">$taroPath</span><span class="p">;</span>
+<span class="w">        </span><span class="nx">Current</span><span class="p">.</span><span class="nx">router</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">params</span><span class="o">:</span><span class="w"> </span><span class="nx">page</span><span class="p">.</span><span class="nx">$taroParams</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="nx">addLeadingSlash</span><span class="p">(</span><span class="nx">router</span><span class="p">),</span>
+<span class="w">            </span><span class="nx">$taroPath</span><span class="o">:</span><span class="w"> </span><span class="nx">page</span><span class="p">.</span><span class="nx">$taroPath</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">onReady</span><span class="o">:</span><span class="w"> </span><span class="nx">getOnReadyEventKey</span><span class="p">(</span><span class="nx">id</span><span class="p">),</span>
+<span class="w">            </span><span class="nx">onShow</span><span class="o">:</span><span class="w"> </span><span class="nx">getOnShowEventKey</span><span class="p">(</span><span class="nx">id</span><span class="p">),</span>
+<span class="w">            </span><span class="nx">onHide</span><span class="o">:</span><span class="w"> </span><span class="nx">getOnHideEventKey</span><span class="p">(</span><span class="nx">id</span><span class="p">)</span>
+<span class="w">        </span><span class="p">};</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="mf">0</span><span class="p">,</span><span class="nx">_chunk_KEK4XUFF_js__WEBPACK_IMPORTED_MODULE_0__</span><span class="p">.</span><span class="nx">isUndefined</span><span class="p">)(</span><span class="nx">page</span><span class="p">.</span><span class="nx">exitState</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">Current</span><span class="p">.</span><span class="nx">router</span><span class="p">.</span><span class="nx">exitState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">page</span><span class="p">.</span><span class="nx">exitState</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+</code></pre></div>
+Current 对象作为全局状态管理器，可以在不同页面间共享数据。</p>
+<p>b. 通过 PageContext, React 的 Context 机制用于跨组件传递数据。
+<div class="highlight"><pre><span></span><code><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">reactMeta</span><span class="p">.</span><span class="nx">PageContext</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">_chunk_KEK4XUFF_js__WEBPACK_IMPORTED_MODULE_1__</span><span class="p">.</span><span class="nx">EMPTY_OBJ</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="nx">reactMeta</span><span class="p">.</span><span class="nx">PageContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">R</span><span class="p">.</span><span class="nx">createContext</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<p><img alt="img.png" src="/images/frontend/img.png" /></p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>

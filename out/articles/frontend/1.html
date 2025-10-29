@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Sass @use vs @import</title>
+        <link rel="stylesheet" href="../../assets/fonts.css">
+        <link rel="stylesheet" href="../../assets/graphite.css">
+        <link rel="stylesheet" href="../../assets/pygments.css">
+        
+        
+    </head>
+    <body class="node-articles-frontend-1 node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>Sass @use vs @import</h1>
+                
+                <hr>
+            </header>
+            <h2>@import</h2>
+<p>Sass 扩展了 CSS 的 @import 规则，能够导入 Sass样式表和 CSS样式表，提供对 mixins，functions,variables 的访问，并将多个样式表的 CSS 合并。</p>
+<p>CSS @import 指令在每次调用时，都会创建一个额外的 HTTP 请求，但 Sass @import 指令将文件包含在 CSS 中，不需要额外的 HTTP 请求。因为 Sass 的导入在编译阶段处理。</p>
+<p>Sass @import 指令语法：
+<div class="highlight"><pre><span></span><code><span class="k">@import</span><span class="w"> </span><span class="n">filename</span><span class="p">;</span>
+<span class="k">@import</span><span class="w"> </span><span class="n">filename</span><span class="o">,</span><span class="w"> </span><span class="n">filename</span><span class="p">;</span>
+</code></pre></div></p>
+<h2>工作过程说明</h2>
+<ol>
+<li>当 Sass 导入一个文件时，文件的内容将会被放到 @import 出现的位置。导入文件以及 @import 之前定义的任何 mixin，function，variable 都是可用的</li>
+<li>如果同一个样式表被多次导入，它会被计算相应的次数。如果被导入文件中只定义函数和 mixin，则没什么问题，因为 function、mixin、varibale会被插入到实际使用的位置。但是具体的样式规则会被多次插入。
+<div class="highlight"><pre><span></span><code><span class="c1">// index.scss</span>
+<span class="k">@import</span><span class="w"> </span><span class="s2">&quot;variables&quot;</span>
+<span class="o">@</span><span class="n">import</span><span class="w"> </span><span class="s2">&quot;border&quot;</span>
+<span class="o">@</span><span class="n">import</span><span class="w"> </span><span class="s2">&quot;background&quot;</span>
+
+<span class="c1">// _variables.scss</span>
+<span class="nv">$color</span><span class="o">:</span><span class="w"> </span><span class="ni">red</span><span class="p">;</span>
+<span class="nc">.square</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">width</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
+<span class="w">  </span><span class="nt">height</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
+<span class="w">  </span><span class="nt">background-color</span><span class="nd">:</span><span class="w"> </span><span class="err">$</span><span class="nt">color</span><span class="o">;</span>
+<span class="p">}</span>
+<span class="c1">// border.scss</span>
+<span class="k">@import</span><span class="w"> </span><span class="s1">&#39;variables&#39;</span><span class="p">;</span>
+<span class="nc">.border</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">border</span><span class="nd">:</span><span class="w"> </span><span class="nt">1px</span><span class="w"> </span><span class="nt">solid</span><span class="w"> </span><span class="err">$</span><span class="nt">color</span><span class="o">;</span>
+<span class="p">}</span>
+<span class="c1">// background.scss</span>
+<span class="nc">.background</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">background</span><span class="nd">:</span><span class="w"> </span><span class="err">$</span><span class="nt">color</span><span class="o">;</span>
+<span class="p">}</span>
+<span class="k">@import</span><span class="w"> </span><span class="s1">&#39;variables&#39;</span><span class="p">;</span>
+<span class="c1">// output.scss</span>
+<span class="nc">.square</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">width</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
+<span class="w">  </span><span class="nt">height</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
+<span class="w">  </span><span class="nt">background-color</span><span class="nd">:</span><span class="w"> </span><span class="nt">red</span><span class="o">;</span>
+<span class="p">}</span>
+
+<span class="nc">.square</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">width</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
+<span class="w">  </span><span class="nt">height</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
+<span class="w">  </span><span class="nt">background-color</span><span class="nd">:</span><span class="w"> </span><span class="nt">red</span><span class="o">;</span>
+<span class="p">}</span>
+
+<span class="nc">.border</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">border</span><span class="nd">:</span><span class="w"> </span><span class="nt">1px</span><span class="w"> </span><span class="nt">solid</span><span class="w"> </span><span class="nt">red</span><span class="o">;</span>
+<span class="p">}</span>
+
+<span class="nc">.background</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">background</span><span class="nd">:</span><span class="w"> </span><span class="nt">red</span><span class="o">;</span>
+<span class="p">}</span>
+
+<span class="nc">.square</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">width</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
+<span class="w">  </span><span class="nt">height</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
+<span class="w">  </span><span class="nt">background-color</span><span class="nd">:</span><span class="w"> </span><span class="nt">red</span><span class="o">;</span>
+<span class="p">}</span>
+</code></pre></div></li>
+<li>Sass 查找文件通过 URL 的方式工作，而不是通过文件路径的方式，这样可以兼容 windows 系统。文件后缀名也不是必须。</li>
+<li>以 <code>_</code> 开头的 Sass 文件本身不会被编译，而是单纯的作为被导入的文件，这些文件是片段文件，再导入片段文件时可以省略<code>_</code>
+<div class="highlight"><pre><span></span><code><span class="c1">// index.scss</span>
+<span class="k">@import</span><span class="w"> </span><span class="s2">&quot;variables&quot;</span>
+<span class="o">@</span><span class="n">import</span><span class="w"> </span><span class="s2">&quot;border&quot;</span>
+<span class="o">@</span><span class="n">import</span><span class="w"> </span><span class="s2">&quot;background&quot;</span>
+
+<span class="c1">// _variables.scss</span>
+<span class="nv">$color</span><span class="o">:</span><span class="w"> </span><span class="ni">red</span><span class="p">;</span>
+<span class="nc">.square</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">width</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
+<span class="w">  </span><span class="nt">height</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
+<span class="p">}</span>
+
+<span class="c1">// border.scss</span>
+<span class="nc">.border</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">border</span><span class="nd">:</span><span class="w"> </span><span class="nt">1px</span><span class="w"> </span><span class="nt">solid</span><span class="w"> </span><span class="err">$</span><span class="nt">color</span><span class="o">;</span>
+<span class="p">}</span>
+
+<span class="c1">// background</span>
+<span class="nc">.background</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">background</span><span class="nd">:</span><span class="w"> </span><span class="err">$</span><span class="nt">color</span><span class="o">;</span>
+<span class="p">}</span>
+
+<span class="c1">// output.css</span>
+<span class="nc">.border</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">border</span><span class="nd">:</span><span class="w"> </span><span class="nt">1px</span><span class="w"> </span><span class="nt">solid</span><span class="w"> </span><span class="nt">red</span><span class="o">;</span>
+<span class="p">}</span>
+
+<span class="nc">.background</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">background</span><span class="nd">:</span><span class="w"> </span><span class="nt">red</span><span class="o">;</span>
+<span class="p">}</span>
+</code></pre></div></li>
+<li>@import 导入的变量可以全局使用
+<div class="highlight"><pre><span></span><code><span class="c1">// index.scss</span>
+<span class="k">@import</span><span class="w"> </span><span class="s2">&quot;variables&quot;</span>
+<span class="o">@</span><span class="n">import</span><span class="w"> </span><span class="s2">&quot;border&quot;</span>
+<span class="o">@</span><span class="n">import</span><span class="w"> </span><span class="s2">&quot;background&quot;</span>
+
+<span class="c1">// variables.scss</span>
+<span class="nv">$color</span><span class="o">:</span><span class="w"> </span><span class="ni">red</span><span class="p">;</span>
+
+<span class="c1">// border.scss</span>
+<span class="nc">.border</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">border</span><span class="nd">:</span><span class="w"> </span><span class="nt">1px</span><span class="w"> </span><span class="nt">solid</span><span class="w"> </span><span class="err">$</span><span class="nt">color</span><span class="o">;</span>
+<span class="p">}</span>
+
+<span class="c1">// background</span>
+<span class="nc">.background</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">background</span><span class="nd">:</span><span class="w"> </span><span class="err">$</span><span class="nt">color</span><span class="o">;</span>
+<span class="p">}</span>
+
+<span class="c1">// output.css</span>
+<span class="nc">.border</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">border</span><span class="nd">:</span><span class="w"> </span><span class="nt">1px</span><span class="w"> </span><span class="nt">solid</span><span class="w"> </span><span class="nt">red</span><span class="o">;</span>
+<span class="p">}</span>
+
+<span class="nc">.background</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">background</span><span class="nd">:</span><span class="w"> </span><span class="nt">red</span><span class="o">;</span>
+<span class="p">}</span>
+</code></pre></div></li>
+<li>!default 与 import 的配置关系，import 在 !default 之前走的是配置化，import 在 !default 之后走的是覆盖，因为  <code>_variables.scss</code> 中的background-color 是 red。
+<div class="highlight"><pre><span></span><code><span class="c1">//realme.scss</span>
+<span class="nv">$color</span><span class="o">:</span><span class="w"> </span><span class="ni">black</span><span class="p">;</span>
+<span class="c1">// index.scss</span>
+<span class="k">@import</span><span class="w"> </span><span class="s1">&#39;realme&#39;</span><span class="p">;</span>
+<span class="k">@import</span><span class="w"> </span><span class="s1">&#39;variables&#39;</span><span class="p">;</span>
+<span class="k">@import</span><span class="w"> </span><span class="s1">&#39;border&#39;</span><span class="p">;</span>
+<span class="k">@import</span><span class="w"> </span><span class="s1">&#39;background&#39;</span><span class="p">;</span>
+<span class="c1">// _variables.scss</span>
+<span class="nv">$color</span><span class="o">:</span><span class="w"> </span><span class="ni">red</span><span class="w"> </span><span class="nv">!default</span><span class="p">;</span>
+
+<span class="nc">.square</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">width</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
+<span class="w">  </span><span class="nt">height</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
+<span class="w">  </span><span class="nt">background-color</span><span class="nd">:</span><span class="w"> </span><span class="err">$</span><span class="nt">color</span><span class="o">;</span>
+<span class="p">}</span>
+<span class="c1">// border.scss</span>
+<span class="k">@import</span><span class="w"> </span><span class="s1">&#39;variables&#39;</span><span class="p">;</span>
+<span class="nc">.border</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">border</span><span class="nd">:</span><span class="w"> </span><span class="nt">1px</span><span class="w"> </span><span class="nt">solid</span><span class="w"> </span><span class="err">$</span><span class="nt">color</span><span class="o">;</span>
+<span class="p">}</span>
+<span class="c1">// background.scss</span>
+<span class="nc">.background</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">background</span><span class="nd">:</span><span class="w"> </span><span class="err">$</span><span class="nt">color</span><span class="o">;</span>
+<span class="p">}</span>
+<span class="k">@import</span><span class="w"> </span><span class="s1">&#39;variables&#39;</span><span class="p">;</span>
+<span class="c1">// output.scss</span>
+<span class="nc">.square</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">width</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
+<span class="w">  </span><span class="nt">height</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
+<span class="w">  </span><span class="nt">background-color</span><span class="nd">:</span><span class="w"> </span><span class="nt">black</span><span class="o">;</span>
+<span class="p">}</span>
+
+<span class="nc">.square</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">width</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
+<span class="w">  </span><span class="nt">height</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
+<span class="w">  </span><span class="nt">background-color</span><span class="nd">:</span><span class="w"> </span><span class="nt">black</span><span class="o">;</span>
+<span class="p">}</span>
+
+<span class="nc">.border</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">border</span><span class="nd">:</span><span class="w"> </span><span class="nt">1px</span><span class="w"> </span><span class="nt">solid</span><span class="w"> </span><span class="nt">black</span><span class="o">;</span>
+<span class="p">}</span>
+
+<span class="nc">.background</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">background</span><span class="nd">:</span><span class="w"> </span><span class="nt">black</span><span class="o">;</span>
+<span class="p">}</span>
+
+<span class="nc">.square</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">width</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
+<span class="w">  </span><span class="nt">height</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
+<span class="w">  </span><span class="nt">background-color</span><span class="nd">:</span><span class="w"> </span><span class="nt">black</span><span class="o">;</span>
+<span class="p">}</span>
+</code></pre></div></li>
+</ol>
+<h2>@use</h2>
+<p>@use 可以从其他 Sass 样式表加载 mixins，functions，variables，将多个样式表合并。通过 @use 加载的样式表被称为“模块”。Sass 同时提供了非常有用的内置模块。</p>
+<h2>工作过程说明</h2>
+<ol>
+<li>@use 规则必须出现在除@forward之外的任何规则之前，包括样式规则。</li>
+<li>可通过 <namespace>.<variable>,<namespace>.<function>(), 或者 @include <namespace>.<mixin>() 访问模块内的成员。</li>
+<li>用@use加载的成员(变量、函数和mixin)只在加载它们的样式表中可见。其他样式表如果也想访问@use规则，则需要编写它们自己的@use规则。这有助于很容易地找出每个成员的确切来源。如果希望一次性从多个文件中加载成员，可以使用@forward规则从一个共享文件中转发所有成员。</li>
+<li>命名空间默认为 url，可通过 as 起别名
+<div class="highlight"><pre><span></span><code><span class="k">@use</span><span class="w"> </span><span class="s2">&quot;src/corners&quot;</span><span class="w"> </span><span class="nt">as</span><span class="w"> </span><span class="nt">c</span><span class="o">;</span>
+<span class="o">@</span><span class="nt">use</span><span class="w"> </span><span class="s2">&quot;src/corners&quot;</span><span class="w"> </span><span class="nt">as</span><span class="w"> </span><span class="o">*;</span>
+</code></pre></div></li>
+<li>使用 <code>-</code> 或 <code>_</code> 指定私有成员
+<div class="highlight"><pre><span></span><code><span class="c1">// src/_corners.scss</span>
+<span class="nv">$-radius</span><span class="o">:</span><span class="w"> </span><span class="mi">3</span><span class="kt">px</span><span class="p">;</span>
+
+<span class="k">@mixin</span><span class="nf"> rounded</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">border-radius</span><span class="nd">:</span><span class="w"> </span><span class="err">$</span><span class="nt">-radius</span><span class="o">;</span>
+<span class="p">}</span>
+<span class="c1">// style.scss</span>
+<span class="k">@use</span><span class="w"> </span><span class="s2">&quot;src/corners&quot;</span><span class="o">;</span>
+
+<span class="nc">.button</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">@include</span><span class="nd"> corners</span><span class="o">.</span><span class="n">rounded</span><span class="p">;</span>
+
+<span class="w">  </span><span class="c1">// This is an error! $-radius isn&#39;t visible outside of `_corners.scss`.</span>
+<span class="w">  </span><span class="nt">padding</span><span class="nd">:</span><span class="w"> </span><span class="nt">5px</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nt">corners</span><span class="nc">.</span><span class="err">$</span><span class="nt">-radius</span><span class="o">;</span>
+<span class="p">}</span>
+</code></pre></div></li>
+<li>样式表可以用<code>!default</code>标志定义变量，使其可配置。使用 <code>@use &lt;url&gt; with (&lt;variable&gt;: &lt;value&gt;, &lt;variable&gt;: &lt;value&gt;)</code> 覆盖默认配置
+<div class="highlight"><pre><span></span><code><span class="c1">// _library.scss</span>
+<span class="nv">$black</span><span class="o">:</span><span class="w"> </span><span class="mh">#000</span><span class="w"> </span><span class="nv">!default</span><span class="p">;</span>
+<span class="nv">$border-radius</span><span class="o">:</span><span class="w"> </span><span class="mi">0</span><span class="mf">.25</span><span class="kt">rem</span><span class="w"> </span><span class="nv">!default</span><span class="p">;</span>
+<span class="nv">$box-shadow</span><span class="o">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="mi">0</span><span class="mf">.5</span><span class="kt">rem</span><span class="w"> </span><span class="mi">1</span><span class="kt">rem</span><span class="w"> </span><span class="nf">rgba</span><span class="p">(</span><span class="nv">$black</span><span class="o">,</span><span class="w"> </span><span class="mi">0</span><span class="mf">.15</span><span class="p">)</span><span class="w"> </span><span class="nv">!default</span><span class="p">;</span>
+
+<span class="nt">code</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">border-radius</span><span class="nd">:</span><span class="w"> </span><span class="err">$</span><span class="nt">border-radius</span><span class="o">;</span>
+<span class="w">  </span><span class="nt">box-shadow</span><span class="nd">:</span><span class="w"> </span><span class="err">$</span><span class="nt">box-shadow</span><span class="o">;</span>
+<span class="p">}</span>
+
+<span class="c1">// style.scss</span>
+<span class="k">@use</span><span class="w"> </span><span class="s1">&#39;library&#39;</span><span class="w"> </span><span class="nt">with</span><span class="w"> </span><span class="o">(</span>
+<span class="w">  </span><span class="err">$</span><span class="nt">black</span><span class="nd">:</span><span class="w"> </span><span class="nn">#222</span><span class="o">,</span>
+<span class="w">  </span><span class="err">$</span><span class="nt">border-radius</span><span class="nd">:</span><span class="w"> </span><span class="nt">0</span><span class="nc">.1rem</span>
+<span class="o">);</span>
+
+<span class="o">//</span><span class="w"> </span><span class="nt">output</span><span class="nc">.css</span>
+<span class="nt">code</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">border-radius</span><span class="nd">:</span><span class="w"> </span><span class="nt">0</span><span class="nc">.1rem</span><span class="o">;</span>
+<span class="w">  </span><span class="nt">box-shadow</span><span class="nd">:</span><span class="w"> </span><span class="nt">0</span><span class="w"> </span><span class="nt">0</span><span class="nc">.5rem</span><span class="w"> </span><span class="nt">1rem</span><span class="w"> </span><span class="nt">rgba</span><span class="o">(</span><span class="nt">34</span><span class="o">,</span><span class="w"> </span><span class="nt">34</span><span class="o">,</span><span class="w"> </span><span class="nt">34</span><span class="o">,</span><span class="w"> </span><span class="nt">0</span><span class="nc">.15</span><span class="o">);</span>
+<span class="p">}</span>
+</code></pre></div></li>
+<li>更灵活的配置推荐使用 mixin 配置
+<div class="highlight"><pre><span></span><code><span class="c1">// _library.scss</span>
+<span class="nv">$-black</span><span class="o">:</span><span class="w"> </span><span class="mh">#000</span><span class="p">;</span>
+<span class="nv">$-border-radius</span><span class="o">:</span><span class="w"> </span><span class="mi">0</span><span class="mf">.25</span><span class="kt">rem</span><span class="p">;</span>
+<span class="nv">$-box-shadow</span><span class="o">:</span><span class="w"> </span><span class="n">null</span><span class="p">;</span>
+
+<span class="c1">/// If the user has configured `$-box-shadow`, returns their configured value.</span>
+<span class="c1">/// Otherwise returns a value derived from `$-black`.</span>
+<span class="k">@function</span><span class="w"> </span><span class="nt">-box-shadow</span><span class="o">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">@return</span><span class="w"> </span><span class="err">$</span><span class="nt">-box-shadow</span><span class="w"> </span><span class="nt">or</span><span class="w"> </span><span class="o">(</span><span class="nt">0</span><span class="w"> </span><span class="nt">0</span><span class="nc">.5rem</span><span class="w"> </span><span class="nt">1rem</span><span class="w"> </span><span class="nt">rgba</span><span class="o">(</span><span class="err">$</span><span class="nt">-black</span><span class="o">,</span><span class="w"> </span><span class="nt">0</span><span class="nc">.15</span><span class="o">));</span>
+<span class="p">}</span>
+
+<span class="k">@mixin</span><span class="nf"> configure</span><span class="p">(</span><span class="nv">$black</span><span class="o">:</span><span class="w"> </span><span class="n">null</span><span class="o">,</span><span class="w"> </span><span class="nv">$border-radius</span><span class="o">:</span><span class="w"> </span><span class="n">null</span><span class="o">,</span><span class="w"> </span><span class="nv">$box-shadow</span><span class="o">:</span><span class="w"> </span><span class="n">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">@if</span><span class="w"> </span><span class="nv">$black</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">$-black</span><span class="o">:</span><span class="w"> </span><span class="nv">$black</span><span class="w"> </span><span class="nv">!global</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="k">@if</span><span class="w"> </span><span class="nv">$border-radius</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">$-border-radius</span><span class="o">:</span><span class="w"> </span><span class="nv">$border-radius</span><span class="w"> </span><span class="nv">!global</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="k">@if</span><span class="w"> </span><span class="nv">$box-shadow</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">$-box-shadow</span><span class="o">:</span><span class="w"> </span><span class="nv">$box-shadow</span><span class="w"> </span><span class="nv">!global</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">@mixin</span><span class="nf"> styles</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">code</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">border-radius</span><span class="nd">:</span><span class="w"> </span><span class="err">$</span><span class="nt">-border-radius</span><span class="o">;</span>
+<span class="w">    </span><span class="nt">box-shadow</span><span class="nd">:</span><span class="w"> </span><span class="nt">-box-shadow</span><span class="o">();</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// style.scss</span>
+<span class="k">@use</span><span class="w"> </span><span class="s1">&#39;library&#39;</span><span class="o">;</span>
+
+<span class="o">@</span><span class="nt">include</span><span class="w"> </span><span class="nt">library</span><span class="nc">.configure</span><span class="o">(</span>
+<span class="w">  </span><span class="err">$</span><span class="nt">black</span><span class="nd">:</span><span class="w"> </span><span class="nn">#222</span><span class="o">,</span>
+<span class="w">  </span><span class="err">$</span><span class="nt">border-radius</span><span class="nd">:</span><span class="w"> </span><span class="nt">0</span><span class="nc">.1rem</span>
+<span class="o">);</span>
+
+<span class="o">@</span><span class="nt">include</span><span class="w"> </span><span class="nt">library</span><span class="nc">.styles</span><span class="o">;</span>
+</code></pre></div></li>
+</ol>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>

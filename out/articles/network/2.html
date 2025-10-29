@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Http Multipart 介绍</title>
+        <link rel="stylesheet" href="../../assets/fonts.css">
+        <link rel="stylesheet" href="../../assets/graphite.css">
+        <link rel="stylesheet" href="../../assets/pygments.css">
+        
+        
+    </head>
+    <body class="node-articles-network-2 node-articles-network node-articles node">
+        <header class="masthead">
+            <h1><a href="../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>Http Multipart 介绍</h1>
+                
+                <hr>
+            </header>
+            <blockquote>
+<p>原文地址：https://blog.adamchalmers.com/multipart/</p>
+</blockquote>
+<ul>
+<li>为什么使用 multipart</li>
+<li>multipart 是什么</li>
+<li>怎么实现 multipart</li>
+<li>压缩</li>
+</ul>
+<h2>为什么使用 multipart</h2>
+<ul>
+<li>支持多部分数据：Multipart 允许将多个不同类型的数据组合成一个单一的请求或响应。例如：在发送电子邮件时，可以将文本消息、附件、图像一起包含在一个 multipart 消息中。</li>
+<li>保留数据结构：Multipart 通过使用边界分隔符将不同部分的数据区分开，保留了数据的结构。接收方可以轻松解析和处理每部分数据</li>
+<li>支持多种媒体类型，即支持多种 MIME type</li>
+</ul>
+<h2>multipart 是什么</h2>
+<p>MIME 类型又叫做媒体类型，用于指示文档、文件或字节分类的性质和格式。可以在 https://datatracker.ietf.org/doc/html/rfc6838 找到它的定义。</p>
+<p>MIME 类型通常由两部分构成：类型和子类型。
+<code>type/subtype</code>
+例如：
+<div class="highlight"><pre><span></span><code>text/plain
+text/html
+text/javascript
+</code></pre></div></p>
+<p>MIME 类型分为两类：
+- 离散类型（Discrete type）
+- Multipart</p>
+<p>离散类型标识一个文件或媒体的类型。multipart 标识由多个部分组成的文档。每个部分都有自己的 MIME。</p>
+<p>Multipart 类型分为两种：
+- message
+- multipart</p>
+<h2>Multipart 怎么实现</h2>
+<p>如果 <code>Content-Type</code> 是 <code>multipart/form-data</code> 则 HTTP 正文包含 Multipart。每个部分都有边界限定符分隔。HTTP 消息有一个标头，它定义了边界限定符，这样服务器就能知道每个部分之间的边界在哪里。每个部分也有自己的 header ：</p>
+<p><code>Content-Disposition</code>: 定义文件名或表单字段名</p>
+<p><code>Content-Type</code>: 每个 part 的类型，默认是 <code>text/plain</code></p>
+<p>请求 Demo：</p>
+<div class="highlight"><pre><span></span><code>POST /cgi-bin/qtest HTTP/1.1
+Content-Type: multipart/form-data; boundary=2a8ae6ad-f4ad-4d9a-a92c-6d217011fe0f
+Content-Length: 514
+
+--2a8ae6ad-f4ad-4d9a-a92c-6d217011fe0f
+Content-Disposition: form-data; name=&quot;datafile1&quot;; filename=&quot;r.gif&quot;
+Content-Type: image/gif
+
+GIF87a.............,...........D..;
+--2a8ae6ad-f4ad-4d9a-a92c-6d217011fe0f
+Content-Disposition: form-data; name=&quot;datafile2&quot;; filename=&quot;g.gif&quot;
+Content-Type: image/gif
+
+GIF87a.............,...........D..;
+--2a8ae6ad-f4ad-4d9a-a92c-6d217011fe0f
+Content-Disposition: form-data; name=&quot;datafile3&quot;; filename=&quot;b.gif&quot;
+Content-Type: image/gif
+
+GIF87a.............,...........D..;
+--2a8ae6ad-f4ad-4d9a-a92c-6d217011fe0f--
+</code></pre></div>
+<h2>压缩</h2>
+<p>multipart 可以使用 gzip 进行消息体的整体压缩。不能单独对各个 part 进行压缩。</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>

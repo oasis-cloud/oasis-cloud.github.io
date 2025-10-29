@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>import.meta 在 Node.js 中的发展过程</title>
+        <link rel="stylesheet" href="../../assets/fonts.css">
+        <link rel="stylesheet" href="../../assets/graphite.css">
+        <link rel="stylesheet" href="../../assets/pygments.css">
+        
+        
+    </head>
+    <body class="node-articles-nodejs-2 node-articles-nodejs node-articles node">
+        <header class="masthead">
+            <h1><a href="../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>import.meta 在 Node.js 中的发展过程</h1>
+                
+                <hr>
+            </header>
+            <p>import.meta 在 Node.js 中的引入和逐步完善经历了多个版本的演进：</p>
+<ol>
+<li>import.meta.url</li>
+</ol>
+<p>从 Node.js v12 开始，import.meta.url 已经被支持，用于获取当前模块的绝对 file: URL。
+它是 ES 模块的标准特性，用于替代 CommonJS 中的 __filename 和 __dirname。
+2. import.meta.resolve()</p>
+<p>在 Node.js v20 中，import.meta.resolve() 被引入，用于同步解析模块路径。
+这个方法允许在模块加载时动态解析路径，类似于浏览器行为。
+3. import.meta.dirname 和 import.meta.filename</p>
+<p>这两个属性在 Node.js v20.11.0 中被引入，作为 __dirname 和 __filename 的替代品。
+它们提供了更直接的方式来获取当前模块的目录路径和文件路径。
+4. 其他特性</p>
+<p>Node.js v21.2.0 进一步完善了 import.meta 的功能，包括对 import.meta.dirname 和 import.meta.filename 的支持。
+总结来说，import.meta 的核心功能（如 url 和 resolve）在 Node.js v20 及更高版本中得到了完善和标准化支持。</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>

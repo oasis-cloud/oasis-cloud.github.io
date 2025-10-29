@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>单元测试</title>
+        <link rel="stylesheet" href="../../assets/fonts.css">
+        <link rel="stylesheet" href="../../assets/graphite.css">
+        <link rel="stylesheet" href="../../assets/pygments.css">
+        
+        
+    </head>
+    <body class="node-articles-software-design-3 node-articles-software-design node-articles node">
+        <header class="masthead">
+            <h1><a href="../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>单元测试</h1>
+                
+                <hr>
+            </header>
+            <h2>单元测试工具要做的事情</h2>
+<ul>
+<li>查找项目中的包含测试代码的文件</li>
+<li>在找到的文件中查找测试用例</li>
+<li>运行测试</li>
+<li>捕获运行结果</li>
+<li>生成运行报告</li>
+</ul>
+<h2>如何构建单元测试</h2>
+<ul>
+<li>一个无参数的 test 函数，这样我们可以统一运行，无需增加特殊逻辑</li>
+<li>每个 test 函数创建一个用于测试的模板过程，通过断言将实际结果和预期结果进行比较，比较结果分为三种情况</li>
+<li>通过</li>
+<li>失败</li>
+<li>error，测试用例本身存在错误</li>
+<li>如何区分 失败 和 error ？</li>
+<li>可以通过 Error 的类型累处理，我们可以给 失败指定一个特殊类型，非此类型的视作测试用例本身存在错误。</li>
+</ul>
+<p>命令行的 test 库，首先要扫描包含测试用例的文件，然后通过动态导入，例如 import(f) 方式。</p>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">main</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="p">(</span><span class="nx">args</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">filenames</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="nx">glob</span><span class="p">.</span><span class="nx">sync</span><span class="p">(</span><span class="s1">&#39;**/test-*.js&#39;</span><span class="p">)</span>
+<span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">f</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">filenames</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">await</span><span class="w"> </span><span class="k">import</span><span class="p">(</span><span class="nx">f</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>现在很多项目都是用 typescript 编写的，所以在需要将代码进行编译，编译到普通的 js 。</p>
+<p>PS: 除了上面代码中的动态导入，在低版本上，可以生成一个 JS 文件，包含那些测试用例，例如生成的结果如下：</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// generated.js</span>
+<span class="nx">require</span><span class="p">(</span><span class="s1">&#39;./test-a.js&#39;</span><span class="p">)</span>
+<span class="nx">require</span><span class="p">(</span><span class="s1">&#39;./test-b.js&#39;</span><span class="p">)</span>
+<span class="nx">require</span><span class="p">(</span><span class="s1">&#39;./test-c.js&#39;</span><span class="p">)</span>
+<span class="p">...</span>
+</code></pre></div>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>在 GitHub Action 中获取改动文件</title>
+        <link rel="stylesheet" href="../../assets/fonts.css">
+        <link rel="stylesheet" href="../../assets/graphite.css">
+        <link rel="stylesheet" href="../../assets/pygments.css">
+        
+        
+    </head>
+    <body class="node-articles-github-4 node-articles-github node-articles node">
+        <header class="masthead">
+            <h1><a href="../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>在 GitHub Action 中获取改动文件</h1>
+                
+                <hr>
+            </header>
+            <p>在 GitHub Action 中可以通过下面的两种方式来获得变更的文件：</p>
+<ol>
+<li>在仓库下通过使用 <code>git</code> 命令对比两个分支。</li>
+<li>借助 GitHub 提供的 API 来查询变更的文件。</li>
+</ol>
+<p>这篇文章主要介绍第二种方法，我采用第二种方式实现了获取 Pull Request 中的变更文件，针对变更的文件进行单元测试。</p>
+<p>GitHub 提供了 <a href="https://docs.github.com/zh/rest/pulls/pulls?apiVersion=2022-11-28#list-pull-requests-files"><code>/repos/{owner}/{repo}/pulls/{pull_number}/files</code></a> API 用于查询 Pull Request 的相关内容。</p>
+<p>想要使用此 API ，我们需要提供 owner、repo、pull number 这三个参数的内容。owner、repo 和 pull number 可以通过 GitHub Action 中的<a href="https://docs.github.com/zh/actions/learn-github-actions/contexts#github-context">上下文</a>来获取：</p>
+<div class="highlight"><pre><span></span><code>name: CI
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Get PR info
+        run: |
+          echo &quot;PR Message github.event.number: ${{ github.event.number }}&quot;
+          echo &quot;PR Message github.repository: ${{ github.repository }}&quot;
+</code></pre></div>
+<p>这里给出了一段 GitHub Action 的脚本，在 <code>Get PR info</code> 任务中，借助 linux 的 echo 命令，打印来 github.event.number 和 github.repository。想要对这段脚本进行测试，可将其提交到 <code>.github/workflows/test.yml</code> 中，然后通过其他分支向目标分支创建 PR。（备注：<code>github.event.number</code>来自<a href="https://docs.github.com/zh/webhooks-and-events/webhooks/webhook-events-and-payloads#pull_request">Webhook 的共有属性</a>）</p>
+<p>通过执行上述代码，我们可以看到输出的 PR 的 ID 和 repository。接下来要使用他们调用 GitHub 提供的 API。这里我采用了 curl 来进行 GitHub API 的调用：</p>
+<div class="highlight"><pre><span></span><code>pr_number=${{ github.event.number }}
+files_url=&quot;https://api.github.com/repos/${{ github.repository }}/pulls/$pr_number/files&quot;
+files_response=$(curl -sSL -H &quot;Authorization: token ${{ secrets.GITHUB_TOKEN }}&quot; $files_url)
+</code></pre></div>
+<p>在这段代码中即存在 <code>${{ xx }}</code> 又存在 <code>$xx</code>，我们需要先区分什么时候使用什么形式。<code>${{}}</code> 是 GitHub 提供的插值表达式，在 GitHub Actions 执行的时候会对这种表达式进行求值。简单理解的话，就是将表达式计算出的结果填到脚本中，然后在执行脚本。<code>$xx</code> 是 Linux shell 的变量调用的方式，所以在 GitHub Actions 中我们实际执行的主要是 Linux shell 脚本。</p>
+<p>在这段代码中，声明变量的方式形如：
+<div class="highlight"><pre><span></span><code><span class="nv">shellVariable</span><span class="o">=</span><span class="m">1</span>
+</code></pre></div></p>
+<p>调用变量的方式形如：</p>
+<div class="highlight"><pre><span></span><code><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$shellVariable</span><span class="s2">&quot;</span>
+</code></pre></div>
+<p>到这里我们已经获取到了 GitHub API 返回的结果，接下来需要对结果进行处理，即提取变更文件。</p>
+<div class="highlight"><pre><span></span><code>files_changed=$(echo &quot;$files_response&quot; | jq -r &#39;.[].filename&#39;)
+echo &quot;PR files: $files_changed&quot;
+component=$(echo &quot;$files_changed&quot; |  grep -E -i &#39;src\/packages\/([a-z]+)(\/[a-z_\.]*)*&#39; | sed -E &#39;s/src\/packages\/([a-z]+)(\/[a-z_\.]*)*/\1/i&#39; | awk &#39;END{print}&#39;)
+npm test -- $component
+</code></pre></div>
+<p>因为 GitHub API 返回的是 JSON 格式：</p>
+<div class="highlight"><pre><span></span><code><span class="o">[</span>
+<span class="w">  </span><span class="o">{</span>
+<span class="w">    </span><span class="s2">&quot;sha&quot;</span>:<span class="w"> </span><span class="s2">&quot;bbcd538c8e72b8c175046e27cc8f907076331401&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;filename&quot;</span>:<span class="w"> </span><span class="s2">&quot;src/packages/button/button.tsx&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;status&quot;</span>:<span class="w"> </span><span class="s2">&quot;added&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;additions&quot;</span>:<span class="w"> </span><span class="m">103</span>,
+<span class="w">    </span><span class="s2">&quot;deletions&quot;</span>:<span class="w"> </span><span class="m">21</span>,
+<span class="w">    </span><span class="s2">&quot;changes&quot;</span>:<span class="w"> </span><span class="m">124</span>,
+<span class="w">    </span><span class="s2">&quot;blob_url&quot;</span>:<span class="w"> </span><span class="s2">&quot;https://github.com/octocat/Hello-World/blob/6dcb09b5b57875f334f61aebed695e2e4193db5e/file1.txt&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;raw_url&quot;</span>:<span class="w"> </span><span class="s2">&quot;https://github.com/octocat/Hello-World/raw/6dcb09b5b57875f334f61aebed695e2e4193db5e/file1.txt&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;contents_url&quot;</span>:<span class="w"> </span><span class="s2">&quot;https://api.github.com/repos/octocat/Hello-World/contents/file1.txt?ref=6dcb09b5b57875f334f61aebed695e2e4193db5e&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;patch&quot;</span>:<span class="w"> </span><span class="s2">&quot;@@ -132,7 +132,7 @@ module Test @@ -1000,7 +1000,7 @@ module Test&quot;</span>
+<span class="w">  </span><span class="o">}</span>
+<span class="o">]</span>
+</code></pre></div>
+<p>所以我们通过 jq 从 GitHub API 返回的结果中提取我们需要的数据，即第一行代码中的 <code>jq -r '.[].filename</code>，这句代码的意思是取 <code>filename</code> 字段的值，然后以原始文本形式返回。对于上面的 JSON 数据，jq 的处理结果是：<code>src/packages/button/button.tsx</code>。（<a href="https://www.tutorialspoint.com/guide-to-linux-jq-command-for-json-processing">jq 介绍</a>）</p>
+<p>获取变更文件后，还需要将<code>src/packages/button/button.tsx</code>中的 button 提取出来，以便传递给 npm 脚本。对于变更文件的处理，主要借助 Linux 中的 grep、sed、awk。</p>
+<p><code>grep -E -i</code> 表示使用正则表达式，并且忽略大小写。
+<code>sed -E</code> 同样表示使用正则表达式，但是它的忽略大小写是写到后面的参数中。</p>
+<p>通过这些步骤，就可以提取 PR 中的变更文件，对文件进行过滤，然后针对特定文件执行特定的处理。</p>
+<p>总的来说，GitHub 提供了 Actions 来帮助我们做自动化的处理，并且允许我们通过 yml 格式的脚本来进行配置，针对 yml 的脚本，GitHub 提供了内置的变量，通过插值方式提供给开发者使用，而且 run 命令提供给开发者使用 shell 的便捷性。</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>
