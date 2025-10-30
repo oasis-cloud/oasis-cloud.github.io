@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>源码分析——Redux</title>
+        <link rel="stylesheet" href="../../assets/fonts.css">
+        <link rel="stylesheet" href="../../assets/graphite.css">
+        <link rel="stylesheet" href="../../assets/pygments.css">
+        
+        
+    </head>
+    <body class="node-articles-frontend-21 node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>源码分析——Redux</h1>
+                
+                <hr>
+            </header>
+            <p>Redux 是一个可预测且可维护的全局状态管理的 JS 库。可预测的特性主要建立在单项数据流和不可变性的基础上。</p>
+<p>Redux 的单向数据流方式为：Store - View - Action - Store。从这种流向的处理上，循环链表有一些像。</p>
+<p>Redux 的使用首先要创建 Store，之后 UI 界面会触发 Action 更新 Store，Store 更新后 View 随之发生变化。</p>
+<p>全局状态管理主要解决了 React 中跨组件共享状态时候遇到的复杂性。出了降低复杂性外，还可以增加项目的可维护性，实现关注点分离。</p>
+<p>Redux 的可预测性是基于 Immutability（不可变性）。不可变性意味着普通数据类型的 const 初始赋值后就不能在被赋值。但是在 JS 中通过 const 初始化的数组和对象并不算事严格意义上的不可变。因为 const 初始化的数组和对象，是可以改变某个索引或某个 key 的值的。</p>
+<p>基于这样的原因，Redux 推荐在处理数组和对象的时候，要返回新的对象拷贝。也就是在实际使用时候经常见到的解构操作。</p>
+<p>在 Redux 中的核心概念：
+- Store
+- Actions
+- Reducers</p>
+<p>Store 通过 createStore 方法创建。Actions 类似一种事件，类似我们给 Dom 元素上添加的 click 类型的事件。Reducers 接收 store 和 action 对象，生成新的 store。</p>
+<p>Actions 是一个普通 JS 对象：
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;add&#39;</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">payload</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span>
+<span class="p">}</span>
+</code></pre></div>
+这里假设在描述加 1 的操作。</p>
+<p>Reducer 接收上面的 action，Reducer 的声明形式如：<code>(state, action) =&gt; store</code></p>
+<p>下面先创建 createStore 方法，在创建之前要先看一下如何使用 createStore，用法如下：</p>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">initialState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="p">}</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">reducer1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">initialState</span><span class="p">,</span><span class="w"> </span><span class="nx">action</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">switch</span><span class="p">(</span><span class="nx">action</span><span class="p">.</span><span class="nx">type</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s1">&#39;add&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="nx">state</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">action</span><span class="p">.</span><span class="nx">payload</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">state</span>
+<span class="p">}</span>
+<span class="c1">// 创建 store 对象</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">store</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">createStore</span><span class="p">(</span><span class="nx">reducer1</span><span class="p">)</span>
+<span class="c1">// 订阅更新</span>
+<span class="nx">store</span><span class="p">.</span><span class="nx">subscribe</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">store</span><span class="p">.</span><span class="nx">getState</span><span class="p">()))</span>
+<span class="c1">// 触发更新</span>
+<span class="nx">store</span><span class="p">.</span><span class="nx">dispatch</span><span class="p">(</span><span class="nx">customAction</span><span class="p">)</span>
+</code></pre></div>
+<p>从 createStore 的用法可以看出，数据的更新是通过发布订阅模式实现的。同时 store 对象上会挂在 subscribe 和 dispatch 方法。而且还提供了 getState 方法。</p>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">createStore</span><span class="p">(</span><span class="nx">reducer</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">subscribe</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">dispatch</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">getState</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>我们可以先把返回的对象定义出来，然后在反推如何实现 subscribe、dispatch、getState。</p>
+<p>首先增加 getState 方法，这个方法返回当前的 store</p>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">createStore</span><span class="p">(</span><span class="nx">reducer</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="nx">currentState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">getState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">currentState</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">subscribe</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">dispatch</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">getState</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>在执行 <code>const store = createStore(reducer1)</code> 的时候，只传入了 reducer1 作为参数，所以在 createStore 的实现里面需要能根据传入的 reducer1 计算出 currentState</p>
+<p>为了统一执行逻辑，我们可以通过 dispatch 一个内置的 action
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">createStore</span><span class="p">(</span><span class="nx">reducer</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="nx">currentState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span>
+<span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="nx">currentReducer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">reducer</span>
+
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">dispatch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">action</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">currentState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">currentReducer</span><span class="p">(</span><span class="nx">currentState</span><span class="p">,</span><span class="w"> </span><span class="nx">action</span><span class="p">)</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">getState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">currentState</span>
+
+<span class="w">  </span><span class="nx">dispatch</span><span class="p">({</span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;INIT&#39;</span><span class="p">})</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">subscribe</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">dispatch</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">getState</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<p>当 createStore 执行的时候，dispatch 执行后，会调用 reducer1 返回 initialState，也就是 {value: 0}，所以 currentState 就是这个值了。</p>
+<p>接下来实现 subscribe 和 dispatch</p>
+<p><div class="highlight"><pre><span></span><code><span class="kd">let</span><span class="w"> </span><span class="nx">listenerIdCounter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">createStore</span><span class="p">(</span><span class="nx">reducer</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="nx">currentState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span>
+<span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="nx">currentReducer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">reducer</span>
+<span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="nx">listeners</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Map</span><span class="p">()</span>
+
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">dispatch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">action</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">currentState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">currentReducer</span><span class="p">(</span><span class="nx">currentState</span><span class="p">,</span><span class="w"> </span><span class="nx">action</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">listeners</span><span class="p">.</span><span class="nx">forEach</span><span class="p">((</span><span class="nx">fn</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">fn</span><span class="p">(</span><span class="nx">currentState</span><span class="p">)</span>
+<span class="w">    </span><span class="p">})</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">subscribe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">fn</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">listenerId</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">listenerIdCounter</span><span class="o">++</span>
+<span class="w">    </span><span class="nx">listeners</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="nx">listenerId</span><span class="p">,</span><span class="w"> </span><span class="nx">fn</span><span class="p">)</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">listeners</span><span class="p">.</span><span class="ow">delete</span><span class="p">(</span><span class="nx">listenerId</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">getState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">currentState</span>
+
+<span class="w">  </span><span class="nx">dispatch</span><span class="p">({</span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;INIT&#39;</span><span class="p">})</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">subscribe</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">dispatch</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">getState</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+这里采用了 Map 存储订阅的事件，并且通过全局的计数器作为索引。</p>
+<p>基础版本的 Redux 已经实现了。接下来要增加 Redux 的扩展性。Redux 在 createStore 方法中设置了三个参数，最后一个参数是 enhancer 。通过传入这个参数，可以对 createStore 和 dispatch 进行拦截或包装。</p>
+<p>先看如何使用 enhancer</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// enhancer：接收 createStore，返回新的 createStore</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">loggerEnhancer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">createStore</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">(</span><span class="nx">reducer</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">store</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">createStore</span><span class="p">(</span><span class="nx">reducer</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">rawDispatch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">store</span><span class="p">.</span><span class="nx">dispatch</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="p">...</span><span class="nx">store</span><span class="p">,</span>
+<span class="w">    </span><span class="c1">// 改变了 dispatch 的行为</span>
+<span class="w">    </span><span class="nx">dispatch</span><span class="p">(</span><span class="nx">action</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;dispatch:&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">action</span><span class="p">)</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">rawDispatch</span><span class="p">(</span><span class="nx">action</span><span class="p">)</span>
+<span class="w">      </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;next state:&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">store</span><span class="p">.</span><span class="nx">getState</span><span class="p">())</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="nx">action</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>上面的 loggerEnhancer 是对 dispatch 做了拦截。在原始 dispatch 前后增加了日志功能。</p>
+<p>通过 loggerEnhancer 的实现，很容易写出 createStore 中 enhancer 的实现逻辑</p>
+<div class="highlight"><pre><span></span><code><span class="kd">let</span><span class="w"> </span><span class="nx">listenerIdCounter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">createStore</span><span class="p">(</span><span class="nx">reducer</span><span class="p">,</span><span class="w"> </span><span class="nx">enhancer</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="nx">currentState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span>
+<span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="nx">currentReducer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">reducer</span>
+<span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="nx">listeners</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Map</span><span class="p">()</span>
+
+<span class="w">  </span><span class="k">if</span><span class="p">(</span><span class="nx">enhancer</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">enhancer</span><span class="p">(</span><span class="nx">createStore</span><span class="p">)(</span><span class="nx">reducer</span><span class="p">)</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">dispatch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">action</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">currentState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">currentReducer</span><span class="p">(</span><span class="nx">currentState</span><span class="p">,</span><span class="w"> </span><span class="nx">action</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">listeners</span><span class="p">.</span><span class="nx">forEach</span><span class="p">((</span><span class="nx">fn</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">fn</span><span class="p">(</span><span class="nx">currentState</span><span class="p">)</span>
+<span class="w">    </span><span class="p">})</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">subscribe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">fn</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">listenerId</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">listenerIdCounter</span><span class="o">++</span>
+<span class="w">    </span><span class="nx">listeners</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="nx">listenerId</span><span class="p">,</span><span class="w"> </span><span class="nx">fn</span><span class="p">)</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">listeners</span><span class="p">.</span><span class="ow">delete</span><span class="p">(</span><span class="nx">listenerId</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">getState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">currentState</span>
+
+<span class="w">  </span><span class="nx">dispatch</span><span class="p">({</span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;INIT&#39;</span><span class="p">})</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">subscribe</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">dispatch</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">getState</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>enhancer 有明显的 AOP 面向切面编程风格，但是更严谨一些的话，enhancer 是高阶函数或函数装饰的一种模式。</p>
+<p>函数装饰相当于用高阶函数给含有函数套壳，在不该动原实现的前提下，扩展前后逻辑或改变行为。</p>
+<p>而且，函数装饰可以像俄罗斯套娃，一层套一层的叠加。所以可以实现多 enhancer 。通过函数装饰的方式实现，可以做到不侵入函数代码，易于测试、可复用、可撤销（换回未装饰的函数）</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>

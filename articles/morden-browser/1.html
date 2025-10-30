@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Oasis's Cloud</title>
+        <link rel="stylesheet" href="../../assets/fonts.css">
+        <link rel="stylesheet" href="../../assets/graphite.css">
+        <link rel="stylesheet" href="../../assets/pygments.css">
+        
+        
+    </head>
+    <body class="node-articles-morden-browser-1 node-articles-morden-browser node-articles node">
+        <header class="masthead">
+            <h1><a href="../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1></h1>
+                
+                <hr>
+            </header>
+            <p>当您在地址栏中输入网址时，浏览器进程的界面线程会处理您的输入。</p>
+<p>当用户开始在地址栏中输入内容时，界面线程首先会询问“这是搜索查询还是网址？”。
+在 Chrome 中，地址栏也是一个搜索输入字段，因此界面线程需要进行解析，并决定是将您定向到搜索引擎，还是定向到您请求的网站。</p>
+<p>当用户按下 Enter 键时，界面线程会发起网络调用以获取网站内容。标签页角落会显示加载旋转图标，网络线程会遵循适当的协议（例如 DNS 查找和为请求建立 TLS 连接）。</p>
+<p>网络线程可能会收到 HTTP 301 等服务器重定向标头。在这种情况下，网络线程会与界面线程通信，告知服务器正在请求重定向。然后，系统会发起另一个网址请求。</p>
+<p>响应正文（载荷）开始传入后，网络线程会视需要查看数据流的前几个字节。响应的 Content-Type 标头应指明其数据类型，但由于该标头可能缺失或错误，因此此处会执行 MIME 类型嗅探。</p>
+<p>Service Worker 是运行在渲染程序进程中的 JavaScript 代码.</p>
+<p>渲染程序的核心工作是将 HTML、CSS 和 JavaScript 转换为用户可以与之互动的网页。</p>
+<p>当渲染程序进程收到导航的提交消息并开始接收 HTML 数据时，主线程会开始解析文本字符串 (HTML) 并将其转换为 Document Object Model (DOM)。</p>
+<p>网站通常会使用图片、CSS 和 JavaScript 等外部资源。这些文件需要从网络或缓存加载。主线程可以在解析构建 DOM 时找到它们时逐个请求它们，但为了加快速度，“预加载扫描器”会并发运行。如果 HTML 文档中存在 <img> 或 <link> 等内容，预加载扫描器会查看 HTML 解析器生成的令牌，并向浏览器进程中的网络线程发送请求。</p>
+<p>当 HTML 解析器找到 <script> 标记时，它会暂停解析 HTML 文档，并必须加载、解析和执行 JavaScript 代码。原因是 JavaScript 可以使用 document.write() 等内容更改文档的形状，而 document.write() 会更改整个 DOM 结构（HTML 规范中的解析模型概览中有个很棒的图表）。因此，HTML 解析器必须等待 JavaScript 运行，然后才能继续解析 HTML 文档。如果您想了解 JavaScript 执行过程中会发生什么，请参阅 V8 团队就此发表的演讲和博文。</p>
+<p>https://html.spec.whatwg.org/multipage/parsing.html#overview-of-the-parsing-model</p>
+<p>https://mathiasbynens.be/notes/shapes-ics</p>
+<p>https://v8.dev/features/modules</p>
+<p>https://web.dev/explore/fast?hl=zh-cn#prioritize-resources</p>
+<p>主线程会解析 CSS 并确定每个 DOM 节点的计算样式。这类信息会说明系统根据 CSS 选择器将哪种样式应用于每个元素。</p>
+<p>主线程会遍历 DOM 和计算样式，并创建包含 x、y 坐标和边界框大小等信息的布局树。布局树的结构可能与 DOM 树类似，但它仅包含与网页上显示的内容相关的信息。如果应用了 display: none，则该元素不属于布局树（不过，具有 visibility: hidden 的元素属于布局树）。同样，如果应用了包含 p::before{content:&rdquo;Hi!&rdquo;} 等内容的伪元素，即使该元素不在 DOM 中，也会包含在布局树中。</p>
+<p>仅有 DOM、样式和布局还不足以呈现网页。假设您尝试再现一幅画作。您知道元素的大小、形状和位置，但仍需要判断绘制它们的顺序。</p>
+<p>主线程会遍历布局树以创建绘制记录。绘制记录是对绘制过程的说明</p>
+<p>在渲染流水线中，最重要的一点是，在每个步骤中，都会使用上一步操作的结果来创建新数据。例如，如果布局树发生了变化，则需要为文档的受影响部分重新生成绘制顺序。</p>
+<p>如果您要为元素添加动画效果，则浏览器必须在每一帧之间运行这些操作。我们的大多数显示屏每秒刷新 60 次（60 fps）；如果您在每一帧中在屏幕上移动内容，动画在人眼中看起来会很流畅。但是，如果动画跳过了中间的帧，则网页会出现卡顿。</p>
+<p>您可以将 JavaScript 操作划分为小块，并使用 requestAnimationFrame() 安排在每个帧中运行</p>
+<p>将此信息转换为屏幕上的像素称为光栅化。</p>
+<p>合成是一种将网页的各个部分拆分为图层、单独光栅化这些图层，并在称为合成程序线程的单独线程中将其合成为网页的技术。如果发生滚动，由于图层已光栅化，因此只需合成新帧即可。您也可以通过移动图层并合成新帧，以同样的方式实现动画。</p>
+<p>为了确定哪些元素需要位于哪些层中，主线程会遍历布局树以创建层树（此部分在 DevTools 性能面板中称为“更新层树”）。如果网页的某些部分应为单独的层（例如滑入式侧边菜单），但未获得单独的层，则您可以在 CSS 中使用 will-change 属性向浏览器发出提示。</p>
+<p>创建图层树并确定绘制顺序后，主线程会将这些信息提交给合成器线程。然后，合成程序线程会对每个图层进行光栅化处理。图层可能很大，例如整个网页的长度，因此合成程序线程会将其划分为图块，并将每个图块发送到光栅线程。光栅线程会对每个图块进行光栅化处理，并将其存储在 GPU 显存中。</p>
+<p>创建图层树并确定绘制顺序后，主线程会将这些信息提交给合成器线程。然后，合成程序线程会对每个图层进行光栅化处理。图层可能很大，例如整个网页的长度，因此合成程序线程会将其划分为图块，并将每个图块发送到光栅线程。光栅线程会对每个图块进行光栅化处理，并将其存储在 GPU 显存中。</p>
+<p>请尽可能将动画限制为 opacity 和 transform，以便将动画保留在渲染路径的合成阶段</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>
