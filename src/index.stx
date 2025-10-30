@@ -30,6 +30,7 @@ subTitle: 目录
 ## Source Code
 * [源码分析——async-validator](@root/articles/frontend/12.html)
 * [源码分析——nrm](@root/articles/frontend/6.html)
+* [源码分析——Redux](@root/articles/frontend/21.html)
 
 ## Frontend
 * [通过 jscodeshift 重构代码](@root/articles/frontend/14.html)
