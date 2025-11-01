@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>esbuild + es module 实现极简 CLI</title>
+        <link rel="stylesheet" href="../../assets/fonts.css">
+        <link rel="stylesheet" href="../../assets/graphite.css">
+        <link rel="stylesheet" href="../../assets/pygments.css">
+        
+        
+    </head>
+    <body class="node-articles-frontend-22 node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>esbuild + es module 实现极简 CLI</h1>
+                
+                <hr>
+            </header>
+            <p>前端项目往往需要在浏览器中查看最终展示效果，而且随着模块化技术的发展，这个事情变得也更加复杂，现在可以记住 webpack、vite 等工具实现开发环境的页面预览等。</p>
+<p>总的来说开发模式下做了两个事情：
+1. 启动本地服务（Http 或 Https）
+2. 构建模块化的脚本，其中可能包括将 TS 编译为 JS，将 JS 文件中的 CSS 文件提取等。</p>
+<p>基于这两个特点，可以在 ESM 的基础上对实现进行简化。
+1. 针对外部以来，可以通过 <a href="https://esm.sh/">esm.sh</a> 提供的方式进行引入。
+2. 在本地通过 Node.js 启动 Http 服务，同时通过 esbuild 将项目中的文件进行构建。</p>
+<p>React 19 移除了 UMD 模块的文件，如果通过 script 标签加载 React，推荐使用 esm.sh 的 CDN 加载方式。</p>
+<div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">script</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;importmap&quot;</span><span class="p">&gt;</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="s2">&quot;imports&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="s2">&quot;react&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;https://esm.sh/react@19.2.0&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="s2">&quot;react-dom/&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;https://esm.sh/react-dom@19.2.0/&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">script</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;module&quot;</span><span class="p">&gt;</span>
+<span class="w">  </span><span class="k">import</span><span class="w"> </span><span class="nx">React</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;react&quot;</span>
+<span class="w">  </span><span class="k">import</span><span class="w"> </span><span class="nx">ReactDOMClient</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;react-dom/client&quot;</span>
+<span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+</code></pre></div>
+<p>因为通过 script 标签加载了 React 和 ReactDomClient，所以在第二步通过 esbuild 构建项目代码时需要对 React 和 ReactDomClient 做 extrnal 处理。</p>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">runBuild</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">build</span><span class="p">({</span>
+<span class="w">    </span><span class="nx">entryPoints</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s1">&#39;./src/index.tsx&#39;</span><span class="p">],</span>
+<span class="w">    </span><span class="nx">outfile</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;./public/bundle.js&#39;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">bundle</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">format</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;esm&#39;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">external</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s1">&#39;react&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;react-dom&#39;</span><span class="p">]</span>
+<span class="w">  </span><span class="p">})</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>本地 http 服务启动可以通过 http-server 模块实现。</p>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">runServer</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">server</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">createServer</span><span class="p">({</span>
+<span class="w">        </span><span class="nx">root</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;./public&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">showDir</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">autoIndex</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">gzip</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">brotli</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="p">})</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">PORT</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">5173</span>
+<span class="w">    </span><span class="nx">server</span><span class="p">.</span><span class="nx">listen</span><span class="p">(</span><span class="nx">PORT</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Server is listen on port: &quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">PORT</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>完整实例可访问：<a href="https://github.com/oasis-cloud/ultra-minimal-cli">oasis-cloud/ultra-minimal-cli</a></p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>
