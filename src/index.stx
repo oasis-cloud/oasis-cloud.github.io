@@ -21,6 +21,7 @@ subTitle: 目录
 * [DNS 解析流程](@root/articles/network/1.html)
 
 ## Node.js
+* [Vite 7.x 版本是如何处理 JS 和 CSS 的](@root/articles/frontend/23.html)
 * [esbuild + es module 实现极简 CLI](@root/articles/frontend/22.html)
 * [Nodes.js v22 带来的重大收益](@root/articles/nodejs/1.html)
 * [Node.js v20.6.0 导入断言改名为导入属性](@root/articles/nodejs/3.html)

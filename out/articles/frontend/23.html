@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Vite 7.x 版本是如何处理 JS 和 CSS 的</title>
+        <link rel="stylesheet" href="../../assets/fonts.css">
+        <link rel="stylesheet" href="../../assets/graphite.css">
+        <link rel="stylesheet" href="../../assets/pygments.css">
+        
+        
+    </head>
+    <body class="node-articles-frontend-23 node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>Vite 7.x 版本是如何处理 JS 和 CSS 的</h1>
+                
+                <hr>
+            </header>
+            <blockquote>
+<p>Vite 6 正式引入了“环境”的概念，在 Vite 5 之前，系统中存在两个隐式环境（client 和可选的 ssr）。新的环境 API 允许用户和框架作者根据应用在生产环境中的运行方式，创建任意数量的环境。</p>
+<p>Vite 6 允许用户在构建和开发过程中配置应用程序，以映射其所有环境。在开发期间，一个 Vite 开发服务器可用于在多个不同环境中同时运行代码。应用程序源代码仍有 Vite 开发服务器进行转换。</p>
+</blockquote>
+<p>Vite 的开发环境实现基本原理是：通过 script 标签加载 ESM 模块，ESM 模块的请求由 Vite 开发服务器进行处理（将代码转换为 JS）。</p>
+<p>在这个原理的基础上可以进行简单的试验来观察下纯 ESM 方式下 React 应用中的 JS 和 CSS 是如何加载的。</p>
+<p><div class="highlight"><pre><span></span><code><span class="c">/* index.css */</span>
+<span class="p">.</span><span class="nc">app</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">color</span><span class="p">:</span><span class="w"> </span><span class="kc">rebeccapurple</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+index.js 内容如下：
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nx">React</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;react&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">ReactDomClient</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;react-dom/client&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="s1">&#39;./bundle.css&#39;</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">App</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">React</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s2">&quot;h1&quot;</span><span class="p">,</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Welcome to ultra minimal cli!&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="kd">var</span><span class="w"> </span><span class="nx">domNode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">&quot;root&quot;</span><span class="p">);</span>
+<span class="kd">var</span><span class="w"> </span><span class="nx">root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ReactDomClient</span><span class="p">.</span><span class="nx">createRoot</span><span class="p">(</span><span class="nx">domNode</span><span class="p">);</span>
+<span class="nx">root</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="nx">React</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="nx">App</span><span class="p">,</span><span class="w"> </span><span class="kc">null</span><span class="p">));</span>
+</code></pre></div></p>
+<p>通过 http-server 启动 http 服务，打开浏览器的网络面板，可以看到 css 文件被加载了，但是控制台有一条错误日志：</p>
+<div class="highlight"><pre><span></span><code>Failed to load module script: Expected a JavaScript-or-Wasm module script but the server responded with a MIME type of &quot;text/css&quot;. Strict MIME type checking is enforced for module scripts per HTML spec.
+</code></pre></div>
+<p>通过这个例子可以试着分析 css 文件应该如何加载。</p>
+<ol>
+<li>因为 ESM 模块中需要 import JS文件，所以需要在开发服务器中将 css 的请求，返回 JS 的响应头</li>
+<li>将 CSS 转换为 JS 代码</li>
+<li>生成 updateStyle() 调用</li>
+<li>加载 CSS 文件，调用 updateStyle() 插入 style 标签</li>
+</ol>
+<p>Vite 返回的 CSS 文件内容示例如下：
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="nx">createHotContext</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">__vite__createHotContext</span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;/@vite/client&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="p">.</span><span class="nx">meta</span><span class="p">.</span><span class="nx">hot</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">__vite__createHotContext</span><span class="p">(</span><span class="s2">&quot;/src/index.css&quot;</span><span class="p">);</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="nx">updateStyle</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">__vite__updateStyle</span><span class="p">,</span><span class="w"> </span><span class="nx">removeStyle</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">__vite__removeStyle</span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;/@vite/client&quot;</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">__vite__id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/Usersc/vite-project/src/index.css&quot;</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">__vite__css</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;\nbody {\n  margin: 0;\n  display: flex;\n  place-items: center;\n  min-width: 320px;\n  min-height: 100vh;\n}\n&quot;</span>
+<span class="nx">__vite__updateStyle</span><span class="p">(</span><span class="nx">__vite__id</span><span class="p">,</span><span class="w"> </span><span class="nx">__vite__css</span><span class="p">)</span>
+<span class="k">import</span><span class="p">.</span><span class="nx">meta</span><span class="p">.</span><span class="nx">hot</span><span class="p">.</span><span class="nx">accept</span><span class="p">()</span>
+<span class="k">import</span><span class="p">.</span><span class="nx">meta</span><span class="p">.</span><span class="nx">hot</span><span class="p">.</span><span class="nx">prune</span><span class="p">(</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">__vite__removeStyle</span><span class="p">(</span><span class="nx">__vite__id</span><span class="p">))</span>
+</code></pre></div></p>
+<p>示例代码中的 import.meta.hot 是 Vite 提供的实现模块级别热更新的 API。createHotContext 会创建一个 HMRContext 对象。HMRContext 是每个模块的 HMR 上下文，通过 HMRClient 管理所有模块的状态。</p>
+<p>import.meta.hot.accept() 调用 creatHotContext 上的 acceptDeps 方法，将文件路径和相关的 callback 存储到 hmr.client 的 hotModulesMap 中。</p>
+<p><code>import.meta.hot.prune( () =&gt; __vite__removeStyle(__vite__id))</code>负责模块不在被使用时候的清理。</p>
+<h2>开发服务器的流程</h2>
+<p>Vite 在 dev 命令中分别实现了 http、socket、watcher 这几个服务。其中 http 服务通过 <code>_createServer()</code> 调用 <a href="https://www.npmjs.com/package/connect"><code>connect</code></a> 实现。watcher 基于 chokidar 实现。</p>
+<p>基于 connect 的 http 服务挂载了一些列的中间件，例如 transformMiddleware 用来解析 main 入口文件。</p>
+<p>这里的步骤如下：</p>
+<ul>
+<li>transformRequest() 被调用</li>
+<li>doTransform()</li>
+<li>loadAndTransform() 执行：</li>
+<li>pluginContainer.load()</li>
+<li>pluginContainer.transform()</li>
+</ul>
+<p>PluginContainer 是在 _createserver 方法中实例化的。PluginContainer 会根据不同的环境（environment）实例化。</p>
+<p>PluginContainer 类具有模板模式的一些特征：固定的算法骨架：遍历插件——过滤——调用 hook——处理结果。</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>
