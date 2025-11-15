@@ -33,6 +33,9 @@
             <header class="title">
                 <h1>微前端学习笔记</h1>
                 
+                
+                    <p class="author">作者：oasis</p>
+                
                 <hr>
             </header>
             <h2>什么是微前端</h2>
@@ -47,17 +50,17 @@
 <h2>实践方案：</h2>
 <p>1.后端进行组合
 主要通过后端模板配合服务器配置进行拼合</p>
-<p>2.前端进行组合
-通过 iframe 进行运行时集成</p>
-<pre><code>通过 JavaScript 进行运行时集成
-
-通过 Web Components 进行运行时集成
+<p>2.前端进行组合</p>
+<pre><code>1.通过 iframe 进行运行时集成
+2.通过 JavaScript 进行运行时集成
+3.通过 Web Components 进行运行时集成
 </code></pre>
-<p>iframe 具有天然的隔离型，保证 JS 和 CSS 不会产生冲突
-其他前端运行时方案需要考虑 JS 和 CSS 的冲突处理，shadow DOM 提供了良好的样式隔离。</p>
+<p>iframe 具有天然的隔离型，保证 JS 和 CSS 不会产生冲突。其他前端运行时方案需要考虑 JS 和 CSS 的冲突处理，shadow DOM 提供了良好的样式隔离。</p>
 <h2>实现方案概述：</h2>
-<p>1.构建基座应用，用来管理微前端的加载。
-2.通过路由匹配，处理微前端的资源进行加载执行。</p>
+<ol>
+<li>构建基座应用，用来管理微前端的加载。</li>
+<li>通过路由匹配，处理微前端的资源进行加载执行。</li>
+</ol>
         </article>
         
         <script src="https://giscus.app/client.js"

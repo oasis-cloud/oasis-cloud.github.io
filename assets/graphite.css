@@ -336,6 +336,12 @@ body {
     text-align: center;
 }
 
+.main .title .author {
+    font-style: italic;
+    text-align: center;
+    color: #666;
+}
+
 .main .title hr {
     margin: 50px auto 60px;
 }
