@@ -35,11 +35,11 @@
                 
                 <hr>
             </header>
-            <p>Redux 是一个可预测且可维护的全局状态管理的 JS 库。可预测的特性主要建立在单项数据流和不可变性的基础上。</p>
-<p>Redux 的单向数据流方式为：Store - View - Action - Store。从这种流向的处理上，循环链表有一些像。</p>
+            <p>Redux 是一个可预测且可维护的全局状态管理的 JS 库。可预测的特性主要建立在单向数据流和不可变性的基础上。</p>
+<p>Redux 的单向数据流方式为：Store - View - Action - Store。从这种流向的处理上，和循环链表有一些相似。</p>
 <p>Redux 的使用首先要创建 Store，之后 UI 界面会触发 Action 更新 Store，Store 更新后 View 随之发生变化。</p>
-<p>全局状态管理主要解决了 React 中跨组件共享状态时候遇到的复杂性。出了降低复杂性外，还可以增加项目的可维护性，实现关注点分离。</p>
-<p>Redux 的可预测性是基于 Immutability（不可变性）。不可变性意味着普通数据类型的 const 初始赋值后就不能在被赋值。但是在 JS 中通过 const 初始化的数组和对象并不算事严格意义上的不可变。因为 const 初始化的数组和对象，是可以改变某个索引或某个 key 的值的。</p>
+<p>全局状态管理主要解决了 React 中跨组件共享状态时候遇到的复杂性。除了降低复杂性外，还可以增加项目的可维护性，实现关注点分离。</p>
+<p>Redux 的可预测性是基于 Immutability（不可变性）。不可变性意味着普通数据类型的 const 初始赋值后就不能再被赋值。但是在 JS 中通过 const 初始化的数组和对象并不算是严格意义上的不可变。因为 const 初始化的数组和对象，是可以改变某个索引或某个 key 的值的。</p>
 <p>基于这样的原因，Redux 推荐在处理数组和对象的时候，要返回新的对象拷贝。也就是在实际使用时候经常见到的解构操作。</p>
 <p>在 Redux 中的核心概念：
 - Store
@@ -57,10 +57,11 @@
 <p>下面先创建 createStore 方法，在创建之前要先看一下如何使用 createStore，用法如下：</p>
 <div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">initialState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="p">}</span>
 <span class="kd">const</span><span class="w"> </span><span class="nx">reducer1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">initialState</span><span class="p">,</span><span class="w"> </span><span class="nx">action</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="k">switch</span><span class="p">(</span><span class="nx">action</span><span class="p">.</span><span class="nx">type</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s1">&#39;add&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="nx">state</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">action</span><span class="p">.</span><span class="nx">payload</span>
-<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="k">switch</span><span class="p">(</span><span class="nx">action</span><span class="p">.</span><span class="nx">type</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="s1">&#39;add&#39;</span><span class="o">:</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="nx">state</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">action</span><span class="p">.</span><span class="nx">payload</span>
+<span class="w">      </span><span class="p">}</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">state</span>
 <span class="p">}</span>
@@ -80,7 +81,7 @@
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
-<p>我们可以先把返回的对象定义出来，然后在反推如何实现 subscribe、dispatch、getState。</p>
+<p>我们可以先把返回的对象定义出来，然后再反推如何实现 subscribe、dispatch、getState。</p>
 <p>首先增加 getState 方法，这个方法返回当前的 store</p>
 <div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">createStore</span><span class="p">(</span><span class="nx">reducer</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="nx">currentState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span>
@@ -197,7 +198,7 @@
 <span class="p">}</span>
 </code></pre></div>
 <p>enhancer 有明显的 AOP 面向切面编程风格，但是更严谨一些的话，enhancer 是高阶函数或函数装饰的一种模式。</p>
-<p>函数装饰相当于用高阶函数给含有函数套壳，在不该动原实现的前提下，扩展前后逻辑或改变行为。</p>
+<p>函数装饰相当于用高阶函数给原有函数套壳，在不改动原实现的前提下，扩展前后逻辑或改变行为。</p>
 <p>而且，函数装饰可以像俄罗斯套娃，一层套一层的叠加。所以可以实现多 enhancer 。通过函数装饰的方式实现，可以做到不侵入函数代码，易于测试、可复用、可撤销（换回未装饰的函数）</p>
         </article>
         
