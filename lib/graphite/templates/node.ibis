@@ -37,6 +37,9 @@
                 {% if node.subtitle %}
                     <p class="subtitle">{{ node.subtitle }}</p>
                 {% endif %}
+                {% if node.author %}
+                    <p class="author">作者：{{ node.author }}</p>
+                {% endif %}
                 <hr>
             </header>
             {{ node.html }}

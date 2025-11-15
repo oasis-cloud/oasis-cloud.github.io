@@ -3,6 +3,54 @@ title: ☁️☁️☁️<br/>🌵🌵🌵🌵🌵
 subTitle: 目录
 ---
 
+## 源码分析
+* [源码分析——Redux](@root/articles/frontend/21.html)
+* [源码分析——Immerjs](@root/articles/frontend/immerjs/2.html)
+* [源码分析——async-validator](@root/articles/frontend/12.html)
+* [源码分析——nrm](@root/articles/frontend/6.html)
+* [Taro 运行时机制解析](@root/articles/frontend/18.html)
+* [Taro 构建流程源码分析](@root/articles/frontend/19.html)
+* [Taro 源码阅读笔记](@root/articles/frontend/20.html)
+
+## 工程化实践
+* [NutUI React CI/CD](@root/articles/github/5.html)
+* [通过 jscodeshift 重构代码](@root/articles/frontend/14.html)
+* [通过 jscodeshift 向类型文件增加注释](@root/articles/frontend/11.html)
+* [esbuild + es module 实现极简 CLI](@root/articles/frontend/22.html)
+* [在 GitHub Action 中获取改动文件](@root/articles/github/4.html)
+* [GitHub Action 本地测试](@root/articles/github/3.html)
+* [GitHub Action 入门](@root/articles/github/2.html)
+
+## 构建工具
+* [Vite 7.x 版本是如何处理 JS 和 CSS 的](@root/articles/frontend/23.html)
+* [Taro 构建流程源码分析](@root/articles/frontend/19.html)
+* [启动 Python 项目](@root/articles/github/1.html)
+* [Brew 包管理器的工作流程分析](@root/articles/frontend/13.html)
+
+## Node.js
+* [Nodes.js v22 带来的重大收益](@root/articles/nodejs/1.html)
+* [import.meta 在 Node.js 中的发展过程](@root/articles/nodejs/2.html)
+* [Node.js v20.6.0 导入断言改名为导入属性](@root/articles/nodejs/3.html)
+* [Node.js 的 preserve-symlinks](@root/articles/frontend/9.html)
+
+## 前端实践
+* [为什么用 ?? 而不是 ||？空值合并运算符详解](@root/articles/frontend/24.html)
+* [NutUI React Checkbox 组件设计与实现](@root/articles/frontend/8.html)
+* [NutUI React 安全区组件的实现](@root/articles/frontend/17.html)
+* [NutUI React 在 Taro 中实现函数调用的方法](@root/articles/frontend/15.html)
+* [JavaScript 中的枚举实现](@root/articles/frontend/7.html)
+* [CSS 设置容器下子元素的间距](@root/articles/frontend/16.html)
+* [TypeScript config 文件中的 extends](@root/articles/frontend/3.html)
+* [TypeScript 中的 type 和 interface 比较](@root/articles/frontend/2.html)
+* [Sass @use vs @import](@root/articles/frontend/1.html)
+* [微前端学习笔记](@root/articles/frontend/5.html)
+* [自己动手实现——marquee](@root/articles/frontend/4.html)
+
+## 网络与协议
+* [DNS 解析流程](@root/articles/network/1.html)
+* [Http Multipart 介绍](@root/articles/network/2.html)
+* [tcpdump](@root/articles/network/3.html)
+
 ## Software Design
 * [系统编程](@root/articles/software-design/1.html)
 * [异步编程](@root/articles/software-design/2.html)
@@ -11,66 +59,17 @@ subTitle: 目录
 * [数据表](@root/articles/software-design/5.html)
 * [构建正则表达式](@root/articles/software-design/6.html)
 
-## SICP
+## 读书笔记
 * [构造数据抽象](@root/articles/sicp/2.html)
 * [构造过程抽象](@root/articles/sicp/1.html)
-
-## Network
-* [tcpdump](@root/articles/network/3.html)
-* [Http Multipart 介绍](@root/articles/network/2.html)
-* [DNS 解析流程](@root/articles/network/1.html)
-
-## Node.js
-* [Vite 7.x 版本是如何处理 JS 和 CSS 的](@root/articles/frontend/23.html)
-* [esbuild + es module 实现极简 CLI](@root/articles/frontend/22.html)
-* [Nodes.js v22 带来的重大收益](@root/articles/nodejs/1.html)
-* [Node.js v20.6.0 导入断言改名为导入属性](@root/articles/nodejs/3.html)
-* [import.meta 在 Node.js 中的发展过程](@root/articles/nodejs/2.html)
-* [Node.js 的 preserve-symlinks](@root/articles/frontend/9.html)
-* [Brew 包管理器的工作流程分析](@root/articles/frontend/13.html)
-
-## Source Code
-* [源码分析——async-validator](@root/articles/frontend/12.html)
-* [源码分析——nrm](@root/articles/frontend/6.html)
-* [源码分析——Redux](@root/articles/frontend/21.html)
-
-## Frontend
-* [为什么用 ?? 而不是 ||？空值合并运算符详解](@root/articles/frontend/24.html)
-* [通过 jscodeshift 重构代码](@root/articles/frontend/14.html)
-* [通过 jscodeshift 向类型文件增加注释](@root/articles/frontend/11.html)
-* [NutUI React 在 Taro 中实现函数调用的方法](@root/articles/frontend/15.html)
-* [NutUI React 安全区组件的实现](@root/articles/frontend/17.html)
-* [NutUI React Checkbox 组件设计与实现](@root/articles/frontend/8.html)
-* [CSS 设置容器下子元素的间距](@root/articles/frontend/16.html)
-* [JavaScript 中的枚举实现](@root/articles/frontend/7.html)
-* [微前端](@root/articles/frontend/5.html)
-* [marquee](@root/articles/frontend/4.html)
-* [TypeScript config 文件中的 extends](@root/articles/frontend/3.html)
-* [TypeScript 中的 type 和 interface 比较](@root/articles/frontend/2.html)
-* [Sass @use vs @import](@root/articles/frontend/1.html)
-* [Taro 源码阅读笔记](@root/articles/frontend/20.html)
-* [Taro 构建流程源码分析](@root/articles/frontend/19.html)
-* [Taro 运行时机制解析](@root/articles/frontend/18.html)
-
-## GitHub
-* [NutUI React CI/CD](@root/articles/github/5.html)
-* [在 GitHub Action 中获取改动文件](@root/articles/github/4.html)
-* [GitHub Action 本地测试](@root/articles/github/3.html)
-* [GitHub Action 入门](@root/articles/github/2.html)
-* [启动 Python 项目](@root/articles/github/1.html)
-
-## Book
-* [人工智能概念](@root/articles/artificial-intelligence/1.html)
-* [人工智能中的表达形式和问题求解方法](@root/articles/artificial-intelligence/2.html)
-* [人工智能中的问题求解方法](@root/articles/artificial-intelligence/3.html)
-
 * [软件设计的哲学](@root/articles/philosophy-of-software-design/1.html)
 * [软件设计的哲学-设计原则总结](@root/articles/philosophy-of-software-design/2.html)
 * [软件设计的哲学-警示信号](@root/articles/philosophy-of-software-design/3.html)
 * [编程格调](@root/articles/1.html)
-
+* [人工智能概念](@root/articles/artificial-intelligence/1.html)
+* [人工智能中的表达形式和问题求解方法](@root/articles/artificial-intelligence/2.html)
+* [人工智能中的问题求解方法](@root/articles/artificial-intelligence/3.html)
 * [深度工作](@root/articles/books/shendugongzuo/1.html)
 * [可变思考](@root/articles/books/kebiansikao/1.html)
 * [点石成金](@root/articles/books/dontmakemethink/1.html)
 * [高效能人士的七个习惯](@root/articles/books/gaoxiaonengrenshideqigexiguan/1.html)
-
