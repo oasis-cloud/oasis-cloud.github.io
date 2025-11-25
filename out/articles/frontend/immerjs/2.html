@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Immer 数据处理流程解析</title>
+        <link rel="stylesheet" href="../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../assets/pygments.css">
+        <script src="../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-frontend-immerjs-2 node-articles-frontend-immerjs node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>Immer 数据处理流程解析</h1>
+                
+                
+                    <p class="author">作者：oasis</p>
+                
+                <hr>
+            </header>
+            <p>Immer 通过 <code>produce</code> 函数实现不可变数据的处理。整个流程可以概括为：创建 draft → 修改跟踪 → 最终化处理 → 返回新状态。下面结合流程图详细说明每个阶段的工作机制。</p>
+<p><img alt="img.png" src="/images/frontend/immer不可变数据的处理流程.png" /></p>
+<h2>流程概览</h2>
+<p>从流程图中可以看到，Immer 的数据处理主要分为三个阶段：</p>
+<ol>
+<li><strong>初始化阶段</strong>：创建 scope 和根 draft</li>
+<li><strong>修改阶段</strong>：通过 Proxy 拦截操作，跟踪修改</li>
+<li><strong>最终化阶段</strong>：根据修改情况生成新状态</li>
+</ol>
+<h2>初始化阶段</h2>
+<p>当调用 <code>produce(baseState, draft =&gt; { ... })</code> 时，首先会创建一个新的 scope：</p>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">scope</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">enterScope</span><span class="p">(</span><span class="k">this</span><span class="p">)</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">proxy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">createProxy</span><span class="p">(</span><span class="nx">base</span><span class="p">,</span><span class="w"> </span><span class="kc">undefined</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Scope 的作用</strong>：
+- 管理整个 <code>produce</code> 调用的上下文
+- 存储所有创建的 draft 对象
+- 提供错误恢复机制</p>
+<p><strong>Draft 的创建</strong>：
+- 为原始对象创建 Proxy 代理
+- 每个 draft 内部都有 <code>DRAFT_STATE</code> 属性
+- State 包含 <code>base_</code>（原始对象）、<code>copy_</code>（null）、<code>modified_</code>（false）等</p>
+<h2>修改阶段</h2>
+<p>当在 recipe 函数中修改 draft 时，Proxy 会拦截这些操作：</p>
+<h3>属性访问</h3>
+<div class="highlight"><pre><span></span><code><span class="nx">draft</span><span class="p">.</span><span class="nx">user</span><span class="p">.</span><span class="nx">age</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">31</span>
+</code></pre></div>
+<p>访问 <code>draft.user</code> 时：
+- 检查 <code>user</code> 属性是否等于原始值
+- 如果相等，调用 <code>prepareCopy(state)</code> 准备副本
+- 创建 <code>user</code> 对象的 draft 并返回</p>
+<h3>属性赋值</h3>
+<p>设置 <code>age</code> 属性时：
+- <code>prepareCopy(state)</code>：为 draft 创建 <code>copy_</code>（浅拷贝）
+- <code>markChanged(state)</code>：标记当前 state 为 <code>modified_ = true</code>
+- 递归向上标记所有父级 state 为已修改
+- 将新值赋给 <code>copy_</code> 中的对应属性</p>
+<p><strong>关键设计</strong>：
+- <strong>惰性复制</strong>：只有在真正修改时才创建副本
+- <strong>修改传播</strong>：子对象的修改会自动传播到父级
+- <strong>结构共享</strong>：未修改的部分保持引用共享</p>
+<h2>最终化阶段</h2>
+<p>当 recipe 函数执行完成后，进入最终化处理：</p>
+<div class="highlight"><pre><span></span><code><span class="nx">processResult</span><span class="p">(</span><span class="nx">result</span><span class="p">,</span><span class="w"> </span><span class="nx">scope</span><span class="p">)</span>
+</code></pre></div>
+<h3>最终化流程</h3>
+<ol>
+<li>
+<p><strong>检查修改状态</strong>：</p>
+<ul>
+<li>如果 <code>modified_ = false</code>，直接返回原始对象</li>
+<li>如果 <code>modified_ = true</code>，处理 <code>copy_</code></li>
+</ul>
+</li>
+<li>
+<p><strong>递归处理子属性</strong>：</p>
+<ul>
+<li>遍历 <code>copy_</code> 中的所有属性</li>
+<li>如果属性是 draft，递归调用 <code>finalize</code></li>
+<li>如果属性是普通对象，根据配置决定是否冻结</li>
+</ul>
+</li>
+<li>
+<p><strong>生成补丁</strong>（如果启用）：</p>
+<ul>
+<li>收集所有变更操作</li>
+<li>生成 <code>patches_</code> 和 <code>inversePatches_</code></li>
+</ul>
+</li>
+<li>
+<p><strong>清理资源</strong>：</p>
+<ul>
+<li>撤销所有 draft 对象</li>
+<li>释放 scope 资源</li>
+</ul>
+</li>
+</ol>
+<h2>示例分析</h2>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">baseState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">user</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;John&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">age</span><span class="o">:</span><span class="w"> </span><span class="mf">30</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">address</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">city</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;New York&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">country</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;USA&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">todos</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;task1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;task2&quot;</span><span class="p">]</span>
+<span class="p">};</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">nextState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">produce</span><span class="p">(</span><span class="nx">baseState</span><span class="p">,</span><span class="w"> </span><span class="nx">draft</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">draft</span><span class="p">.</span><span class="nx">user</span><span class="p">.</span><span class="nx">age</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">31</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">draft</span><span class="p">.</span><span class="nx">todos</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="s2">&quot;task3&quot;</span><span class="p">);</span>
+<span class="p">});</span>
+</code></pre></div>
+<p><strong>执行流程</strong>：</p>
+<ol>
+<li>
+<p><strong>初始化</strong>：</p>
+<ul>
+<li>创建 scope</li>
+<li>创建根 draft（baseState 的代理）</li>
+</ul>
+</li>
+<li>
+<p><strong>修改 <code>draft.user.age</code></strong>：</p>
+<ul>
+<li>访问 <code>draft.user</code> → 创建 user draft</li>
+<li>设置 <code>age</code> → 标记 user state 和根 state 为已修改</li>
+<li>创建 user 的 <code>copy_</code>，修改 <code>age</code> 为 31</li>
+</ul>
+</li>
+<li>
+<p><strong>修改 <code>draft.todos</code></strong>：</p>
+<ul>
+<li>访问 <code>draft.todos</code> → 创建数组 draft</li>
+<li><code>push</code> 操作 → 标记数组 state 和根 state 为已修改</li>
+<li>创建数组的 <code>copy_</code>，添加 &ldquo;task3&rdquo;</li>
+</ul>
+</li>
+<li>
+<p><strong>最终化</strong>：</p>
+<ul>
+<li>根 state 被修改，返回新的根对象</li>
+<li>user 被修改，返回新的 user 对象（age=31）</li>
+<li>address 未修改，保持原始引用</li>
+<li>todos 被修改，返回新的数组</li>
+</ul>
+</li>
+</ol>
+<p><strong>结果</strong>：
+<div class="highlight"><pre><span></span><code><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">baseState</span><span class="p">.</span><span class="nx">user</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">nextState</span><span class="p">.</span><span class="nx">user</span><span class="p">);</span><span class="w"> </span><span class="c1">// false</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">baseState</span><span class="p">.</span><span class="nx">user</span><span class="p">.</span><span class="nx">address</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">nextState</span><span class="p">.</span><span class="nx">user</span><span class="p">.</span><span class="nx">address</span><span class="p">);</span><span class="w"> </span><span class="c1">// true</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">baseState</span><span class="p">.</span><span class="nx">todos</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">nextState</span><span class="p">.</span><span class="nx">todos</span><span class="p">);</span><span class="w"> </span><span class="c1">// false</span>
+</code></pre></div></p>
+<h2>性能优化</h2>
+<p>Immer 通过以下机制优化性能：</p>
+<ol>
+<li><strong>Copy-on-Write</strong>：只在修改时创建副本</li>
+<li><strong>结构共享</strong>：未修改的部分保持引用</li>
+<li><strong>修改跟踪</strong>：避免不必要的深度遍历</li>
+<li><strong>批量处理</strong>：scope 统一管理所有 drafts</li>
+</ol>
+<p>这种设计使得 Immer 既能保证不可变性，又能在性能上接近直接修改的方式。</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>

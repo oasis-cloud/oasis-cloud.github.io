@@ -3,6 +3,17 @@ title: ☁️☁️☁️<br/>🌵🌵🌵🌵🌵
 subTitle: 目录
 ---
 
+
+## 人工智能
+* [MCP 协议入门：基础概念](@root/articles/artificial-intelligence/mcp/1.html)
+* [MCP 协议入门：MCP 服务器的发现和调用](@root/articles/artificial-intelligence/mcp/2.html)
+* [MCP 协议入门：JSON RPC 的实现](@root/articles/artificial-intelligence/mcp/3.html)
+* [MCP 协议实践：基于个人电子书目的 Code Review](@root/articles/artificial-intelligence/mcp/4.html)
+* [Vibe Coding 实践：使用 Cursor 为博客添加图片放大功能](@root/articles/artificial-intelligence/vibe-coding/1.html)
+* [人工智能概念](@root/articles/artificial-intelligence/books/AI-modern-approach/1.html)
+* [人工智能中的表达形式和问题求解方法](@root/articles/artificial-intelligence/books/AI-modern-approach/2.html)
+* [人工智能中的问题求解方法](@root/articles/artificial-intelligence/books/人工智能现代方法/3.html)
+
 ## 源码分析
 * [源码分析——Redux](@root/articles/frontend/21.html)
 * [源码分析——Immerjs](@root/articles/frontend/immerjs/2.html)
@@ -11,6 +22,7 @@ subTitle: 目录
 * [Taro 运行时机制解析](@root/articles/frontend/18.html)
 * [Taro 构建流程源码分析](@root/articles/frontend/19.html)
 * [Taro 源码阅读笔记](@root/articles/frontend/20.html)
+* [React 基础渲染流程——基于 v19.2.0 版本](@root/articles/frontend/react/1.html)
 
 ## 工程化实践
 * [NutUI React CI/CD](@root/articles/github/5.html)
@@ -34,6 +46,7 @@ subTitle: 目录
 * [Node.js 的 preserve-symlinks](@root/articles/frontend/9.html)
 
 ## 前端实践
+* [京东前端：PhantomJS 和 NodeJS 在京东网站前端监控平台的最佳实践](https://www.infoq.cn/article/practise-of-phantomjs-and-nodejs-in-jingdong)
 * [为什么用 ?? 而不是 ||？空值合并运算符详解](@root/articles/frontend/24.html)
 * [NutUI React Checkbox 组件设计与实现](@root/articles/frontend/8.html)
 * [NutUI React 安全区组件的实现](@root/articles/frontend/17.html)
@@ -66,9 +79,6 @@ subTitle: 目录
 * [软件设计的哲学-设计原则总结](@root/articles/philosophy-of-software-design/2.html)
 * [软件设计的哲学-警示信号](@root/articles/philosophy-of-software-design/3.html)
 * [编程格调](@root/articles/1.html)
-* [人工智能概念](@root/articles/artificial-intelligence/1.html)
-* [人工智能中的表达形式和问题求解方法](@root/articles/artificial-intelligence/2.html)
-* [人工智能中的问题求解方法](@root/articles/artificial-intelligence/3.html)
 * [深度工作](@root/articles/books/shendugongzuo/1.html)
 * [可变思考](@root/articles/books/kebiansikao/1.html)
 * [点石成金](@root/articles/books/dontmakemethink/1.html)

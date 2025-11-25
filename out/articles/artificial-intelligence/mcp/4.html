@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>MCP 协议实践：基于个人电子书目的 Code Review</title>
+        <link rel="stylesheet" href="../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../assets/pygments.css">
+        <script src="../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-artificial-intelligence-mcp-4 node-articles-artificial-intelligence-mcp node-articles-artificial-intelligence node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>MCP 协议实践：基于个人电子书目的 Code Review</h1>
+                
+                
+                    <p class="author">作者：oasis</p>
+                
+                <hr>
+            </header>
+            <p>我的电脑中存放了一些平日读过的程序设计或计算机原理相关的书籍，以前
+写代码首先会在头脑中回忆一些指导原则，然后在开始写，或者是进行代码的修改。</p>
+<p>现在可以通过 MCP 列出书籍清单，将书籍作为资源提供给 LLM，并且设置指定的提示词，让 LLM 对我写的代码进行分析评价。例如：</p>
+<p>&ldquo;请基于《软件设计的哲学》这本书的观点，评价我写的这段代码设计&hellip;&rdquo;</p>
+<p>AI: [调用 evaluate_content tool]
+     → MCP 服务器检索相关章节
+     → 提取书中相关观点
+     → 返回评价结果</p>
+<h2>MCP 的实现</h2>
+<h3>核心功能设计</h3>
+<p>基于个人电子书目的 Code Review MCP 服务器需要实现以下功能：</p>
+<ol>
+<li><strong>书籍资源管理</strong>：扫描电子书目录，将书籍作为资源提供给 LLM</li>
+<li><strong>内容检索</strong>：根据代码内容，从相关书籍中检索相关章节和观点</li>
+<li><strong>代码评价</strong>：基于书籍中的设计原则和最佳实践，对代码进行评价</li>
+</ol>
+<h3>完整实现</h3>
+<h4>1. 项目结构</h4>
+<div class="highlight"><pre><span></span><code>ebook-code-review-mcp/
+├── package.json
+├── src/
+│   ├── index.ts          # MCP 服务器入口
+│   ├── book-scanner.ts   # 书籍扫描器
+│   ├── content-extractor.ts  # 内容提取器
+│   ├── code-reviewer.ts  # 代码评价器
+│   └── types.ts          # 类型定义
+└── tsconfig.json
+</code></pre></div>
+<h4>2. 依赖安装</h4>
+<div class="highlight"><pre><span></span><code>npm<span class="w"> </span>init<span class="w"> </span>-y
+npm<span class="w"> </span>install<span class="w"> </span>@modelcontextprotocol/sdk
+npm<span class="w"> </span>install<span class="w"> </span>-D<span class="w"> </span>typescript<span class="w"> </span>@types/node<span class="w"> </span>tsx
+</code></pre></div>
+<h4>3. 核心实现代码</h4>
+<p><strong>types.ts - 类型定义</strong></p>
+<div class="highlight"><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="nx">Book</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">title</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">filePath</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">fileType</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;pdf&#39;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;epub&#39;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;txt&#39;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;md&#39;</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">metadata</span><span class="o">?:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">author?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="w">    </span><span class="nx">isbn?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="w">    </span><span class="nx">publishDate?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="w">  </span><span class="p">};</span>
+<span class="p">}</span>
+
+<span class="k">export</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="nx">BookChapter</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">bookId</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">chapterTitle</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">content</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">pageNumber?</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">section?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">export</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="nx">CodeReviewRequest</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">code</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">bookTitle?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">  </span><span class="c1">// 指定书籍，如果不指定则从所有书籍中检索</span>
+<span class="w">  </span><span class="nx">language?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">   </span><span class="c1">// 代码语言</span>
+<span class="w">  </span><span class="nx">focusAreas?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">[];</span><span class="w"> </span><span class="c1">// 关注点：如 &#39;design&#39;, &#39;performance&#39;, &#39;security&#39;</span>
+<span class="p">}</span>
+
+<span class="k">export</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="nx">CodeReviewResult</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">bookTitle</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">relevantChapters</span><span class="o">:</span><span class="w"> </span><span class="kt">BookChapter</span><span class="p">[];</span>
+<span class="w">  </span><span class="nx">review</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">principles</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">[];</span><span class="w"> </span><span class="c1">// 引用的设计原则</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>book-scanner.ts - 书籍扫描器</strong></p>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">fs</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;fs&#39;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">path</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;path&#39;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">Book</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;./types.js&#39;</span><span class="p">;</span>
+
+<span class="k">export</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nx">BookScanner</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">private</span><span class="w"> </span><span class="nx">booksDirectory</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+
+<span class="w">  </span><span class="kr">constructor</span><span class="p">(</span><span class="nx">booksDirectory</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">booksDirectory</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">booksDirectory</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="cm">/**</span>
+<span class="cm">   * 扫描电子书目录，返回所有书籍信息</span>
+<span class="cm">   */</span>
+<span class="w">  </span><span class="k">async</span><span class="w"> </span><span class="nx">scanBooks</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">Book</span><span class="p">[]</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">books</span><span class="o">:</span><span class="w"> </span><span class="kt">Book</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[];</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">fs</span><span class="p">.</span><span class="nx">existsSync</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">booksDirectory</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">console</span><span class="p">.</span><span class="nx">warn</span><span class="p">(</span><span class="sb">`书籍目录不存在: </span><span class="si">${</span><span class="k">this</span><span class="p">.</span><span class="nx">booksDirectory</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="nx">books</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">files</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">getAllBookFiles</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">booksDirectory</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">file</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">files</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">book</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">parseBookFile</span><span class="p">(</span><span class="nx">file</span><span class="p">);</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">book</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">books</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">book</span><span class="p">);</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">books</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="cm">/**</span>
+<span class="cm">   * 递归获取所有电子书文件</span>
+<span class="cm">   */</span>
+<span class="w">  </span><span class="k">private</span><span class="w"> </span><span class="nx">getAllBookFiles</span><span class="p">(</span><span class="nx">dir</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">[]</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">files</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[];</span>
+
+<span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">entries</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">fs</span><span class="p">.</span><span class="nx">readdirSync</span><span class="p">(</span><span class="nx">dir</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">withFileTypes</span><span class="o">:</span><span class="w"> </span><span class="kt">true</span><span class="w"> </span><span class="p">});</span>
+
+<span class="w">      </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">entry</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">entries</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">fullPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">path</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="nx">dir</span><span class="p">,</span><span class="w"> </span><span class="nx">entry</span><span class="p">.</span><span class="nx">name</span><span class="p">);</span>
+
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">entry</span><span class="p">.</span><span class="nx">isDirectory</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="c1">// 递归扫描子目录</span>
+<span class="w">          </span><span class="nx">files</span><span class="p">.</span><span class="nx">push</span><span class="p">(...</span><span class="k">this</span><span class="p">.</span><span class="nx">getAllBookFiles</span><span class="p">(</span><span class="nx">fullPath</span><span class="p">));</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">entry</span><span class="p">.</span><span class="nx">isFile</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="kd">const</span><span class="w"> </span><span class="nx">ext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">path</span><span class="p">.</span><span class="nx">extname</span><span class="p">(</span><span class="nx">entry</span><span class="p">.</span><span class="nx">name</span><span class="p">).</span><span class="nx">toLowerCase</span><span class="p">();</span>
+<span class="w">          </span><span class="k">if</span><span class="w"> </span><span class="p">([</span><span class="s1">&#39;.pdf&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;.epub&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;.txt&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;.md&#39;</span><span class="p">].</span><span class="nx">includes</span><span class="p">(</span><span class="nx">ext</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">files</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">fullPath</span><span class="p">);</span>
+<span class="w">          </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="sb">`扫描目录失败: </span><span class="si">${</span><span class="nx">dir</span><span class="si">}</span><span class="sb">`</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">files</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="cm">/**</span>
+<span class="cm">   * 解析书籍文件，提取元数据</span>
+<span class="cm">   */</span>
+<span class="w">  </span><span class="k">private</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="nx">parseBookFile</span><span class="p">(</span><span class="nx">filePath</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">Book</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">null</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">ext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">path</span><span class="p">.</span><span class="nx">extname</span><span class="p">(</span><span class="nx">filePath</span><span class="p">).</span><span class="nx">toLowerCase</span><span class="p">().</span><span class="nx">slice</span><span class="p">(</span><span class="mf">1</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">fileName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">path</span><span class="p">.</span><span class="nx">basename</span><span class="p">(</span><span class="nx">filePath</span><span class="p">,</span><span class="w"> </span><span class="nx">path</span><span class="p">.</span><span class="nx">extname</span><span class="p">(</span><span class="nx">filePath</span><span class="p">));</span>
+
+<span class="w">    </span><span class="c1">// 从文件名提取书名（去除扩展名和常见后缀）</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">title</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">fileName</span>
+<span class="w">      </span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/[-_]/g</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+<span class="w">      </span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/\s+/g</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+<span class="w">      </span><span class="p">.</span><span class="nx">trim</span><span class="p">();</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="kt">this.generateBookId</span><span class="p">(</span><span class="nx">filePath</span><span class="p">),</span>
+<span class="w">      </span><span class="nx">title</span><span class="o">:</span><span class="w"> </span><span class="kt">title</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">filePath</span><span class="o">:</span><span class="w"> </span><span class="kt">filePath</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">fileType</span><span class="o">:</span><span class="w"> </span><span class="kt">ext</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="s1">&#39;pdf&#39;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;epub&#39;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;txt&#39;</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">&#39;md&#39;</span><span class="p">,</span>
+<span class="w">    </span><span class="p">};</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="cm">/**</span>
+<span class="cm">   * 生成书籍唯一 ID（基于文件路径的哈希）</span>
+<span class="cm">   */</span>
+<span class="w">  </span><span class="k">private</span><span class="w"> </span><span class="nx">generateBookId</span><span class="p">(</span><span class="nx">filePath</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 简单实现：使用文件路径的哈希</span>
+<span class="w">    </span><span class="c1">// 实际可以使用 crypto.createHash</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">Buffer</span><span class="p">.</span><span class="kr">from</span><span class="p">(</span><span class="nx">filePath</span><span class="p">).</span><span class="nx">toString</span><span class="p">(</span><span class="s1">&#39;base64&#39;</span><span class="p">).</span><span class="nx">slice</span><span class="p">(</span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="mf">16</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>content-extractor.ts - 内容提取器</strong></p>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">fs</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;fs&#39;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">Book</span><span class="p">,</span><span class="w"> </span><span class="nx">BookChapter</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;./types.js&#39;</span><span class="p">;</span>
+
+<span class="k">export</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nx">ContentExtractor</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="cm">/**</span>
+<span class="cm">   * 从书籍中提取文本内容</span>
+<span class="cm">   * 注意：PDF 和 EPUB 的解析需要专门的库</span>
+<span class="cm">   */</span>
+<span class="w">  </span><span class="k">async</span><span class="w"> </span><span class="nx">extractContent</span><span class="p">(</span><span class="nx">book</span><span class="o">:</span><span class="w"> </span><span class="kt">Book</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="kt">string</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">switch</span><span class="w"> </span><span class="p">(</span><span class="nx">book</span><span class="p">.</span><span class="nx">fileType</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="s1">&#39;txt&#39;</span><span class="o">:</span>
+<span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="s1">&#39;md&#39;</span><span class="o">:</span>
+<span class="w">          </span><span class="k">return</span><span class="w"> </span><span class="nx">fs</span><span class="p">.</span><span class="nx">readFileSync</span><span class="p">(</span><span class="nx">book</span><span class="p">.</span><span class="nx">filePath</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;utf-8&#39;</span><span class="p">);</span>
+
+<span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="s1">&#39;pdf&#39;</span><span class="o">:</span>
+<span class="w">          </span><span class="c1">// 需要 pdf-parse 或 pdfjs-dist 库</span>
+<span class="w">          </span><span class="c1">// return await this.extractFromPDF(book.filePath);</span>
+<span class="w">          </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="s1">&#39;PDF 解析需要安装 pdf-parse 库&#39;</span><span class="p">);</span>
+
+<span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="s1">&#39;epub&#39;</span><span class="o">:</span>
+<span class="w">          </span><span class="c1">// 需要 epub2 或 epubjs 库</span>
+<span class="w">          </span><span class="c1">// return await this.extractFromEPUB(book.filePath);</span>
+<span class="w">          </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="s1">&#39;EPUB 解析需要安装 epub2 库&#39;</span><span class="p">);</span>
+
+<span class="w">        </span><span class="nx">default</span><span class="o">:</span>
+<span class="w">          </span><span class="kt">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="sb">`不支持的文件类型: </span><span class="si">${</span><span class="nx">book</span><span class="p">.</span><span class="nx">fileType</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="sb">`提取内容失败: </span><span class="si">${</span><span class="nx">book</span><span class="p">.</span><span class="nx">title</span><span class="si">}</span><span class="sb">`</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="cm">/**</span>
+<span class="cm">   * 将书籍内容分割成章节</span>
+<span class="cm">   */</span>
+<span class="w">  </span><span class="nx">splitIntoChapters</span><span class="p">(</span><span class="nx">content</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">bookId</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">BookChapter</span><span class="p">[]</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">chapters</span><span class="o">:</span><span class="w"> </span><span class="kt">BookChapter</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[];</span>
+
+<span class="w">    </span><span class="c1">// 简单的章节分割逻辑（可以根据实际格式调整）</span>
+<span class="w">    </span><span class="c1">// 假设章节以 &quot;第X章&quot; 或 &quot;Chapter X&quot; 开头</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">chapterPattern</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="sr">/(?:第[一二三四五六七八九十\d]+章|Chapter\s+\d+|##\s+.+)/g</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">matches</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Array</span><span class="p">.</span><span class="kr">from</span><span class="p">(</span><span class="nx">content</span><span class="p">.</span><span class="nx">matchAll</span><span class="p">(</span><span class="nx">chapterPattern</span><span class="p">));</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">matches</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="mf">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="c1">// 如果没有找到章节标记，将整个内容作为一个章节</span>
+<span class="w">      </span><span class="nx">chapters</span><span class="p">.</span><span class="nx">push</span><span class="p">({</span>
+<span class="w">        </span><span class="nx">bookId</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">chapterTitle</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;全文&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">content</span><span class="o">:</span><span class="w"> </span><span class="kt">content.substring</span><span class="p">(</span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="mf">10000</span><span class="p">),</span><span class="w"> </span><span class="c1">// 限制长度</span>
+<span class="w">      </span><span class="p">});</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="nx">chapters</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">let</span><span class="w"> </span><span class="nx">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0</span><span class="p">;</span><span class="w"> </span><span class="nx">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="nx">matches</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span><span class="w"> </span><span class="nx">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">start</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">matches</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">index</span><span class="o">!</span><span class="p">;</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">end</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="nx">matches</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">1</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="nx">matches</span><span class="p">[</span><span class="nx">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1</span><span class="p">].</span><span class="nx">index</span><span class="o">!</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">content</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">chapterContent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">content</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="nx">start</span><span class="p">,</span><span class="w"> </span><span class="nx">end</span><span class="p">);</span>
+
+<span class="w">      </span><span class="nx">chapters</span><span class="p">.</span><span class="nx">push</span><span class="p">({</span>
+<span class="w">        </span><span class="nx">bookId</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">chapterTitle</span><span class="o">:</span><span class="w"> </span><span class="kt">matches</span><span class="p">[</span><span class="nx">i</span><span class="p">][</span><span class="mf">0</span><span class="p">],</span>
+<span class="w">        </span><span class="nx">content</span><span class="o">:</span><span class="w"> </span><span class="kt">chapterContent.substring</span><span class="p">(</span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="mf">5000</span><span class="p">),</span><span class="w"> </span><span class="c1">// 限制每章长度</span>
+<span class="w">      </span><span class="p">});</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">chapters</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="cm">/**</span>
+<span class="cm">   * 搜索相关内容（简单的关键词匹配，实际可以使用向量检索）</span>
+<span class="cm">   */</span>
+<span class="w">  </span><span class="nx">searchRelevantChapters</span><span class="p">(</span>
+<span class="w">    </span><span class="nx">chapters</span><span class="o">:</span><span class="w"> </span><span class="kt">BookChapter</span><span class="p">[],</span>
+<span class="w">    </span><span class="nx">keywords</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">[],</span>
+<span class="w">    </span><span class="nx">limit</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">3</span>
+<span class="w">  </span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">BookChapter</span><span class="p">[]</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 简单的关键词匹配评分</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">scored</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">chapters</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">chapter</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">content</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">chapter</span><span class="p">.</span><span class="nx">content</span><span class="p">.</span><span class="nx">toLowerCase</span><span class="p">();</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">score</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">keywords</span><span class="p">.</span><span class="nx">reduce</span><span class="p">((</span><span class="nx">sum</span><span class="p">,</span><span class="w"> </span><span class="nx">keyword</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">content</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="ow">new</span><span class="w"> </span><span class="nb">RegExp</span><span class="p">(</span><span class="nx">keyword</span><span class="p">.</span><span class="nx">toLowerCase</span><span class="p">(),</span><span class="w"> </span><span class="s1">&#39;g&#39;</span><span class="p">))</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="p">[]).</span><span class="nx">length</span><span class="p">;</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">sum</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">count</span><span class="p">;</span>
+<span class="w">      </span><span class="p">},</span><span class="w"> </span><span class="mf">0</span><span class="p">);</span>
+
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">chapter</span><span class="p">,</span><span class="w"> </span><span class="nx">score</span><span class="w"> </span><span class="p">};</span>
+<span class="w">    </span><span class="p">});</span>
+
+<span class="w">    </span><span class="c1">// 按分数排序，返回前 N 个</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">scored</span>
+<span class="w">      </span><span class="p">.</span><span class="nx">sort</span><span class="p">((</span><span class="nx">a</span><span class="p">,</span><span class="w"> </span><span class="nx">b</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">b</span><span class="p">.</span><span class="nx">score</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nx">a</span><span class="p">.</span><span class="nx">score</span><span class="p">)</span>
+<span class="w">      </span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="nx">limit</span><span class="p">)</span>
+<span class="w">      </span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">item</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">item</span><span class="p">.</span><span class="nx">chapter</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>code-reviewer.ts - 代码评价器</strong></p>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">Book</span><span class="p">,</span><span class="w"> </span><span class="nx">BookChapter</span><span class="p">,</span><span class="w"> </span><span class="nx">CodeReviewRequest</span><span class="p">,</span><span class="w"> </span><span class="nx">CodeReviewResult</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;./types.js&#39;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ContentExtractor</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;./content-extractor.js&#39;</span><span class="p">;</span>
+
+<span class="k">export</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nx">CodeReviewer</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">private</span><span class="w"> </span><span class="nx">extractor</span><span class="o">:</span><span class="w"> </span><span class="kt">ContentExtractor</span><span class="p">;</span>
+<span class="w">  </span><span class="k">private</span><span class="w"> </span><span class="nx">books</span><span class="o">:</span><span class="w"> </span><span class="kt">Book</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[];</span>
+<span class="w">  </span><span class="k">private</span><span class="w"> </span><span class="nx">bookChapters</span><span class="o">:</span><span class="w"> </span><span class="kt">Map</span><span class="o">&lt;</span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">BookChapter</span><span class="p">[]</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Map</span><span class="p">();</span>
+
+<span class="w">  </span><span class="kr">constructor</span><span class="p">(</span><span class="nx">extractor</span><span class="o">:</span><span class="w"> </span><span class="kt">ContentExtractor</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">extractor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">extractor</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="cm">/**</span>
+<span class="cm">   * 加载书籍内容</span>
+<span class="cm">   */</span>
+<span class="w">  </span><span class="k">async</span><span class="w"> </span><span class="nx">loadBooks</span><span class="p">(</span><span class="nx">books</span><span class="o">:</span><span class="w"> </span><span class="kt">Book</span><span class="p">[])</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="ow">void</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">books</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">books</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">book</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">books</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">content</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">extractor</span><span class="p">.</span><span class="nx">extractContent</span><span class="p">(</span><span class="nx">book</span><span class="p">);</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">chapters</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">extractor</span><span class="p">.</span><span class="nx">splitIntoChapters</span><span class="p">(</span><span class="nx">content</span><span class="p">,</span><span class="w"> </span><span class="nx">book</span><span class="p">.</span><span class="nx">id</span><span class="p">);</span>
+<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">bookChapters</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="nx">book</span><span class="p">.</span><span class="nx">id</span><span class="p">,</span><span class="w"> </span><span class="nx">chapters</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="cm">/**</span>
+<span class="cm">   * 基于书籍内容评价代码</span>
+<span class="cm">   */</span>
+<span class="w">  </span><span class="k">async</span><span class="w"> </span><span class="nx">reviewCode</span><span class="p">(</span><span class="nx">request</span><span class="o">:</span><span class="w"> </span><span class="kt">CodeReviewRequest</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">CodeReviewResult</span><span class="p">[]</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">code</span><span class="p">,</span><span class="w"> </span><span class="nx">bookTitle</span><span class="p">,</span><span class="w"> </span><span class="nx">focusAreas</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">request</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// 提取代码中的关键词</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">keywords</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">extractKeywords</span><span class="p">(</span><span class="nx">code</span><span class="p">,</span><span class="w"> </span><span class="nx">focusAreas</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// 选择要搜索的书籍</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">targetBooks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">bookTitle</span>
+<span class="w">      </span><span class="o">?</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">books</span><span class="p">.</span><span class="nx">filter</span><span class="p">(</span><span class="nx">b</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">b</span><span class="p">.</span><span class="nx">title</span><span class="p">.</span><span class="nx">includes</span><span class="p">(</span><span class="nx">bookTitle</span><span class="p">))</span>
+<span class="w">      </span><span class="o">:</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">books</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">results</span><span class="o">:</span><span class="w"> </span><span class="kt">CodeReviewResult</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[];</span>
+
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">book</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">targetBooks</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">chapters</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">bookChapters</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">book</span><span class="p">.</span><span class="nx">id</span><span class="p">)</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="p">[];</span>
+
+<span class="w">      </span><span class="c1">// 搜索相关章节</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">relevantChapters</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">extractor</span><span class="p">.</span><span class="nx">searchRelevantChapters</span><span class="p">(</span>
+<span class="w">        </span><span class="nx">chapters</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">keywords</span><span class="p">,</span>
+<span class="w">        </span><span class="mf">3</span>
+<span class="w">      </span><span class="p">);</span>
+
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">relevantChapters</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="mf">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">continue</span><span class="p">;</span>
+<span class="w">      </span><span class="p">}</span>
+
+<span class="w">      </span><span class="c1">// 提取设计原则（从章节内容中提取）</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">principles</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">extractPrinciples</span><span class="p">(</span><span class="nx">relevantChapters</span><span class="p">);</span>
+
+<span class="w">      </span><span class="c1">// 生成评价（这里返回章节内容，实际可以调用 LLM 生成评价）</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">review</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">generateReview</span><span class="p">(</span><span class="nx">code</span><span class="p">,</span><span class="w"> </span><span class="nx">relevantChapters</span><span class="p">,</span><span class="w"> </span><span class="nx">principles</span><span class="p">);</span>
+
+<span class="w">      </span><span class="nx">results</span><span class="p">.</span><span class="nx">push</span><span class="p">({</span>
+<span class="w">        </span><span class="nx">bookTitle</span><span class="o">:</span><span class="w"> </span><span class="kt">book.title</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">relevantChapters</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">review</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">principles</span><span class="p">,</span>
+<span class="w">      </span><span class="p">});</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">results</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="cm">/**</span>
+<span class="cm">   * 从代码中提取关键词</span>
+<span class="cm">   */</span>
+<span class="w">  </span><span class="k">private</span><span class="w"> </span><span class="nx">extractKeywords</span><span class="p">(</span><span class="nx">code</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">focusAreas</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">[])</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">[]</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">keywords</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[];</span>
+
+<span class="w">    </span><span class="c1">// 添加关注领域的关键词</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">focusKeywords</span><span class="o">:</span><span class="w"> </span><span class="kt">Record</span><span class="o">&lt;</span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="kt">string</span><span class="p">[]</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">design</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s1">&#39;设计&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;架构&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;结构&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;模块&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;抽象&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;封装&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;设计模式&#39;</span><span class="p">],</span>
+<span class="w">      </span><span class="nx">performance</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s1">&#39;性能&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;优化&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;效率&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;算法&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;复杂度&#39;</span><span class="p">],</span>
+<span class="w">      </span><span class="nx">security</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s1">&#39;安全&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;加密&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;认证&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;授权&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;漏洞&#39;</span><span class="p">],</span>
+<span class="w">      </span><span class="nx">maintainability</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s1">&#39;可维护&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;可读&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;重构&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;代码质量&#39;</span><span class="p">],</span>
+<span class="w">    </span><span class="p">};</span>
+
+<span class="w">    </span><span class="nx">focusAreas</span><span class="p">.</span><span class="nx">forEach</span><span class="p">(</span><span class="nx">area</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">keywords</span><span class="p">.</span><span class="nx">push</span><span class="p">(...(</span><span class="nx">focusKeywords</span><span class="p">[</span><span class="nx">area</span><span class="p">]</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="p">[]));</span>
+<span class="w">    </span><span class="p">});</span>
+
+<span class="w">    </span><span class="c1">// 从代码中提取常见的设计相关词汇</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">codePatterns</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="sr">/class\s+(\w+)/g</span><span class="p">,</span>
+<span class="w">      </span><span class="sr">/function\s+(\w+)/g</span><span class="p">,</span>
+<span class="w">      </span><span class="sr">/interface\s+(\w+)/g</span><span class="p">,</span>
+<span class="w">      </span><span class="sr">/abstract\s+class\s+(\w+)/g</span><span class="p">,</span>
+<span class="w">    </span><span class="p">];</span>
+
+<span class="w">    </span><span class="nx">codePatterns</span><span class="p">.</span><span class="nx">forEach</span><span class="p">(</span><span class="nx">pattern</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">matches</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">code</span><span class="p">.</span><span class="nx">matchAll</span><span class="p">(</span><span class="nx">pattern</span><span class="p">);</span>
+<span class="w">      </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">match</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">matches</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">match</span><span class="p">[</span><span class="mf">1</span><span class="p">])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="nx">keywords</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">match</span><span class="p">[</span><span class="mf">1</span><span class="p">]);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">});</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">[...</span><span class="ow">new</span><span class="w"> </span><span class="nb">Set</span><span class="p">(</span><span class="nx">keywords</span><span class="p">)];</span><span class="w"> </span><span class="c1">// 去重</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="cm">/**</span>
+<span class="cm">   * 从章节内容中提取设计原则</span>
+<span class="cm">   */</span>
+<span class="w">  </span><span class="k">private</span><span class="w"> </span><span class="nx">extractPrinciples</span><span class="p">(</span><span class="nx">chapters</span><span class="o">:</span><span class="w"> </span><span class="kt">BookChapter</span><span class="p">[])</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">[]</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">principles</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[];</span>
+
+<span class="w">    </span><span class="c1">// 简单的原则提取（实际可以使用更复杂的 NLP 方法）</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">principlePatterns</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="sr">/原则[一二三四五六七八九十\d]+[：:]\s*(.+?)(?:\n|$)/g</span><span class="p">,</span>
+<span class="w">      </span><span class="sr">/(?:应该|应当|建议|推荐)[，,]\s*(.+?)(?:\n|$)/g</span><span class="p">,</span>
+<span class="w">    </span><span class="p">];</span>
+
+<span class="w">    </span><span class="nx">chapters</span><span class="p">.</span><span class="nx">forEach</span><span class="p">(</span><span class="nx">chapter</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">principlePatterns</span><span class="p">.</span><span class="nx">forEach</span><span class="p">(</span><span class="nx">pattern</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">matches</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">chapter</span><span class="p">.</span><span class="nx">content</span><span class="p">.</span><span class="nx">matchAll</span><span class="p">(</span><span class="nx">pattern</span><span class="p">);</span>
+<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">match</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">matches</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">match</span><span class="p">[</span><span class="mf">1</span><span class="p">]</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">match</span><span class="p">[</span><span class="mf">1</span><span class="p">].</span><span class="nx">length</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mf">100</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">principles</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">match</span><span class="p">[</span><span class="mf">1</span><span class="p">].</span><span class="nx">trim</span><span class="p">());</span>
+<span class="w">          </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">      </span><span class="p">});</span>
+<span class="w">    </span><span class="p">});</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">[...</span><span class="ow">new</span><span class="w"> </span><span class="nb">Set</span><span class="p">(</span><span class="nx">principles</span><span class="p">)].</span><span class="nx">slice</span><span class="p">(</span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="mf">5</span><span class="p">);</span><span class="w"> </span><span class="c1">// 返回前 5 个</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="cm">/**</span>
+<span class="cm">   * 生成代码评价</span>
+<span class="cm">   */</span>
+<span class="w">  </span><span class="k">private</span><span class="w"> </span><span class="nx">generateReview</span><span class="p">(</span>
+<span class="w">    </span><span class="nx">code</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">chapters</span><span class="o">:</span><span class="w"> </span><span class="kt">BookChapter</span><span class="p">[],</span>
+<span class="w">    </span><span class="nx">principles</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">[]</span>
+<span class="w">  </span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 这里返回章节内容的摘要</span>
+<span class="w">    </span><span class="c1">// 实际实现中，可以调用 LLM 生成更详细的评价</span>
+
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">chapterSummaries</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">chapters</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">ch</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span>
+<span class="w">      </span><span class="sb">`《</span><span class="si">${</span><span class="nx">ch</span><span class="p">.</span><span class="nx">chapterTitle</span><span class="si">}</span><span class="sb">》中的相关内容：\n</span><span class="si">${</span><span class="nx">ch</span><span class="p">.</span><span class="nx">content</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="mf">500</span><span class="p">)</span><span class="si">}</span><span class="sb">...`</span>
+<span class="w">    </span><span class="p">).</span><span class="nx">join</span><span class="p">(</span><span class="s1">&#39;\n\n&#39;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="sb">`基于相关章节内容，以下是代码评价：\n\n`</span><span class="w"> </span><span class="o">+</span>
+<span class="w">           </span><span class="sb">`</span><span class="si">${</span><span class="nx">chapterSummaries</span><span class="si">}</span><span class="sb">\n\n`</span><span class="w"> </span><span class="o">+</span>
+<span class="w">           </span><span class="sb">`引用的设计原则：\n</span><span class="si">${</span><span class="nx">principles</span><span class="p">.</span><span class="nx">map</span><span class="p">((</span><span class="nx">p</span><span class="p">,</span><span class="w"> </span><span class="nx">i</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="sb">`</span><span class="si">${</span><span class="nx">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1</span><span class="si">}</span><span class="sb">. </span><span class="si">${</span><span class="nx">p</span><span class="si">}</span><span class="sb">`</span><span class="p">).</span><span class="nx">join</span><span class="p">(</span><span class="s1">&#39;\n&#39;</span><span class="p">)</span><span class="si">}</span><span class="sb">`</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="cm">/**</span>
+<span class="cm">   * 获取所有书籍列表</span>
+<span class="cm">   */</span>
+<span class="w">  </span><span class="nx">getBooks</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="nx">Book</span><span class="p">[]</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">books</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>index.ts - MCP 服务器主文件</strong></p>
+<div class="highlight"><pre><span></span><code><span class="ch">#!/usr/bin/env node</span>
+
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">Server</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;@modelcontextprotocol/sdk/server/index.js&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">StdioServerTransport</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;@modelcontextprotocol/sdk/server/stdio.js&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">CallToolRequestSchema</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">ListToolsRequestSchema</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">ListResourcesRequestSchema</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">ReadResourceRequestSchema</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">ListPromptsRequestSchema</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">GetPromptRequestSchema</span><span class="p">,</span>
+<span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;@modelcontextprotocol/sdk/types.js&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">path</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;path&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">os</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;os&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">BookScanner</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;./book-scanner.js&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ContentExtractor</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;./content-extractor.js&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">CodeReviewer</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;./code-reviewer.js&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">Book</span><span class="p">,</span><span class="w"> </span><span class="nx">CodeReviewRequest</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;./types.js&quot;</span><span class="p">;</span>
+
+<span class="kd">class</span><span class="w"> </span><span class="nx">EbookCodeReviewServer</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">private</span><span class="w"> </span><span class="nx">server</span><span class="o">:</span><span class="w"> </span><span class="kt">Server</span><span class="p">;</span>
+<span class="w">  </span><span class="k">private</span><span class="w"> </span><span class="nx">bookScanner</span><span class="o">:</span><span class="w"> </span><span class="kt">BookScanner</span><span class="p">;</span>
+<span class="w">  </span><span class="k">private</span><span class="w"> </span><span class="nx">contentExtractor</span><span class="o">:</span><span class="w"> </span><span class="kt">ContentExtractor</span><span class="p">;</span>
+<span class="w">  </span><span class="k">private</span><span class="w"> </span><span class="nx">codeReviewer</span><span class="o">:</span><span class="w"> </span><span class="kt">CodeReviewer</span><span class="p">;</span>
+<span class="w">  </span><span class="k">private</span><span class="w"> </span><span class="nx">booksDirectory</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+
+<span class="w">  </span><span class="kr">constructor</span><span class="p">(</span><span class="nx">booksDirectory?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 默认使用桌面上的电子书目录</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">booksDirectory</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">booksDirectory</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">path</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="nx">os</span><span class="p">.</span><span class="nx">homedir</span><span class="p">(),</span><span class="w"> </span><span class="s2">&quot;Desktop&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;电子书&quot;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">server</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">Server</span><span class="p">(</span>
+<span class="w">      </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;ebook-code-review-mcp&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">version</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;0.1.0&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">capabilities</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="nx">tools</span><span class="o">:</span><span class="w"> </span><span class="p">{},</span>
+<span class="w">          </span><span class="nx">resources</span><span class="o">:</span><span class="w"> </span><span class="p">{},</span>
+<span class="w">          </span><span class="nx">prompts</span><span class="o">:</span><span class="w"> </span><span class="p">{},</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">bookScanner</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">BookScanner</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">booksDirectory</span><span class="p">);</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">contentExtractor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">ContentExtractor</span><span class="p">();</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">codeReviewer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">CodeReviewer</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">contentExtractor</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">setupHandlers</span><span class="p">();</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">initializeBooks</span><span class="p">();</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="k">private</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="nx">initializeBooks</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">books</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">bookScanner</span><span class="p">.</span><span class="nx">scanBooks</span><span class="p">();</span>
+<span class="w">      </span><span class="k">await</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">codeReviewer</span><span class="p">.</span><span class="nx">loadBooks</span><span class="p">(</span><span class="nx">books</span><span class="p">);</span>
+<span class="w">      </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="sb">`已加载 </span><span class="si">${</span><span class="nx">books</span><span class="p">.</span><span class="nx">length</span><span class="si">}</span><span class="sb"> 本书籍`</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s2">&quot;初始化书籍失败:&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="k">private</span><span class="w"> </span><span class="nx">setupHandlers</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 列出可用工具</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">server</span><span class="p">.</span><span class="nx">setRequestHandler</span><span class="p">(</span><span class="nx">ListToolsRequestSchema</span><span class="p">,</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({</span>
+<span class="w">      </span><span class="nx">tools</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">          </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;evaluate_code&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">description</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;基于个人电子书目中的设计原则评价代码&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">inputSchema</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;object&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">properties</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">              </span><span class="nx">code</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
+<span class="w">                </span><span class="nx">description</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;要评价的代码&quot;</span><span class="p">,</span>
+<span class="w">              </span><span class="p">},</span>
+<span class="w">              </span><span class="nx">bookTitle</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
+<span class="w">                </span><span class="nx">description</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;指定书籍标题（可选，不指定则从所有书籍中检索）&quot;</span><span class="p">,</span>
+<span class="w">              </span><span class="p">},</span>
+<span class="w">              </span><span class="nx">language</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
+<span class="w">                </span><span class="nx">description</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;代码语言（如：javascript, python, java）&quot;</span><span class="p">,</span>
+<span class="w">              </span><span class="p">},</span>
+<span class="w">              </span><span class="nx">focusAreas</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;array&quot;</span><span class="p">,</span>
+<span class="w">                </span><span class="nx">items</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">                </span><span class="nx">description</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;关注点：design, performance, security, maintainability&quot;</span><span class="p">,</span>
+<span class="w">              </span><span class="p">},</span>
+<span class="w">            </span><span class="p">},</span>
+<span class="w">            </span><span class="nx">required</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;code&quot;</span><span class="p">],</span>
+<span class="w">          </span><span class="p">},</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">          </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;list_books&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">description</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;列出所有可用的电子书&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">inputSchema</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;object&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">properties</span><span class="o">:</span><span class="w"> </span><span class="p">{},</span>
+<span class="w">          </span><span class="p">},</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">          </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;search_book_content&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">description</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;在指定书籍中搜索相关内容&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">inputSchema</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;object&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">properties</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">              </span><span class="nx">bookTitle</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
+<span class="w">                </span><span class="nx">description</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;书籍标题&quot;</span><span class="p">,</span>
+<span class="w">              </span><span class="p">},</span>
+<span class="w">              </span><span class="nx">query</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
+<span class="w">                </span><span class="nx">description</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;搜索关键词&quot;</span><span class="p">,</span>
+<span class="w">              </span><span class="p">},</span>
+<span class="w">            </span><span class="p">},</span>
+<span class="w">            </span><span class="nx">required</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;bookTitle&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;query&quot;</span><span class="p">],</span>
+<span class="w">          </span><span class="p">},</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">      </span><span class="p">],</span>
+<span class="w">    </span><span class="p">}));</span>
+
+<span class="w">    </span><span class="c1">// 列出可用资源（书籍）</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">server</span><span class="p">.</span><span class="nx">setRequestHandler</span><span class="p">(</span><span class="nx">ListResourcesRequestSchema</span><span class="p">,</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">books</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">codeReviewer</span><span class="p">.</span><span class="nx">getBooks</span><span class="p">();</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">resources</span><span class="o">:</span><span class="w"> </span><span class="kt">books.map</span><span class="p">((</span><span class="nx">book</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({</span>
+<span class="w">          </span><span class="nx">uri</span><span class="o">:</span><span class="w"> </span><span class="sb">`ebook://</span><span class="si">${</span><span class="nx">book</span><span class="p">.</span><span class="nx">id</span><span class="si">}</span><span class="sb">`</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">book.title</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">description</span><span class="o">:</span><span class="w"> </span><span class="sb">`电子书：</span><span class="si">${</span><span class="nx">book</span><span class="p">.</span><span class="nx">title</span><span class="si">}</span><span class="sb">`</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">mimeType</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;text/plain&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="p">})),</span>
+<span class="w">      </span><span class="p">};</span>
+<span class="w">    </span><span class="p">});</span>
+
+<span class="w">    </span><span class="c1">// 读取资源（书籍内容）</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">server</span><span class="p">.</span><span class="nx">setRequestHandler</span><span class="p">(</span><span class="nx">ReadResourceRequestSchema</span><span class="p">,</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">request</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">uri</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">request</span><span class="p">.</span><span class="nx">params</span><span class="p">.</span><span class="nx">uri</span><span class="p">;</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">bookId</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">uri</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="s2">&quot;ebook://&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">);</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">books</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">codeReviewer</span><span class="p">.</span><span class="nx">getBooks</span><span class="p">();</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">book</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">books</span><span class="p">.</span><span class="nx">find</span><span class="p">((</span><span class="nx">b</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">b</span><span class="p">.</span><span class="nx">id</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">bookId</span><span class="p">);</span>
+
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">book</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="sb">`未找到书籍: </span><span class="si">${</span><span class="nx">bookId</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<span class="w">      </span><span class="p">}</span>
+
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">content</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">contentExtractor</span><span class="p">.</span><span class="nx">extractContent</span><span class="p">(</span><span class="nx">book</span><span class="p">);</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">contents</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">          </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">uri</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">mimeType</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;text/plain&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="kt">content.substring</span><span class="p">(</span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="mf">100000</span><span class="p">),</span><span class="w"> </span><span class="c1">// 限制长度</span>
+<span class="w">          </span><span class="p">},</span>
+<span class="w">        </span><span class="p">],</span>
+<span class="w">      </span><span class="p">};</span>
+<span class="w">    </span><span class="p">});</span>
+
+<span class="w">    </span><span class="c1">// 列出可用提示</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">server</span><span class="p">.</span><span class="nx">setRequestHandler</span><span class="p">(</span><span class="nx">ListPromptsRequestSchema</span><span class="p">,</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({</span>
+<span class="w">      </span><span class="nx">prompts</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">          </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;code_review_with_book&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">description</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;基于指定书籍评价代码的提示模板&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">arguments</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">              </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;code&quot;</span><span class="p">,</span>
+<span class="w">              </span><span class="nx">description</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;要评价的代码&quot;</span><span class="p">,</span>
+<span class="w">              </span><span class="nx">required</span><span class="o">:</span><span class="w"> </span><span class="kt">true</span><span class="p">,</span>
+<span class="w">            </span><span class="p">},</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">              </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;bookTitle&quot;</span><span class="p">,</span>
+<span class="w">              </span><span class="nx">description</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;书籍标题&quot;</span><span class="p">,</span>
+<span class="w">              </span><span class="nx">required</span><span class="o">:</span><span class="w"> </span><span class="kt">false</span><span class="p">,</span>
+<span class="w">            </span><span class="p">},</span>
+<span class="w">          </span><span class="p">],</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">      </span><span class="p">],</span>
+<span class="w">    </span><span class="p">}));</span>
+
+<span class="w">    </span><span class="c1">// 获取提示</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">server</span><span class="p">.</span><span class="nx">setRequestHandler</span><span class="p">(</span><span class="nx">GetPromptRequestSchema</span><span class="p">,</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">request</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">name</span><span class="p">,</span><span class="w"> </span><span class="nx">arguments</span><span class="o">:</span><span class="w"> </span><span class="kt">args</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">request</span><span class="p">.</span><span class="nx">params</span><span class="p">;</span>
+
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">name</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s2">&quot;code_review_with_book&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">code</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">args</span><span class="o">?</span><span class="p">.</span><span class="nx">code</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">bookTitle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">args</span><span class="o">?</span><span class="p">.</span><span class="nx">bookTitle</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">;</span>
+
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="nx">messages</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">              </span><span class="nx">role</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;user&quot;</span><span class="p">,</span>
+<span class="w">              </span><span class="nx">content</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+<span class="w">                </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="sb">`请基于</span><span class="si">${</span><span class="nx">bookTitle</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="sb">`《</span><span class="si">${</span><span class="nx">bookTitle</span><span class="si">}</span><span class="sb">》`</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;相关设计书籍&quot;</span><span class="si">}</span><span class="sb">中的观点，评价以下代码：\n\n\`\`\`\n</span><span class="si">${</span><span class="nx">code</span><span class="si">}</span><span class="sb">\n\`\`\``</span><span class="p">,</span>
+<span class="w">              </span><span class="p">},</span>
+<span class="w">            </span><span class="p">},</span>
+<span class="w">          </span><span class="p">],</span>
+<span class="w">        </span><span class="p">};</span>
+<span class="w">      </span><span class="p">}</span>
+
+<span class="w">      </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="sb">`未知提示: </span><span class="si">${</span><span class="nx">name</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<span class="w">    </span><span class="p">});</span>
+
+<span class="w">    </span><span class="c1">// 处理工具调用</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">server</span><span class="p">.</span><span class="nx">setRequestHandler</span><span class="p">(</span><span class="nx">CallToolRequestSchema</span><span class="p">,</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">request</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">name</span><span class="p">,</span><span class="w"> </span><span class="nx">arguments</span><span class="o">:</span><span class="w"> </span><span class="kt">args</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">request</span><span class="p">.</span><span class="nx">params</span><span class="p">;</span>
+
+<span class="w">      </span><span class="k">switch</span><span class="w"> </span><span class="p">(</span><span class="nx">name</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="s2">&quot;evaluate_code&quot;</span><span class="o">:</span>
+<span class="w">          </span><span class="k">return</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">handleEvaluateCode</span><span class="p">(</span><span class="nx">args</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">CodeReviewRequest</span><span class="p">);</span>
+
+<span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="s2">&quot;list_books&quot;</span><span class="o">:</span>
+<span class="w">          </span><span class="k">return</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">handleListBooks</span><span class="p">();</span>
+
+<span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="s2">&quot;search_book_content&quot;</span><span class="o">:</span>
+<span class="w">          </span><span class="k">return</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">handleSearchBookContent</span><span class="p">(</span>
+<span class="w">            </span><span class="nx">args</span><span class="o">?</span><span class="p">.</span><span class="nx">bookTitle</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">args</span><span class="o">?</span><span class="p">.</span><span class="nx">query</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">          </span><span class="p">);</span>
+
+<span class="w">        </span><span class="nx">default</span><span class="o">:</span>
+<span class="w">          </span><span class="kt">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="sb">`未知工具: </span><span class="si">${</span><span class="nx">name</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">});</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="k">private</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="nx">handleEvaluateCode</span><span class="p">(</span><span class="nx">request</span><span class="o">:</span><span class="w"> </span><span class="kt">CodeReviewRequest</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">results</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">codeReviewer</span><span class="p">.</span><span class="nx">reviewCode</span><span class="p">(</span><span class="nx">request</span><span class="p">);</span>
+
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">results</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="mf">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="nx">content</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">              </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+<span class="w">              </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;未找到相关的书籍内容来评价这段代码。&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="p">},</span>
+<span class="w">          </span><span class="p">],</span>
+<span class="w">          </span><span class="nx">isError</span><span class="o">:</span><span class="w"> </span><span class="kt">false</span><span class="p">,</span>
+<span class="w">        </span><span class="p">};</span>
+<span class="w">      </span><span class="p">}</span>
+
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">reviewText</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">results</span>
+<span class="w">        </span><span class="p">.</span><span class="nx">map</span><span class="p">((</span><span class="nx">result</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="k">return</span><span class="w"> </span><span class="sb">`## 《</span><span class="si">${</span><span class="nx">result</span><span class="p">.</span><span class="nx">bookTitle</span><span class="si">}</span><span class="sb">》的评价\n\n`</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                 </span><span class="sb">`</span><span class="si">${</span><span class="nx">result</span><span class="p">.</span><span class="nx">review</span><span class="si">}</span><span class="sb">\n\n`</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                 </span><span class="sb">`相关章节：\n</span><span class="si">${</span><span class="nx">result</span><span class="p">.</span><span class="nx">relevantChapters</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">ch</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="sb">`- </span><span class="si">${</span><span class="nx">ch</span><span class="p">.</span><span class="nx">chapterTitle</span><span class="si">}</span><span class="sb">`</span><span class="p">).</span><span class="nx">join</span><span class="p">(</span><span class="s1">&#39;\n&#39;</span><span class="p">)</span><span class="si">}</span><span class="sb">\n`</span><span class="p">;</span>
+<span class="w">        </span><span class="p">})</span>
+<span class="w">        </span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s2">&quot;\n\n---\n\n&quot;</span><span class="p">);</span>
+
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">content</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">          </span><span class="p">{</span>
+<span class="w">            </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="kt">reviewText</span><span class="p">,</span>
+<span class="w">          </span><span class="p">},</span>
+<span class="w">        </span><span class="p">],</span>
+<span class="w">        </span><span class="nx">isError</span><span class="o">:</span><span class="w"> </span><span class="kt">false</span><span class="p">,</span>
+<span class="w">      </span><span class="p">};</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">content</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">          </span><span class="p">{</span>
+<span class="w">            </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="sb">`评价失败: </span><span class="si">${</span><span class="nx">error</span><span class="w"> </span><span class="ow">instanceof</span><span class="w"> </span><span class="ne">Error</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="nx">error.message</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kt">String</span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="si">}</span><span class="sb">`</span><span class="p">,</span>
+<span class="w">          </span><span class="p">},</span>
+<span class="w">        </span><span class="p">],</span>
+<span class="w">        </span><span class="nx">isError</span><span class="o">:</span><span class="w"> </span><span class="kt">true</span><span class="p">,</span>
+<span class="w">      </span><span class="p">};</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="k">private</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="nx">handleListBooks</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">books</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">codeReviewer</span><span class="p">.</span><span class="nx">getBooks</span><span class="p">();</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">bookList</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">books</span>
+<span class="w">      </span><span class="p">.</span><span class="nx">map</span><span class="p">((</span><span class="nx">book</span><span class="p">,</span><span class="w"> </span><span class="nx">index</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="sb">`</span><span class="si">${</span><span class="nx">index</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1</span><span class="si">}</span><span class="sb">. </span><span class="si">${</span><span class="nx">book</span><span class="p">.</span><span class="nx">title</span><span class="si">}</span><span class="sb"> (</span><span class="si">${</span><span class="nx">book</span><span class="p">.</span><span class="nx">fileType</span><span class="si">}</span><span class="sb">)`</span><span class="p">)</span>
+<span class="w">      </span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s2">&quot;\n&quot;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">content</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">          </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="sb">`可用书籍列表（共 </span><span class="si">${</span><span class="nx">books</span><span class="p">.</span><span class="nx">length</span><span class="si">}</span><span class="sb"> 本）：\n\n</span><span class="si">${</span><span class="nx">bookList</span><span class="si">}</span><span class="sb">`</span><span class="p">,</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">      </span><span class="p">],</span>
+<span class="w">      </span><span class="nx">isError</span><span class="o">:</span><span class="w"> </span><span class="kt">false</span><span class="p">,</span>
+<span class="w">    </span><span class="p">};</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="k">private</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="nx">handleSearchBookContent</span><span class="p">(</span><span class="nx">bookTitle</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">query</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">books</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">codeReviewer</span><span class="p">.</span><span class="nx">getBooks</span><span class="p">();</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">book</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">books</span><span class="p">.</span><span class="nx">find</span><span class="p">((</span><span class="nx">b</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">b</span><span class="p">.</span><span class="nx">title</span><span class="p">.</span><span class="nx">includes</span><span class="p">(</span><span class="nx">bookTitle</span><span class="p">));</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">book</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">content</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">          </span><span class="p">{</span>
+<span class="w">            </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="sb">`未找到书籍: </span><span class="si">${</span><span class="nx">bookTitle</span><span class="si">}</span><span class="sb">`</span><span class="p">,</span>
+<span class="w">          </span><span class="p">},</span>
+<span class="w">        </span><span class="p">],</span>
+<span class="w">        </span><span class="nx">isError</span><span class="o">:</span><span class="w"> </span><span class="kt">true</span><span class="p">,</span>
+<span class="w">      </span><span class="p">};</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// 实现搜索逻辑</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">content</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">contentExtractor</span><span class="p">.</span><span class="nx">extractContent</span><span class="p">(</span><span class="nx">book</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">chapters</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">contentExtractor</span><span class="p">.</span><span class="nx">splitIntoChapters</span><span class="p">(</span><span class="nx">content</span><span class="p">,</span><span class="w"> </span><span class="nx">book</span><span class="p">.</span><span class="nx">id</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">relevantChapters</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">contentExtractor</span><span class="p">.</span><span class="nx">searchRelevantChapters</span><span class="p">(</span>
+<span class="w">      </span><span class="nx">chapters</span><span class="p">,</span>
+<span class="w">      </span><span class="p">[</span><span class="nx">query</span><span class="p">],</span>
+<span class="w">      </span><span class="mf">5</span>
+<span class="w">    </span><span class="p">);</span>
+
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">results</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">relevantChapters</span>
+<span class="w">      </span><span class="p">.</span><span class="nx">map</span><span class="p">((</span><span class="nx">ch</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="sb">`### </span><span class="si">${</span><span class="nx">ch</span><span class="p">.</span><span class="nx">chapterTitle</span><span class="si">}</span><span class="sb">\n\n</span><span class="si">${</span><span class="nx">ch</span><span class="p">.</span><span class="nx">content</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="mf">500</span><span class="p">)</span><span class="si">}</span><span class="sb">...`</span><span class="p">)</span>
+<span class="w">      </span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s2">&quot;\n\n&quot;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">content</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">          </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="sb">`在《</span><span class="si">${</span><span class="nx">book</span><span class="p">.</span><span class="nx">title</span><span class="si">}</span><span class="sb">》中搜索&quot;</span><span class="si">${</span><span class="nx">query</span><span class="si">}</span><span class="sb">&quot;的结果：\n\n</span><span class="si">${</span><span class="nx">results</span><span class="si">}</span><span class="sb">`</span><span class="p">,</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">      </span><span class="p">],</span>
+<span class="w">      </span><span class="nx">isError</span><span class="o">:</span><span class="w"> </span><span class="kt">false</span><span class="p">,</span>
+<span class="w">    </span><span class="p">};</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="k">async</span><span class="w"> </span><span class="nx">run</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">transport</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">StdioServerTransport</span><span class="p">();</span>
+<span class="w">    </span><span class="k">await</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">server</span><span class="p">.</span><span class="nx">connect</span><span class="p">(</span><span class="nx">transport</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s2">&quot;电子书 Code Review MCP 服务器已启动&quot;</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// 启动服务器</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">booksDirectory</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">EBOOKS_DIR</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="kc">undefined</span><span class="p">;</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">server</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">EbookCodeReviewServer</span><span class="p">(</span><span class="nx">booksDirectory</span><span class="p">);</span>
+<span class="nx">server</span><span class="p">.</span><span class="nx">run</span><span class="p">().</span><span class="k">catch</span><span class="p">(</span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">);</span>
+</code></pre></div>
+<h4>4. package.json 配置</h4>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ebook-code-review-mcp&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0.1.0&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;module&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;main&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;dist/index.js&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;scripts&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;build&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;tsc&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;start&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;tsx src/index.ts&quot;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;dependencies&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;@modelcontextprotocol/sdk&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;^0.5.0&quot;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;devDependencies&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;@types/node&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;^20.0.0&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;typescript&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;^5.0.0&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;tsx&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;^4.0.0&quot;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<h4>5. tsconfig.json 配置</h4>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;compilerOptions&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;target&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ES2022&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;module&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ES2022&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;moduleResolution&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;node&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;outDir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./dist&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;rootDir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;./src&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;strict&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;esModuleInterop&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;skipLibCheck&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;forceConsistentCasingInFileNames&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;include&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;src/**/*&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;exclude&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;node_modules&quot;</span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+<h4>6. Cursor 配置</h4>
+<p>在 Cursor 的 MCP 配置文件中添加：</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;ebook-code-review&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;node&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;/path/to/ebook-code-review-mcp/dist/index.js&quot;</span><span class="p">],</span>
+<span class="w">      </span><span class="nt">&quot;env&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;EBOOKS_DIR&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/Users/oasis/Desktop/电子书&quot;</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<h4>7. 使用示例</h4>
+<p>在 Cursor 中与 AI 对话：</p>
+<div class="highlight"><pre><span></span><code>用户：请基于《软件设计的哲学》这本书的观点，评价我写的这段代码：
+
+```javascript
+class UserService {
+  constructor() {
+    this.users = [];
+  }
+
+  addUser(user) {
+    this.users.push(user);
+  }
+
+  findUser(id) {
+    return this.users.find(u =&gt; u.id === id);
+  }
+}
+</code></pre></div>
+<p>AI: [调用 evaluate_code tool]
+    → 扫描电子书目录
+    → 检索《软件设计的哲学》相关内容
+    → 提取设计原则
+    → 基于书籍观点评价代码
+    → 返回评价结果
+```</p>
+<h3>优化建议</h3>
+<ol>
+<li><strong>PDF/EPUB 解析</strong>：安装 <code>pdf-parse</code> 和 <code>epub2</code> 库来解析电子书内容</li>
+<li><strong>向量检索</strong>：使用向量数据库（如 Chroma、Qdrant）实现语义搜索，提高检索准确性</li>
+<li><strong>缓存机制</strong>：缓存已解析的书籍内容，避免重复解析</li>
+<li><strong>增量更新</strong>：监听书籍目录变化，自动更新书籍列表</li>
+<li><strong>LLM 集成</strong>：在生成评价时调用 LLM，生成更详细的评价报告</li>
+</ol>
+<p>这个实现提供了一个完整的、可运行的 MCP 服务器，可以直接使用你的电子书目录进行 Code Review。</p>
+<h2>其他有趣的 MCP 开发想法</h2>
+<p>除了基于个人电子书目的 Code Review，还有很多有趣的 MCP 服务器可以开发：</p>
+<h3>1. <strong>个人知识库 MCP</strong></h3>
+<p>将个人的笔记、博客、学习资料整合为 MCP 资源，让 AI 能够基于你的知识体系回答问题：
+- <strong>资源</strong>：提供笔记文件、博客文章、学习资料
+- <strong>工具</strong>：搜索笔记、添加新笔记、关联相关笔记
+- <strong>提示</strong>：基于个人知识库回答问题的模板</p>
+<h3>2. <strong>代码库分析 MCP</strong></h3>
+<p>深度分析你的代码库，提供架构洞察和代码质量评估：
+- <strong>工具</strong>：
+  - <code>analyze_architecture</code>：分析项目架构，识别模块依赖关系
+  - <code>find_code_smells</code>：检测代码坏味道
+  - <code>suggest_refactoring</code>：基于最佳实践建议重构方案
+- <strong>资源</strong>：代码统计、依赖图、复杂度分析报告</p>
+<h3>3. <strong>Git 历史智能分析 MCP</strong></h3>
+<p>从 Git 提交历史中提取开发模式和团队协作洞察：
+- <strong>工具</strong>：
+  - <code>analyze_commit_patterns</code>：分析提交模式，识别开发习惯
+  - <code>find_hotspots</code>：找出频繁修改的文件（潜在的技术债）
+  - <code>suggest_reviewers</code>：基于历史提交推荐代码审查者
+- <strong>资源</strong>：提交统计、贡献者分析、代码演进历史</p>
+<h3>4. <strong>API 文档生成 MCP</strong></h3>
+<p>自动从代码中提取 API 信息并生成文档：
+- <strong>工具</strong>：
+  - <code>extract_api_endpoints</code>：从代码中提取 API 端点
+  - <code>generate_api_docs</code>：生成 API 文档
+  - <code>validate_api_consistency</code>：验证 API 实现与文档的一致性
+- <strong>资源</strong>：API 规范、示例代码、测试用例</p>
+<h3>5. <strong>设计系统 MCP</strong></h3>
+<p>管理设计系统的组件库和设计规范：
+- <strong>资源</strong>：组件文档、设计规范、设计令牌（Design Tokens）
+- <strong>工具</strong>：
+  - <code>search_components</code>：搜索可用的 UI 组件
+  - <code>generate_component_code</code>：基于设计规范生成组件代码
+  - <code>validate_design_compliance</code>：验证代码是否符合设计规范</p>
+<h3>6. <strong>数据库 Schema 分析 MCP</strong></h3>
+<p>分析数据库结构，提供数据建模建议：
+- <strong>工具</strong>：
+  - <code>analyze_schema</code>：分析数据库表结构
+  - <code>suggest_indexes</code>：建议索引优化
+  - <code>detect_anomalies</code>：检测数据异常和潜在问题
+- <strong>资源</strong>：ER 图、表关系图、数据字典</p>
+<h3>7. <strong>性能监控 MCP</strong></h3>
+<p>集成性能监控数据，提供性能分析和优化建议：
+- <strong>工具</strong>：
+  - <code>analyze_performance</code>：分析性能指标
+  - <code>identify_bottlenecks</code>：识别性能瓶颈
+  - <code>suggest_optimizations</code>：提供优化建议
+- <strong>资源</strong>：性能报告、监控图表、历史趋势</p>
+<h3>8. <strong>测试覆盖率分析 MCP</strong></h3>
+<p>分析测试覆盖率，识别未测试的代码路径：
+- <strong>工具</strong>：
+  - <code>analyze_coverage</code>：分析测试覆盖率
+  - <code>suggest_test_cases</code>：建议需要添加的测试用例
+  - <code>find_untested_paths</code>：找出未测试的代码路径
+- <strong>资源</strong>：覆盖率报告、测试统计、质量指标</p>
+<h3>9. <strong>依赖管理 MCP</strong></h3>
+<p>智能管理项目依赖，检测安全漏洞和版本冲突：
+- <strong>工具</strong>：
+  - <code>check_vulnerabilities</code>：检查依赖的安全漏洞
+  - <code>suggest_updates</code>：建议依赖更新
+  - <code>resolve_conflicts</code>：解决版本冲突
+- <strong>资源</strong>：依赖树、安全报告、更新日志</p>
+<h3>10. <strong>代码生成模板 MCP</strong></h3>
+<p>基于项目模式和最佳实践生成代码模板：
+- <strong>工具</strong>：
+  - <code>generate_component</code>：生成组件模板
+  - <code>generate_api_handler</code>：生成 API 处理函数
+  - <code>generate_test_suite</code>：生成测试套件
+- <strong>提示</strong>：各种代码生成模板的提示词</p>
+<h3>12. <strong>日志分析 MCP</strong></h3>
+<p>分析应用日志，识别错误模式和异常行为：
+- <strong>工具</strong>：
+  - <code>analyze_logs</code>：分析日志文件
+  - <code>detect_errors</code>：检测错误模式
+  - <code>suggest_fixes</code>：基于错误模式建议修复方案
+- <strong>资源</strong>：错误统计、日志摘要、趋势分析</p>
+<p>这些 MCP 服务器的共同特点是：
+- <strong>个性化</strong>：基于你的实际工作场景和需求
+- <strong>上下文感知</strong>：能够理解你的项目结构和代码库
+- <strong>可扩展</strong>：可以根据需要添加新功能
+- <strong>本地优先</strong>：数据存储在本地，保护隐私</p>
+<p>选择开发哪个 MCP 服务器，取决于你的具体需求和痛点。从最常用的场景开始，逐步扩展功能。</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>

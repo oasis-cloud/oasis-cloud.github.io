@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Immer 源码分析——State 和 Scope 的设计原因</title>
+        <link rel="stylesheet" href="../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../assets/pygments.css">
+        <script src="../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-frontend-immerjs-1 node-articles-frontend-immerjs node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>Immer 源码分析——State 和 Scope 的设计原因</h1>
+                
+                
+                    <p class="author">作者：oasis</p>
+                
+                <hr>
+            </header>
+            <p>我将分析这个 Immer 仓库的代码，了解为什么存在 state 和 scope 这两个中间层，以及它们的设计原因。让我先查看相关的核心文件。</p>
+<p>[5 tools called]</p>
+<p>基于对 Immer 代码库的分析，我来详细解释为什么需要 <code>state</code> 和 <code>scope</code> 这两个中间层，以及它们各自的作用和设计原因。</p>
+<h2>State 的作用和设计原因</h2>
+<h3>1. 状态跟踪和管理</h3>
+<p><code>state</code>（在代码中表现为 <code>ImmerState</code> 及其子类型）主要负责跟踪每个 draft 对象的状态信息：</p>
+<p>```typescript:25:31:src/types/types-internal.ts
+export interface ImmerBaseState {
+    parent_?: ImmerState
+    scope_: ImmerScope
+    modified_: boolean
+    finalized_: boolean
+    isManual_: boolean
+}
+<div class="highlight"><pre><span></span><code>**设计原因：**
+- **修改跟踪**：`modified_` 标志记录对象是否被修改，避免不必要的复制
+- **层级关系**：`parent_` 维护父子 draft 关系，实现嵌套对象的修改传播
+- **作用域关联**：`scope_` 将 draft 与特定的 `produce` 调用关联
+
+### 2. 复制机制优化
+在 `proxy.ts` 中，state 管理着复制策略：
+
+```typescript:56:78:src/core/proxy.ts
+const state: ProxyState = {
+    type_: isArray ? ArchType.Array : (ArchType.Object as any),
+    scope_: parent ? parent.scope_ : getCurrentScope()!,
+    modified_: false,
+    finalized_: false,
+    assigned_: {},
+    parent_: parent,
+    base_: base,
+    draft_: null as any,
+    copy_: null,
+    revoke_: null as any,
+    isManual_: false
+}
+</code></pre></div></p>
+<p><strong>设计原因：</strong>
+- <strong>惰性复制</strong>：<code>copy_</code> 只在真正修改时才创建，节省内存和性能
+- <strong>赋值跟踪</strong>：<code>assigned_</code> 记录哪些属性被赋值，优化最终化过程
+- <strong>类型区分</strong>：<code>type_</code> 区分对象和数组，应用不同的代理策略</p>
+<h2>Scope 的作用和设计原因</h2>
+<h3>1. 调用上下文管理</h3>
+<p><code>scope</code> 代表一个完整的 <code>produce</code> 调用上下文：</p>
+<p>```typescript:14:23:src/core/scope.ts
+export interface ImmerScope {
+    patches_?: Patch[]
+    inversePatches_?: Patch[]
+    canAutoFreeze_: boolean
+    drafts_: any[]
+    parent_?: ImmerScope
+    patchListener_?: PatchListener
+    immer_: Immer
+    unfinalizedDrafts_: number
+}
+<div class="highlight"><pre><span></span><code>**设计原因：**
+- **调用隔离**：每个 `produce` 调用有独立的作用域，避免状态污染
+- **错误恢复**：作用域可以在出错时被撤销（`revokeScope`）
+- **嵌套支持**：`parent_` 支持嵌套的 `produce` 调用
+
+### 2. 资源管理和清理
+scope 负责管理所有相关的 draft 对象：
+
+```typescript:58:63:src/core/scope.ts
+export function revokeScope(scope: ImmerScope) {
+    leaveScope(scope)
+    scope.drafts_.forEach(revokeDraft)
+    // @ts-ignore
+    scope.drafts_ = null
+}
+</code></pre></div></p>
+<p><strong>设计原因：</strong>
+- <strong>统一清理</strong>：确保所有相关资源在作用域结束时被正确清理
+- <strong>内存安全</strong>：防止内存泄漏，特别是在错误情况下</p>
+<h3>3. Patch 功能支持</h3>
+<p>scope 为 patch 功能提供基础设施：</p>
+<p>```typescript:46:56:src/core/scope.ts
+export function usePatchesInScope(
+    scope: ImmerScope,
+    patchListener?: PatchListener
+) {
+    if (patchListener) {
+        getPlugin(&ldquo;Patches&rdquo;) // assert we have the plugin
+        scope.patches_ = []
+        scope.inversePatches_ = []
+        scope.patchListener_ = patchListener
+    }
+}
+<div class="highlight"><pre><span></span><code>## State 和 Scope 的协同工作机制
+
+### 1. 创建关联
+在 `createProxy` 中建立 state 和 scope 的关联：
+
+```typescript:222:236:src/core/immerClass.ts
+export function createProxy&lt;T extends Objectish&gt;(
+    value: T,
+    parent?: ImmerState
+): Drafted&lt;T, ImmerState&gt; {
+    // precondition: createProxy should be guarded by isDraftable, so we know we can safely draft
+    const draft: Drafted = isMap(value)
+        ? getPlugin(&quot;MapSet&quot;).proxyMap_(value, parent)
+        : isSet(value)
+        ? getPlugin(&quot;MapSet&quot;).proxySet_(value, parent)
+        : createProxyProxy(value, parent)
+
+    const scope = parent ? parent.scope_ : getCurrentScope()
+    scope.drafts_.push(draft)
+    return draft
+}
+</code></pre></div></p>
+<h3>2. 生命周期管理</h3>
+<p>在 <code>produce</code> 方法中完整的生命周期管理：</p>
+<p>```typescript:95:109:src/core/immerClass.ts
+const scope = enterScope(this)
+const proxy = createProxy(base, undefined)
+let hasError = true
+try {
+    result = recipe(proxy)
+    hasError = false
+} finally {
+    // finally instead of catch + rethrow better preserves original stack
+    if (hasError) revokeScope(scope)
+    else leaveScope(scope)
+}
+<div class="highlight"><pre><span></span><code>## 设计优势总结
+
+1. **关注点分离**：state 关注单个对象状态，scope 关注调用上下文
+2. **性能优化**：惰性复制、修改跟踪等机制大幅提升性能
+3. **错误恢复**：作用域机制确保在错误情况下能正确清理资源
+4. **功能扩展**：为 patch、嵌套调用等高级功能提供基础设施
+5. **内存安全**：统一的资源管理防止内存泄漏
+
+这种分层设计使得 Immer 能够高效处理复杂的不可变更新场景，同时保持代码的可维护性和扩展性。
+
+[1 tool called]
+
+基于对 Immer 代码库的分析，我来详细解释为什么需要 `state` 和 `scope` 这两个中间层，以及它们各自的设计原因：
+
+## State（状态）的作用和设计原因
+
+### 1. 状态的核心作用
+`state` 是每个 draft（草稿）对象内部的状态管理结构，它存储了 draft 的关键信息：
+
+```12:15:src/types/types-internal.ts
+export interface ImmerBaseState {
+    parent_?: ImmerState
+    scope_: ImmerScope
+    modified_: boolean
+    finalized_: boolean
+    isManual_: boolean
+}
+</code></pre></div></p>
+<h3>2. 状态的设计原因</h3>
+<p><strong>a. 跟踪修改状态</strong>
+- <code>modified_</code>: 标记该 draft 是否被修改过
+- <code>assigned_</code>: 跟踪哪些属性被赋值或删除（在 proxy.ts 中定义）</p>
+<p><strong>b. 管理复制机制</strong>
+- <code>base_</code>: 存储原始状态
+- <code>copy_</code>: 存储修改后的副本
+- 只有在真正修改时才创建副本（copy-on-write）</p>
+<p><strong>c. 维护父子关系</strong>
+- <code>parent_</code>: 指向父级 state，用于级联标记修改
+- 当子 draft 被修改时，会自动标记所有父级为已修改</p>
+<p><strong>d. 类型区分</strong>
+- <code>type_</code>: 区分对象、数组、Map、Set 等不同类型
+- 不同类型的对象需要不同的代理处理策略</p>
+<h2>Scope（作用域）的作用和设计原因</h2>
+<h3>1. 作用域的核心作用</h3>
+<p><code>scope</code> 代表一个完整的 <code>produce</code> 调用过程：</p>
+<p>```13:23:src/core/scope.ts
+export interface ImmerScope {
+    patches_?: Patch[]
+    inversePatches_?: Patch[]
+    canAutoFreeze_: boolean
+    drafts_: any[]
+    parent_?: ImmerScope
+    patchListener_?: PatchListener
+    immer_: Immer
+    unfinalizedDrafts_: number
+}
+<div class="highlight"><pre><span></span><code>### 2. 作用域的设计原因
+
+**a. 生命周期管理**
+- 每个 `produce` 调用创建一个新的 scope
+- 通过 `enterScope`/`leaveScope` 管理调用栈
+
+**b. 批量处理 drafts**
+- `drafts_`: 存储该作用域内创建的所有 draft
+- 在最终化时统一处理所有相关 drafts
+
+**c. 补丁生成**
+- `patches_` 和 `inversePatches_`: 存储变更补丁
+- 支持撤销/重做功能
+
+**d. 配置继承**
+- `immer_`: 引用 Immer 实例，继承配置（如 autoFreeze 设置）
+- 确保同一 produce 调用内的行为一致性
+
+**e. 错误恢复**
+- 如果 recipe 函数抛出错误，可以 `revokeScope` 撤销所有修改
+- 保持原子性操作
+
+## State 和 Scope 的协同工作机制
+
+### 1. 创建时的关联
+```233:235:src/core/immerClass.ts
+const scope = parent ? parent.scope_ : getCurrentScope()
+scope.drafts_.push(draft)
+return draft
+</code></pre></div></p>
+<p>每个 draft 的 state 都引用其所属的 scope，而 scope 则记录所有属于它的 drafts。</p>
+<h3>2. 修改传播机制</h3>
+<p>当 draft 被修改时：
+- 首先标记自己的 <code>modified_ = true</code>
+- 然后递归向上标记所有父级 state 为已修改
+- 最终 scope 在最终化时收集所有修改</p>
+<h3>3. 最终化处理</h3>
+<p>在 <code>processResult</code> 中：
+- Scope 负责协调所有 drafts 的最终化
+- 统一生成补丁（如果启用）
+- 统一应用自动冻结</p>
+<h2>设计优势总结</h2>
+<ol>
+<li><strong>职责分离</strong>: state 管理单个 draft 的状态，scope 管理整个 produce 调用的上下文</li>
+<li><strong>性能优化</strong>: 只有在真正修改时才创建副本，避免不必要的内存分配</li>
+<li><strong>错误安全</strong>: 作用域机制确保在错误时能正确清理资源</li>
+<li><strong>功能扩展</strong>: 为补丁、撤销等高级功能提供了基础设施</li>
+<li><strong>配置管理</strong>: 通过 scope 继承 Immer 实例配置，保持行为一致性</li>
+</ol>
+<p>这种分层设计使得 Immer 能够高效地处理复杂的不可变状态更新，同时提供了丰富的功能和良好的错误处理机制。</p>
+<p>让我通过两个具体的 demo 来讲解 state 和 scope 的工作机制：</p>
+<h2>Demo 1: 基本对象修改</h2>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">baseState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">user</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;John&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">age</span><span class="o">:</span><span class="w"> </span><span class="mf">30</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">address</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">city</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;New York&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">country</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;USA&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">todos</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;task1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;task2&quot;</span><span class="p">]</span>
+<span class="p">};</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">nextState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">produce</span><span class="p">(</span><span class="nx">baseState</span><span class="p">,</span><span class="w"> </span><span class="nx">draft</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">draft</span><span class="p">.</span><span class="nx">user</span><span class="p">.</span><span class="nx">age</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">31</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">draft</span><span class="p">.</span><span class="nx">todos</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="s2">&quot;task3&quot;</span><span class="p">);</span>
+<span class="p">});</span>
+</code></pre></div>
+<h3>State 和 Scope 的工作流程：</h3>
+<ol>
+<li>
+<p><strong>创建 Scope</strong>:</p>
+<ul>
+<li><code>enterScope(this)</code> 创建一个新的作用域</li>
+<li>当前 scope 记录 Immer 实例配置和 drafts 数组</li>
+</ul>
+</li>
+<li>
+<p><strong>创建 Drafts</strong>:</p>
+<ul>
+<li><code>createProxy(baseState, undefined)</code> 创建根 draft</li>
+<li>每个 draft 内部都有 <code>DRAFT_STATE</code> 属性指向其 state</li>
+<li>state 包含 <code>base_</code>(原始对象), <code>copy_</code>(null), <code>modified_</code>(false)</li>
+</ul>
+</li>
+<li>
+<p><strong>修改过程</strong>:</p>
+<ul>
+<li>
+<p><code>draft.user.age = 31</code>:</p>
+<ul>
+<li>访问 <code>draft.user</code> → 创建 user 对象的 draft (新的 state)</li>
+<li>设置 <code>age</code> 属性 → 标记 user state 为 <code>modified_ = true</code></li>
+<li>递归标记根 state 为 <code>modified_ = true</code></li>
+<li>创建 user 对象的 <code>copy_</code> (浅拷贝)</li>
+</ul>
+</li>
+<li>
+<p><code>draft.todos.push("task3")</code>:</p>
+<ul>
+<li>访问 <code>draft.todos</code> → 创建数组的 draft</li>
+<li><code>push</code> 操作 → 标记数组 state 为 <code>modified_ = true</code></li>
+<li>递归标记根 state 为 <code>modified_ = true</code></li>
+<li>创建数组的 <code>copy_</code></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>最终化</strong>:</p>
+<ul>
+<li><code>processResult(result, scope)</code> 处理所有 drafts</li>
+<li>只对修改过的对象创建新副本，未修改的保持引用</li>
+<li>返回最终的新状态</li>
+</ul>
+</li>
+</ol>
+<h2>Demo 2: 错误处理和补丁生成</h2>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">baseState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">count</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="nx">items</span><span class="o">:</span><span class="w"> </span><span class="p">[]</span><span class="w"> </span><span class="p">};</span>
+
+<span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">nextState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">produce</span><span class="p">(</span><span class="nx">baseState</span><span class="p">,</span><span class="w"> </span><span class="nx">draft</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">draft</span><span class="p">.</span><span class="nx">count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1</span><span class="p">;</span>
+<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="s2">&quot;Something went wrong&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">draft</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="s2">&quot;item1&quot;</span><span class="p">);</span><span class="w"> </span><span class="c1">// 这行不会执行</span>
+<span class="w">  </span><span class="p">},</span><span class="w"> </span><span class="p">(</span><span class="nx">patches</span><span class="p">,</span><span class="w"> </span><span class="nx">inversePatches</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Patches:&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">patches</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Inverse patches:&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">inversePatches</span><span class="p">);</span>
+<span class="w">  </span><span class="p">});</span>
+<span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Error caught:&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">.</span><span class="nx">message</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3>State 和 Scope 的错误处理：</h3>
+<ol>
+<li>
+<p><strong>Scope 的错误恢复</strong>:
+   <code>95:107:src/core/immerClass.ts
+   let hasError = true
+   try {
+     result = recipe(proxy)
+     hasError = false
+   } finally {
+     if (hasError) revokeScope(scope)
+     else leaveScope(scope)
+   }</code></p>
+</li>
+<li>
+<p><strong>错误发生时的处理</strong>:</p>
+<ul>
+<li><code>hasError</code> 保持为 true</li>
+<li><code>finally</code> 块中调用 <code>revokeScope(scope)</code></li>
+<li><code>revokeScope</code> 会撤销所有已创建的 drafts</li>
+<li>保持原子性：要么全部成功，要么全部回滚</li>
+</ul>
+</li>
+<li>
+<p><strong>补丁机制</strong>:</p>
+<ul>
+<li>如果启用补丁监听器，scope 会存储 <code>patches_</code> 和 <code>inversePatches_</code></li>
+<li>每个修改操作都会生成相应的补丁</li>
+<li>最终统一传递给监听器</li>
+</ul>
+</li>
+</ol>
+<h2>关键设计优势体现</h2>
+<h3>1. 性能优化（Copy-on-Write）</h3>
+<p>```281:293:src/core/proxy.ts
+export function prepareCopy(state: {
+    base_: any
+    copy_: any
+    scope_: ImmerScope
+}) {
+    if (!state.copy_) {
+        state.copy_ = shallowCopy(
+            state.base_,
+            state.scope_.immer_.useStrictShallowCopy_
+        )
+    }
+}
+<div class="highlight"><pre><span></span><code>只有在第一次修改时才创建副本，避免不必要的内存分配。
+
+### 2. 修改传播机制
+```272:279:src/core/proxy.ts
+export function markChanged(state: ImmerState) {
+    if (!state.modified_) {
+        state.modified_ = true
+        if (state.parent_) {
+            markChanged(state.parent_)
+        }
+    }
+}
+</code></pre></div></p>
+<p>子对象的修改会自动传播到所有父级，确保正确的修改跟踪。</p>
+<h3>3. 类型安全的代理处理</h3>
+<p>```102:209:src/core/proxy.ts
+export const objectTraps: ProxyHandler<ProxyState> = {
+    get(state, prop) {
+        if (prop === DRAFT_STATE) return state
+        // &hellip; 复杂的属性访问逻辑
+    },
+    set(state, prop, value) {
+        // &hellip; 复杂的属性设置逻辑
+    }
+}
+<div class="highlight"><pre><span></span><code>不同的对象类型（普通对象、数组、Map、Set）有不同的代理陷阱，确保类型安全的行为。
+
+这种分层设计使得 Immer 能够：
+- ✅ 高效处理深层嵌套对象的修改
+- ✅ 提供原子性操作（全成功或全回滚）
+- ✅ 支持高级功能如补丁生成
+- ✅ 保持优秀的性能表现
+
+
+
+[1 tool called]
+
+**不会！** `draft.user.age = 31` 不会让整个 `user` 对象变为全新的对象。让我详细解释这个过程：
+
+## 具体执行流程
+
+### 1. 访问 `draft.user`
+```116:121:src/core/proxy.ts
+if (value === peek(state.base_, prop)) {
+    prepareCopy(state)
+    return (state.copy_![prop as any] = createProxy(value, state))
+}
+</code></pre></div></p>
+<p>当访问 <code>draft.user</code> 时：
+- 检查 <code>user</code> 属性是否等于原始值
+- 如果相等，调用 <code>prepareCopy(state)</code> 准备副本
+- 创建 <code>user</code> 对象的 draft 并返回</p>
+<h3>2. 设置 <code>age</code> 属性</h3>
+<p>```129:171:src/core/proxy.ts
+set(
+    state: ProxyObjectState,
+    prop: string /<em> strictly not, but helps TS </em>/,
+    value
+) {
+    // &hellip; 验证和准备逻辑
+    prepareCopy(state)
+    markChanged(state)
+    // @ts-ignore
+    state.copy_![prop] = value
+    state.assigned_[prop] = true
+    return true
+}
+<div class="highlight"><pre><span></span><code>设置 `age` 属性时：
+- 只修改 `user` draft 的 `copy_` 中的 `age` 属性
+- **不会重新创建整个 `user` 对象**
+
+### 3. 最终化过程
+```75:78:src/core/finalize.ts
+if (!state.modified_) {
+    maybeFreeze(rootScope, state.base_, true)
+    return state.base_
+}
+</code></pre></div></p>
+<p>在 <code>finalize</code> 阶段：
+- 如果 <code>user</code> 对象没有被修改（<code>modified_</code> 为 false），直接返回原始 <code>user</code> 对象
+- 如果被修改了，返回 <code>state.copy_</code>（修改后的副本）</p>
+<h2>关键设计：结构共享</h2>
+<p>Immer 使用<strong>结构共享（Structural Sharing）</strong> 技术：</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// 原始状态</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">baseState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">user</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;John&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">age</span><span class="o">:</span><span class="w"> </span><span class="mf">30</span><span class="p">,</span><span class="w"> </span><span class="nx">address</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">city</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;NY&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">country</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;USA&quot;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">todos</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;task1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;task2&quot;</span><span class="p">]</span>
+<span class="p">};</span>
+
+<span class="c1">// 修改后</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">nextState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">produce</span><span class="p">(</span><span class="nx">baseState</span><span class="p">,</span><span class="w"> </span><span class="nx">draft</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">draft</span><span class="p">.</span><span class="nx">user</span><span class="p">.</span><span class="nx">age</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">31</span><span class="p">;</span>
+<span class="p">});</span>
+
+<span class="c1">// 结果：</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">baseState</span><span class="p">.</span><span class="nx">user</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">nextState</span><span class="p">.</span><span class="nx">user</span><span class="p">);</span><span class="w"> </span><span class="c1">// false (user 对象不同)</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">baseState</span><span class="p">.</span><span class="nx">user</span><span class="p">.</span><span class="nx">address</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">nextState</span><span class="p">.</span><span class="nx">user</span><span class="p">.</span><span class="nx">address</span><span class="p">);</span><span class="w"> </span><span class="c1">// true (address 对象相同)</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">baseState</span><span class="p">.</span><span class="nx">todos</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">nextState</span><span class="p">.</span><span class="nx">todos</span><span class="p">);</span><span class="w"> </span><span class="c1">// true (todos 数组相同)</span>
+</code></pre></div>
+<h3>内存结构示意图：</h3>
+<div class="highlight"><pre><span></span><code>baseState: {
+  user: { name: &quot;John&quot;, age: 30, address: {...} },
+  todos: [&quot;task1&quot;, &quot;task2&quot;]
+}
+
+nextState: {
+  user: { name: &quot;John&quot;, age: 31, address: {...} },  // 新的 user 对象
+  todos: [&quot;task1&quot;, &quot;task2&quot;]  // 相同的 todos 引用
+}
+</code></pre></div>
+<p>只有真正被修改的部分才会创建新对象，未修改的部分保持引用共享。这就是为什么 Immer 既保证了不可变性，又保持了良好的性能。</p>
+<p>让我详细讲解 <code>draft.user.age = 31</code> 操作中 <code>finalized_</code> 的完整过程：</p>
+<h2>操作流程分解</h2>
+<h3>1. 初始状态</h3>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">baseState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">user</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;John&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">age</span><span class="o">:</span><span class="w"> </span><span class="mf">30</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">todos</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;task1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;task2&quot;</span><span class="p">]</span>
+<span class="p">};</span>
+</code></pre></div>
+<p>所有 draft 的初始状态：
+- <code>modified_ = false</code>
+- <code>finalized_ = false</code>
+- <code>copy_ = null</code></p>
+<h3>2. 执行 <code>draft.user.age = 31</code></h3>
+<p><strong>步骤 1: 访问 <code>draft.user</code></strong>
+<code>``116:121:src/core/proxy.ts
+if (value === peek(state.base_, prop)) {
+    prepareCopy(state)
+    return (state.copy_![prop as any] = createProxy(value, state))
+}
+<div class="highlight"><pre><span></span><code>- 创建 `user` 对象的 draft（新的 state）
+- `user` state: `modified_ = false`, `finalized_ = false`, `copy_ = null`
+
+**步骤 2: 设置 `age` 属性**
+```129:171:src/core/proxy.ts
+set(state, prop, value) {
+    prepareCopy(state)
+    markChanged(state)
+    state.copy_![prop] = value
+    state.assigned_[prop] = true
+}
+</code></pre></div>
+-</code>prepareCopy(state)<code>：为</code>user<code>state 创建</code>copy_<code>（浅拷贝）
+-</code>markChanged(state)<code>：标记</code>user<code>state 为</code>modified_ = true<code>- 递归标记根 state 为</code>modified_ = true`</p>
+<h3>3. 进入 <code>processResult(result, scope)</code></h3>
+<p>```22:53:src/core/finalize.ts
+export function processResult(result: any, scope: ImmerScope) {
+    scope.unfinalizedDrafts_ = scope.drafts_.length
+    const baseDraft = scope.drafts_![0]
+    const isReplaced = result !== undefined &amp;&amp; result !== baseDraft
+    if (isReplaced) {
+        // &hellip; 处理替换情况
+    } else {
+        // Finalize the base draft.
+        result = finalize(scope, baseDraft, [])
+    }
+    revokeScope(scope)
+    // &hellip; 处理补丁
+    return result !== NOTHING ? result : undefined
+}
+<div class="highlight"><pre><span></span><code>### 4. `finalize` 函数的详细过程
+
+```55:122:src/core/finalize.ts
+function finalize(rootScope: ImmerScope, value: any, path?: PatchPath) {
+    const state: ImmerState = value[DRAFT_STATE]
+
+    // 未修改的 draft，返回原始对象
+    if (!state.modified_) {
+        maybeFreeze(rootScope, state.base_, true)
+        return state.base_
+    }
+
+    // 首次最终化
+    if (!state.finalized_) {
+        state.finalized_ = true  // ← 这里设置 finalized_ = true
+        state.scope_.unfinalizedDrafts_--
+        const result = state.copy_
+
+        // 最终化所有子属性
+        each(resultEach, (key, childValue) =&gt;
+            finalizeProperty(rootScope, state, result, key, childValue, path, isSet)
+        )
+
+        // 冻结结果
+        maybeFreeze(rootScope, result, false)
+
+        // 生成补丁
+        if (path &amp;&amp; rootScope.patches_) {
+            getPlugin(&quot;Patches&quot;).generatePatches_(state, path, rootScope.patches_, rootScope.inversePatches_!)
+        }
+    }
+    return state.copy_
+}
+</code></pre></div></p>
+<h3>5. <code>finalizeProperty</code> 处理子属性</h3>
+<p>```124:198:src/core/finalize.ts
+function finalizeProperty(rootScope, parentState, targetObject, prop, childValue, rootPath, targetIsSet) {
+    if (isDraft(childValue)) {
+        const res = finalize(rootScope, childValue, path)
+        set(targetObject, prop, res)
+        // &hellip; 其他逻辑
+    }
+    // &hellip; 处理非 draft 对象
+}
+<div class="highlight"><pre><span></span><code>## 具体执行顺序
+
+对于 `draft.user.age = 31`：
+
+1. **最终化根对象**：
+    - 调用 `finalize(scope, baseDraft, [])`
+    - 发现根 state `modified_ = true`（因为 user 被修改）
+    - 设置 `finalized_ = true`
+    - 开始处理 `copy_` 中的属性
+
+2. **处理 `user` 属性**：
+    - `user` 是一个 draft（有 `DRAFT_STATE`）
+    - 递归调用 `finalize(rootScope, childValue, path)` 处理 user
+    - user state `modified_ = true`（age 被修改）
+    - 设置 user state `finalized_ = true`
+    - 返回 user 的 `copy_`（包含 age=31）
+
+3. **处理 `age` 属性**：
+    - `age` 是基本类型（31），不是 draft
+    - 直接保留在 user 的 `copy_` 中
+
+4. **处理其他属性**：
+    - `name` 属性没有被修改，保持原始值 &quot;John&quot;
+    - `todos` 数组没有被访问，保持原始引用
+
+## 最终状态变化
+
+**修改前**：
+```javascript
+user state: { modified_: false, finalized_: false, copy_: null }
+</code></pre></div></p>
+<p><strong>修改后</strong>：
+<div class="highlight"><pre><span></span><code><span class="nx">user</span><span class="w"> </span><span class="nx">state</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">modified_</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nx">finalized_</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nx">copy_</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;John&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">age</span><span class="o">:</span><span class="w"> </span><span class="mf">31</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div></p>
+<p><strong>根 state</strong>：
+<div class="highlight"><pre><span></span><code><span class="nx">root</span><span class="w"> </span><span class="nx">state</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">modified_</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nx">finalized_</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nx">copy_</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">user</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;John&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">age</span><span class="o">:</span><span class="w"> </span><span class="mf">31</span><span class="p">},</span><span class="w"> </span><span class="nx">todos</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;task1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;task2&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div></p>
+<h2><code>finalized_</code> 的关键作用</h2>
+<ol>
+<li><strong>防止重复最终化</strong>：确保每个 draft 只被最终化一次</li>
+<li><strong>线程安全</strong>：在多线程环境中防止竞态条件（虽然 JS 是单线程）</li>
+<li><strong>状态机管理</strong>：明确标识 draft 的生命周期阶段</li>
+<li><strong>错误恢复</strong>：如果最终化过程中出错，可以知道哪些已经处理过</li>
+</ol>
+<p>这就是为什么 <code>finalized_</code> 标志位如此重要 - 它确保了最终化过程的正确性和幂等性。</p>
+<p>[1 tool called]</p>
+<p>当执行 <code>draft.user.age = {old: '35'}</code> 时，处理过程与设置基本类型值有所不同。让我详细讲解这个操作的具体流程：</p>
+<h2>操作流程详解</h2>
+<h3>1. 初始状态</h3>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">baseState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">user</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;John&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">age</span><span class="o">:</span><span class="w"> </span><span class="mf">30</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">todos</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;task1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;task2&quot;</span><span class="p">]</span>
+<span class="p">};</span>
+</code></pre></div>
+<h3>2. 执行 <code>draft.user.age = {old: '35'}</code></h3>
+<p><strong>步骤 1: 访问 <code>draft.user</code></strong>
+```116:121:src/core/proxy.ts
+if (value === peek(state.base_, prop)) {
+    prepareCopy(state)
+    return (state.copy_![prop as any] = createProxy(value, state))
+}
+<div class="highlight"><pre><span></span><code>- 创建 `user` 对象的 draft
+- `user` state: `modified_ = false`, `finalized_ = false`, `copy_ = null`
+
+**步骤 2: 设置 `age` 属性为对象**
+```129:171:src/core/proxy.ts
+set(state, prop, value) {
+    // ... 验证逻辑
+    prepareCopy(state)
+    markChanged(state)
+    // @ts-ignore
+    state.copy_![prop] = value
+    state.assigned_[prop] = true
+    return true
+}
+</code></pre></div></p>
+<p>这里的关键区别在于：<strong><code>{old: '35'}</code> 是一个新对象，不是 draft</strong></p>
+<h3>3. 特殊处理：对象赋值 vs 基本类型赋值</h3>
+<p><strong>对于基本类型值（如数字、字符串）</strong>：
+- 直接赋值到 <code>copy_</code> 中
+- 不需要创建新的 draft</p>
+<p><strong>对于对象值</strong>：
+```112:122:src/core/proxy.ts
+get(state, prop) {
+    const value = source[prop]
+    if (state.finalized_ || !isDraftable(value)) {
+        return value
+    }
+    // &hellip; 创建 draft 的逻辑
+}
+<div class="highlight"><pre><span></span><code>当设置 `age = {old: &#39;35&#39;}` 时：
+1. `isDraftable({old: &#39;35&#39;})` 返回 `true`（因为是普通对象）
+2. 但是此时是在 `set` 操作中，不是 `get` 操作
+3. **直接**将新对象赋值给 `copy_.age`
+
+### 4. 最终化过程中的特殊处理
+
+```167:197:src/core/finalize.ts
+if (isDraftable(childValue) &amp;&amp; !childIsFrozen) {
+    if (!rootScope.immer_.autoFreeze_ &amp;&amp; rootScope.unfinalizedDrafts_ &lt; 1) {
+        // optimization: if an object is not a draft, and we don&#39;t have to
+        // deepfreeze everything, and we are sure that no drafts are left in the remaining object
+        // cause we saw and finalized all drafts already; we can stop visiting the rest of the tree.
+        // This benefits especially adding large data tree&#39;s without further processing.
+        // See add-data.js perf test
+        return
+    }
+    // ... 其他检查
+    finalize(rootScope, childValue)
+    // ... 冻结逻辑
+}
+</code></pre></div></p>
+<p>在 <code>finalizeProperty</code> 中：
+- 发现 <code>age</code> 属性是一个普通对象（不是 draft）
+- 但是 <code>isDraftable({old: '35'})</code> 返回 <code>true</code>
+- 会递归调用 <code>finalize(rootScope, childValue)</code> 来处理这个新对象</p>
+<h2>具体内存变化</h2>
+<h3>修改前：</h3>
+<div class="highlight"><pre><span></span><code>baseState: {
+  user: { name: &quot;John&quot;, age: 30 }  // ← 原始对象
+}
+</code></pre></div>
+<h3>修改后：</h3>
+<div class="highlight"><pre><span></span><code>nextState: {
+  user: { 
+    name: &quot;John&quot;,           // ← 保持原始引用（未修改）
+    age: { old: &quot;35&quot; }      // ← 全新的对象！
+  }
+}
+</code></pre></div>
+<h2>与 <code>draft.user.age = 31</code> 的关键区别</h2>
+<table>
+<thead>
+<tr>
+<th>操作</th>
+<th><code>draft.user.age = 31</code></th>
+<th><code>draft.user.age = {old: '35'}</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>修改类型</strong></td>
+<td>修改现有属性值</td>
+<td>替换整个属性值为新对象</td>
+</tr>
+<tr>
+<td><strong>内存影响</strong></td>
+<td>只修改 <code>age</code> 值</td>
+<td>创建全新的 <code>age</code> 对象</td>
+</tr>
+<tr>
+<td><strong>结构共享</strong></td>
+<td>共享 <code>user</code> 对象的其他属性</td>
+<td>完全中断 <code>age</code> 属性的共享</td>
+</tr>
+<tr>
+<td><strong>最终化处理</strong></td>
+<td>简单值直接赋值</td>
+<td>需要递归处理新对象</td>
+</tr>
+</tbody>
+</table>
+<h2>性能考虑</h2>
+<p>这种设计意味着：
+- ✅ <strong>小对象赋值</strong>：性能影响很小
+- ⚠️ <strong>大对象赋值</strong>：可能产生较大的内存开销（因为创建全新对象）
+- ✅ <strong>结构感知</strong>：Immer 能智能处理各种赋值情况</p>
+<p>这就是为什么在性能敏感的场景中，建议避免频繁赋值大对象，而是采用逐步修改现有对象的方式。</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>
