@@ -53,28 +53,28 @@
 <blockquote>
 <p>博客详情页中插入的图片需要支持鼠标点击放大。</p>
 </blockquote>
-<p><img alt="img" src="images/ai/vibe-coding-1.png" /></p>
+<p><img alt="img" src="/images/ai/vibe-coding-1.png" /></p>
 <p>Cursor 生成了代码后，我选择接受更改并开始测试。第一次测试未通过，图片点击后无法放大。这说明提示词需要更详细一些。</p>
 <h3>第二轮：细化需求</h3>
 <p>我改进了提示词，增加了更多细节：</p>
 <blockquote>
 <p>例如一篇博客有 5 个图片，我只想点击每个图片，放大。</p>
 </blockquote>
-<p><img alt="img" src="images/ai/vibe-coding-2.png" /></p>
+<p><img alt="img" src="/images/ai/vibe-coding-2.png" /></p>
 <p>这次测试通过了，点击图片后放大功能正常工作。但在测试过程中发现，放大后的图片可能会超出浏览器可视范围，影响用户体验。</p>
 <h3>第三轮：完善体验</h3>
 <p>继续优化提示词，增加尺寸限制：</p>
 <blockquote>
 <p>限制一下放大后的宽高，不要超过浏览器可视范围</p>
 </blockquote>
-<p><img alt="img" src="images/ai/vibe-coding-3.png" /></p>
+<p><img alt="img" src="/images/ai/vibe-coding-3.png" /></p>
 <p>经过这次优化，图片放大功能已经能够正常工作，并且不会超出可视范围。</p>
 <h2>自动化测试</h2>
 <p>除了人工测试外，还可以通过 Chrome MCP（Model Context Protocol）进行自动化测试。将 Chrome MCP 添加到 Cursor 的 Tool &amp; MCP 配置中后，可以输入以下提示词：</p>
 <blockquote>
 <p>本地连接：http://localhost:8080/index.html。使用 chrome mcp 测试刚刚增加的图片放大功能。</p>
 </blockquote>
-<p><img alt="img" src="images/ai/vibe-coding-4.png" /></p>
+<p><img alt="img" src="/images/ai/vibe-coding-4.png" /></p>
 <p>Cursor 会打开一个新的 Chrome 窗口，自动执行测试操作，并最终给出测试结果。这种方式可以更高效地验证功能的正确性。</p>
 <h2>部署新特性</h2>
 <p>功能开发完成后，将新添加的文件提交到 GitHub，等待 GitHub Actions 自动部署即可。</p>
