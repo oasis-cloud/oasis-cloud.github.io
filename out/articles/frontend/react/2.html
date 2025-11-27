@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>React 状态更新流程</title>
+        <link rel="stylesheet" href="../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../assets/pygments.css">
+        <script src="../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-frontend-react-2 node-articles-frontend-react node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>React 状态更新流程</h1>
+                
+                    <p class="subtitle">基于 v19.2.0 版本</p>
+                
+                
+                    <p class="author">作者：oasis</p>
+                
+                <hr>
+            </header>
+            <p>本文通过下述 Demo 分析 React v19.2.0 的状态更新流程。</p>
+<div class="highlight"><pre><span></span><code>import { useState } from &#39;react&#39;
+import { createRoot } from &#39;react-dom/client&#39;
+
+function App() {
+    // 断点 1: useState 初始化
+    debugger;
+    const [count, setCount] = useState(0);
+
+    // 断点 2: 组件渲染
+    console.log(&#39;渲染次数:&#39;, count);
+
+    const handleClick = () =&gt; {
+        // 断点 3: setState 调用
+        debugger;
+        setCount(count + 1);
+        // 断点 4: setState 调用后（注意：此时 count 还未更新）
+        debugger;
+    };
+
+    return (
+        &lt;div&gt;
+            &lt;h1&gt;状态更新流程&lt;/h1&gt;
+            &lt;p onClick={handleClick}&gt;观察 setState 如何触发更新流程, {count}&lt;/p&gt;
+        &lt;/div&gt;
+    );
+}
+
+debugger;
+const root = createRoot(document.getElementById(&#39;root&#39;));
+
+debugger;
+root.render(&lt;App /&gt;);
+</code></pre></div>
+<h2>useState(0) 的执行过程</h2>
+<p>在创建 App Fiber 的时候，会执行 <code>renderWithHooks</code>，之后调用 App 函数，触发 useState 的执行</p>
+<p><div class="highlight"><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">useState</span><span class="o">&lt;</span><span class="nx">S</span><span class="o">&gt;</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">initialState</span><span class="o">:</span><span class="w"> </span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">S</span><span class="p">)</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nx">S</span><span class="p">,</span>
+<span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="nx">S</span><span class="p">,</span><span class="w"> </span><span class="nx">Dispatch</span><span class="o">&lt;</span><span class="nx">BasicStateAction</span><span class="o">&lt;</span><span class="nx">S</span><span class="o">&gt;&gt;</span><span class="p">]</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">dispatcher</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">resolveDispatcher</span><span class="p">();</span>
+<span class="w">    </span><span class="c1">// initialState = 0</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">dispatcher</span><span class="p">.</span><span class="nx">useState</span><span class="p">(</span><span class="nx">initialState</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+resolveDispatcher 会返回 packages/shared/ReactSharedInternals.js 中的 React.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE;</p>
+<p>__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE 实际上是 ReactSharedInternals。</p>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">ReactSharedInternals</span><span class="o">:</span><span class="w"> </span><span class="kt">SharedStateClient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">({</span>
+<span class="w">                                                     </span><span class="nx">H</span><span class="o">:</span><span class="w"> </span><span class="kt">null</span><span class="p">,</span>
+<span class="w">                                                     </span><span class="nx">A</span><span class="o">:</span><span class="w"> </span><span class="kt">null</span><span class="p">,</span>
+<span class="w">                                                     </span><span class="nx">T</span><span class="o">:</span><span class="w"> </span><span class="kt">null</span><span class="p">,</span>
+<span class="w">                                                     </span><span class="nx">S</span><span class="o">:</span><span class="w"> </span><span class="kt">null</span><span class="p">,</span>
+<span class="w">                                                 </span><span class="p">}</span><span class="o">:</span><span class="w"> </span><span class="nx">any</span><span class="p">);</span>
+</code></pre></div>
+<p>ReactSharedInternals.H 在 renderWithHooks 中被赋值。</p>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">renderWithHooks</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">ReactSharedInternals</span><span class="p">.</span><span class="nx">H</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">HooksDispatcherOnMountInDEV</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>所以 resolveDispathcer 返回了一个包含 useState 方法的对象。</p>
+<p>useState 方法中调用 mountState(initialState) 设置 workInProgressHook。并将 workInProgressFiler 和 queue 绑定到 dispatchSetState。
+然后返回状态值和绑定后的 dispatch。</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// The work-in-progress fiber. I&#39;ve named it differently to distinguish it from</span>
+<span class="c1">// the work-in-progress hook.</span>
+<span class="kd">let</span><span class="w"> </span><span class="nx">currentlyRenderingFiber</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">null</span><span class="o">:</span><span class="w"> </span><span class="kt">any</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="nx">workInProgressHook</span><span class="o">:</span><span class="w"> </span><span class="kt">Hook</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span><span class="w">  </span><span class="c1">// 存储当前的 Hooks</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">mountState</span><span class="o">&lt;</span><span class="nx">S</span><span class="o">&gt;</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">initialState</span><span class="o">:</span><span class="w"> </span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">S</span><span class="p">)</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nx">S</span><span class="p">,</span>
+<span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="nx">S</span><span class="p">,</span><span class="w"> </span><span class="nx">Dispatch</span><span class="o">&lt;</span><span class="nx">BasicStateAction</span><span class="o">&lt;</span><span class="nx">S</span><span class="o">&gt;&gt;</span><span class="p">]</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// hook 变量实际指向 workInProgressHook</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">hook</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">mountStateImpl</span><span class="p">(</span><span class="nx">initialState</span><span class="p">);</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">queue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">hook</span><span class="p">.</span><span class="nx">queue</span><span class="p">;</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">dispatch</span><span class="o">:</span><span class="w"> </span><span class="kt">Dispatch</span><span class="o">&lt;</span><span class="nx">BasicStateAction</span><span class="o">&lt;</span><span class="nx">S</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">dispatchSetState</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span>
+<span class="w">    </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">currentlyRenderingFiber</span><span class="p">,</span><span class="c1">// workInProgressFiber</span>
+<span class="w">    </span><span class="nx">queue</span><span class="p">,</span>
+<span class="w">  </span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">any</span><span class="p">);</span>
+<span class="w">  </span><span class="nx">queue</span><span class="p">.</span><span class="nx">dispatch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">dispatch</span><span class="p">;</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">[</span><span class="nx">hook</span><span class="p">.</span><span class="nx">memoizedState</span><span class="p">,</span><span class="w"> </span><span class="nx">dispatch</span><span class="p">];</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">mountStateImpl</span><span class="o">&lt;</span><span class="nx">S</span><span class="o">&gt;</span><span class="p">(</span><span class="nx">initialState</span><span class="o">:</span><span class="w"> </span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">S</span><span class="p">)</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nx">S</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">Hook</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">hook</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">mountWorkInProgressHook</span><span class="p">();</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="ow">typeof</span><span class="w"> </span><span class="nx">initialState</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;function&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">initialStateInitializer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">initialState</span><span class="p">;</span>
+<span class="w">        </span><span class="c1">// $FlowFixMe[incompatible-use]: Flow doesn&#39;t like mixed types</span>
+<span class="w">        </span><span class="nx">initialState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">initialStateInitializer</span><span class="p">();</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">shouldDoubleInvokeUserFnsInHooksDEV</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">setIsStrictModeForDevtools</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span>
+<span class="w">            </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="c1">// $FlowFixMe[incompatible-use]: Flow doesn&#39;t like mixed types</span>
+<span class="w">                </span><span class="nx">initialStateInitializer</span><span class="p">();</span>
+<span class="w">            </span><span class="p">}</span><span class="w"> </span><span class="k">finally</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nx">setIsStrictModeForDevtools</span><span class="p">(</span><span class="kc">false</span><span class="p">);</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">hook</span><span class="p">.</span><span class="nx">memoizedState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">hook</span><span class="p">.</span><span class="nx">baseState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">initialState</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">queue</span><span class="o">:</span><span class="w"> </span><span class="kt">UpdateQueue</span><span class="o">&lt;</span><span class="nx">S</span><span class="p">,</span><span class="w"> </span><span class="nx">BasicStateAction</span><span class="o">&lt;</span><span class="nx">S</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">pending</span><span class="o">:</span><span class="w"> </span><span class="kt">null</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">lanes</span><span class="o">:</span><span class="w"> </span><span class="kt">NoLanes</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">dispatch</span><span class="o">:</span><span class="w"> </span><span class="kt">null</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">lastRenderedReducer</span><span class="o">:</span><span class="w"> </span><span class="kt">basicStateReducer</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">lastRenderedState</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">initialState</span><span class="o">:</span><span class="w"> </span><span class="kt">any</span><span class="p">),</span>
+<span class="w">    </span><span class="p">};</span>
+<span class="w">    </span><span class="nx">hook</span><span class="p">.</span><span class="nx">queue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">queue</span><span class="p">;</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">hook</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">mountWorkInProgressHook</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="nx">Hook</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">hook</span><span class="o">:</span><span class="w"> </span><span class="kt">Hook</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">memoizedState</span><span class="o">:</span><span class="w"> </span><span class="kt">null</span><span class="p">,</span>
+
+<span class="w">    </span><span class="nx">baseState</span><span class="o">:</span><span class="w"> </span><span class="kt">null</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">baseQueue</span><span class="o">:</span><span class="w"> </span><span class="kt">null</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">queue</span><span class="o">:</span><span class="w"> </span><span class="kt">null</span><span class="p">,</span>
+
+<span class="w">    </span><span class="nx">next</span><span class="o">:</span><span class="w"> </span><span class="kt">null</span><span class="p">,</span>
+<span class="w">  </span><span class="p">};</span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">workInProgressHook</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// This is the first hook in the list</span>
+<span class="w">    </span><span class="nx">currentlyRenderingFiber</span><span class="p">.</span><span class="nx">memoizedState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">workInProgressHook</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">hook</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Append to the end of the list</span>
+<span class="w">    </span><span class="nx">workInProgressHook</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">workInProgressHook</span><span class="p">.</span><span class="nx">next</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">hook</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">workInProgressHook</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>workInProgressHook 的内存结构如下：</p>
+<p><img alt="workInProgressHook" src="/images/react/React-2-1.png" /></p>
+<h2>setCount(count + 1) 的执行过程</h2>
+<p>当点击 p 元素，触发 dispatchSetState 方法（它已经绑定了正确的 FiberNode 和 queue）。对于本文中的 demo ，dispatchSetState 执行的时候，fiber 是 App 的 FiberNode。</p>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">dispatchSetStateInternal</span><span class="o">&lt;</span><span class="nx">S</span><span class="p">,</span><span class="w"> </span><span class="nx">A</span><span class="o">&gt;</span><span class="p">(</span>
+<span class="w">    </span><span class="nx">fiber</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">queue</span><span class="o">:</span><span class="w"> </span><span class="kt">UpdateQueue</span><span class="o">&lt;</span><span class="nx">S</span><span class="p">,</span><span class="w"> </span><span class="nx">A</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">action</span><span class="o">:</span><span class="w"> </span><span class="kt">A</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">lane</span><span class="o">:</span><span class="w"> </span><span class="kt">Lane</span><span class="p">,</span>
+<span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">update</span><span class="o">:</span><span class="w"> </span><span class="kt">Update</span><span class="o">&lt;</span><span class="nx">S</span><span class="p">,</span><span class="w"> </span><span class="nx">A</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">lane</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">revertLane</span><span class="o">:</span><span class="w"> </span><span class="kt">NoLane</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">gesture</span><span class="o">:</span><span class="w"> </span><span class="kt">null</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">action</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">hasEagerState</span><span class="o">:</span><span class="w"> </span><span class="kt">false</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">eagerState</span><span class="o">:</span><span class="w"> </span><span class="kt">null</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">next</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">null</span><span class="o">:</span><span class="w"> </span><span class="kt">any</span><span class="p">),</span>
+<span class="w">    </span><span class="p">};</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">enqueueConcurrentHookUpdate</span><span class="p">(</span><span class="nx">fiber</span><span class="p">,</span><span class="w"> </span><span class="nx">queue</span><span class="p">,</span><span class="w"> </span><span class="nx">update</span><span class="p">,</span><span class="w"> </span><span class="nx">lane</span><span class="p">);</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">root</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">scheduleUpdateOnFiber</span><span class="p">(</span><span class="nx">root</span><span class="p">,</span><span class="w"> </span><span class="nx">fiber</span><span class="p">,</span><span class="w"> </span><span class="nx">lane</span><span class="p">);</span>
+<span class="w">        </span><span class="nx">entangleTransitionUpdate</span><span class="p">(</span><span class="nx">root</span><span class="p">,</span><span class="w"> </span><span class="nx">queue</span><span class="p">,</span><span class="w"> </span><span class="nx">lane</span><span class="p">);</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>enqueueConcurrentHookUpdate(fiber, queue, update, lane) 找到需要更新的 Root。然后通过 scheduleUpdateOnFiber 启动 Root 的调度。</p>
+<p>此时 Root 的 pendingLanes 为 2。</p>
+<p>attemptEarlyBailoutIfNoScheduledUpdate()
+bailoutOnAlreadyFinishedWork()
+updateFunctionComponent()
+finishRenderingHooks()
+useFiber()
+createWorkInProgress()</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>
