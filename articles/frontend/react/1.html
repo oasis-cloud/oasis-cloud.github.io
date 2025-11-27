@@ -495,6 +495,7 @@ export default App
 </ul>
 <p><code>workInProgress</code> 为 <code>HostRootFiber</code>（即 App 的父级）时同样做上述处理。</p>
 <p>到此回溯完毕，设置 <code>workInProgressRootExitStatus = RootCompleted</code>。</p>
+<p><img alt="Fiber构建完整流程" src="/images/react/React-1-8.png" /></p>
 <h2>提交阶段</h2>
 <p>渲染完成后，检查是否可以提交：</p>
 <div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">commitRootWhenReady</span><span class="p">(</span>
