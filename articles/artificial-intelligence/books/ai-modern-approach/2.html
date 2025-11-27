@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>人工智能中的表达形式和问题求解方法——语义网络和描述匹配</title>
+        <link rel="stylesheet" href="../../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../../assets/pygments.css">
+        <script src="../../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-artificial-intelligence-books-ai-modern-approach-2 node-articles-artificial-intelligence-books-ai-modern-approach node-articles-artificial-intelligence-books node-articles-artificial-intelligence node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>人工智能中的表达形式和问题求解方法——语义网络和描述匹配</h1>
+                
+                    <p class="subtitle">《人工智能现代方法》读书笔记</p>
+                
+                
+                    <p class="author">作者：oasis</p>
+                
+                <hr>
+            </header>
+            <h2>表达形式</h2>
+<ul>
+<li>好的表达形式是好的问题求解的关键</li>
+<li>好的表达形式支持清晰明确的、揭示约束的描述</li>
+<li>如何评价表达形式<ul>
+<li>好的表达形式能使重要的对象和关系明朗化：可对发生的事态一目了然</li>
+<li>好的表达形式揭示自然的约束条件：可表达一对象或关系如何影响另一对象或关系</li>
+<li>好的表达形式将对象和关系结合在一起：将极少用到的细节排除在视野外，但是一旦需要，仍可取到</li>
+<li>好的表达形式是透明的，可理解正在说的是什么或正在说些什么</li>
+<li>好的表达形式是完备的：可说出需要说的一切</li>
+<li>好的表达形式是简洁的：可高效的输出需要说的东西</li>
+<li>好的表达形式是快捷的：可快速存储和检索信息</li>
+<li>好的表达形式是可计算的：可用一个现存的过程来生成它</li>
+</ul>
+</li>
+<li>一种表达形式具有 4 个基本部分</li>
+<li>词法部分<ul>
+<li>确定表达形式的词汇表中哪些符号是允许的</li>
+</ul>
+</li>
+<li>结构部分<ul>
+<li>描述词法符号如何排列的约束</li>
+</ul>
+</li>
+<li>过程部分<ul>
+<li>规定存取过程，用于生成和修改各种描述，并用这些描述来回答问题</li>
+</ul>
+</li>
+<li>语义部分<ul>
+<li>确定一种将描述与意义关联的方式
+一种表达形式的 4 个基本部分，和通用程序设计语言的编译器很像，编译器包含词法解析、语法解析、语义分析。词法解析需要规定词法可用的符号集合，词法符号集合中的元素根据一定的约束组合，例如在 JavaScript 中，变量定义的约束条件是不能以数字开头。编译器可以说是一个好的表达形式的实现，和编译器对应的好的表达形式是 BNF。</li>
+</ul>
+</li>
+</ul>
+<h2>语义网络</h2>
+<p>语义网络常作为一种知识表达形式，用于描述人对事物的认识。它是一个有向图，由节点和连线组成，节点表示概念，连线表示概念之间的语义关系。</p>
+<p>在语义网络树的基础上产生的变种包括：
+- 语义树
+  - 搜索树
+  - 目标树
+  - 决策树
+    - K 纬树
+    - 识别树
+  - 博弈树
+- 框架系统
+  - 收缩网
+    - 标记网
+    - 时段网
+  - 算术约束网
+- 状态空间</p>
+<h3>语义网络的形式</h3>
+<ul>
+<li>词法上，有节点、连线和应用特定的连接标记</li>
+<li>结构上，每条连线连接一个尾节点至一个首节点</li>
+<li>语义上，节点和连线表示应用特定的实体</li>
+<li>构造子</li>
+<li>构造一个节点</li>
+<li>给定一个连线标记和两个待连接的节点，构造一条连线</li>
+<li>读子</li>
+<li>产生从某给定节点出发的一个所有连线的表</li>
+<li>产生到达某给定节点的一个所有连线的表</li>
+<li>产生某给定连线的尾节点</li>
+<li>产生某给定连线的首节点</li>
+<li>产生某给定连线的连接标记</li>
+</ul>
+<h2>描述-匹配法</h2>
+<p>描述-匹配法的基本概念：识别一个对象可分两步进行，首先描述此对象，之后在描述库中搜索一个与其匹配的描述。</p>
+<p>通过描述-匹配法识别一个对象的过程如下：
+- 用一种合适的表达形式描述该对象
+- 在描述苦衷搜索，直到找到一个描述与该对象描述匹配，或最终找不到为止。
+- 若发现匹配，则成功，否则失败</p>
+<p>描述-匹配法，可以描述对象的特征，从而完成通过特征的匹配。比如识别一个动物是不是猫，首先要描述出猫的特征和待识别对象的特征，然后进行匹配。</p>
+<p>除了通过特征匹配外，还可进行类比的处理。在处理类比问题时，要描述的是类比变换的规则，通过变换的规则进行匹配。
+例如给出一种 A 转换为 B 的描述，求解从 C 到 D 的转换是不是用的转换规则和 A 到 B 类似。</p>
+<h2>如何求解问题和知识理解</h2>
+<p>在面临新的问题时，需要作如下考虑：
+- 涉及什么类型的知识？
+- 知识应该如何表达？
+- 需要多少知识？
+- 究竟需要什么知识？</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>

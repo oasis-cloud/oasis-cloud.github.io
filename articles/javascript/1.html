@@ -7,6 +7,7 @@
         <link rel="stylesheet" href="../../assets/fonts.css">
         <link rel="stylesheet" href="../../assets/graphite.css">
         <link rel="stylesheet" href="../../assets/pygments.css">
+        <script src="../../assets/image-zoom.js" defer></script>
         
         
     </head>
@@ -179,13 +180,13 @@
 <span class="c1">// 相同的 symbol</span>
 <span class="nx">alert</span><span class="p">(</span><span class="w"> </span><span class="nx">id</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">idAgain</span><span class="w"> </span><span class="p">);</span><span class="w"> </span><span class="c1">// true</span>
 </code></pre></div></p>
-<p>JS 内部有很多“系统”层的 symbol，通过它们可以微调对象的各个方面：</p>
-<p><code>js
-Symbol.hasInstance
-Symbol.isConcatSpreadable
-Symbol.iterator
-Symbol.toPrimitive
-...</code></p>
+<p>JS 内部有很多&rdquo;系统&rdquo;层的 symbol，通过它们可以微调对象的各个方面：</p>
+<div class="highlight"><pre><span></span><code><span class="nb">Symbol</span><span class="p">.</span><span class="nx">hasInstance</span>
+<span class="nb">Symbol</span><span class="p">.</span><span class="nx">isConcatSpreadable</span>
+<span class="nb">Symbol</span><span class="p">.</span><span class="nx">iterator</span>
+<span class="nb">Symbol</span><span class="p">.</span><span class="nx">toPrimitive</span>
+<span class="p">...</span>
+</code></pre></div>
 <p>Object.keys/values/entries 会忽略 symbol 属性</p>
 <h4>类数组</h4>
 <p>类数组是有索引和 length 属性的对象。类数组没有数组的一些方法，比如 pop、push。可以通过 Array.from 将其转为数组。</p>

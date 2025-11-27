@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>MCP 协议实践：鱼缸盐度计算</title>
+        <link rel="stylesheet" href="../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../assets/pygments.css">
+        <script src="../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-artificial-intelligence-mcp-4 node-articles-artificial-intelligence-mcp node-articles-artificial-intelligence node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>MCP 协议实践：鱼缸盐度计算</h1>
+                
+                
+                    <p class="author">作者：oasis</p>
+                
+                <hr>
+            </header>
+            <h2>开发环境准备</h2>
+<p>创建 weather 目录，通过 npm 进行项目初始化：</p>
+<div class="highlight"><pre><span></span><code>mkdir<span class="w"> </span>memorandum
+<span class="nb">cd</span><span class="w"> </span>memorandum
+
+npm<span class="w"> </span>init<span class="w"> </span>-y
+
+<span class="c1"># 安装依赖</span>
+npm<span class="w"> </span>install<span class="w"> </span>@modelcontextprotocol/sdk<span class="w"> </span>zod@3
+npm<span class="w"> </span>install<span class="w"> </span>-D<span class="w"> </span>@types/node<span class="w"> </span>typescript
+</code></pre></div>
+<p>修改 package.json 中的 scripts 属性：</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;scripts&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;build&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;tsc &amp;&amp; chmod +x build/index.js&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;inspect&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;npx @modelcontextprotocol/inspector node build/index.js&quot;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>inspect 命令调用 MCP 官方提供的调试工具，方便在开始的时候对 MCP Server 提供的能力进行测试。下面是 inspector 的界面：</p>
+<p><img alt="inspect" src="/images/ai/mcp-1.png" /></p>
+<p>在 src 下创建 index.ts 文件，然后引入相关的代码：</p>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">McpServer</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;@modelcontextprotocol/sdk/server/mcp.js&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">StdioServerTransport</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;@modelcontextprotocol/sdk/server/stdio.js&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">z</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;zod&quot;</span><span class="p">;</span>
+</code></pre></div>
+<p>这里使用 stdio 进行 MCP Client 和 MCP Server 之间的交互。所以 import 了 <code>StdioServerTransport</code>。</p>
+<p>由于我们要实现的是 Tool，所以需要对 Tool 进行注册：</p>
+<p><div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">server</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">McpServer</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;weather&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">version</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;1.0.0&quot;</span><span class="p">,</span>
+<span class="p">});</span>
+
+<span class="nx">server</span><span class="p">.</span><span class="nx">registerTool</span><span class="p">(</span>
+<span class="w">  </span><span class="s2">&quot;get_weather&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">title</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Get weather for a city&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">description</span><span class="o">:</span>
+<span class="w">      </span><span class="s2">&quot;Get current weather information for a city (supports cities worldwide including Beijing, Shanghai, etc.)&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">inputSchema</span><span class="o">:</span><span class="w"> </span><span class="kt">z.object</span><span class="p">({</span>
+<span class="w">      </span><span class="nx">city</span><span class="o">:</span><span class="w"> </span><span class="kt">z</span>
+<span class="w">        </span><span class="p">.</span><span class="kt">string</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="nx">describe</span><span class="p">(</span>
+<span class="w">          </span><span class="s2">&quot;The city name to get weather for (e.g., &#39;Beijing&#39;, &#39;Shanghai&#39;, &#39;New York&#39;)&quot;</span>
+<span class="w">        </span><span class="p">),</span>
+<span class="w">    </span><span class="p">}),</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">input</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">content</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">          </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;晴天☀️&quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">input</span><span class="p">.</span><span class="nx">city</span><span class="p">,</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">      </span><span class="p">],</span>
+<span class="w">      </span><span class="nx">structuredContent</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">content</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">          </span><span class="p">{</span>
+<span class="w">            </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;晴天☀️&quot;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">input</span><span class="p">.</span><span class="nx">city</span><span class="p">,</span>
+<span class="w">          </span><span class="p">},</span>
+<span class="w">        </span><span class="p">],</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">};</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">);</span>
+</code></pre></div>
+第一次写 Demo，问题容易出现在 <code>structuredContent</code> 上。当工具定义了 outputSchema，此字段必须在结果中存在，并包含一个符合模式的 JSON 对象。</p>
+<p>执行 <code>pnpm build</code> 后，将此服务配置到 Cursor 中：</p>
+<p><div class="highlight"><pre><span></span><code><span class="nt">&quot;weather&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;node&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;demo/wather-mcp/build/index.js&quot;</span><span class="p">]</span>
+<span class="w">    </span><span class="p">}</span>
+</code></pre></div>
+args 是命令的参数数组，由于通过 node 执行脚本，所以 args 中的文件路径应该是绝对路径。</p>
+<p>现在根据 MCP 网站写的 Demo 已经可以正常运行了。接下来将在此基础上进行修改。</p>
+<h2>修改 index.ts</h2>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">McpServer</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;@modelcontextprotocol/sdk/server/mcp.js&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">StdioServerTransport</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;@modelcontextprotocol/sdk/server/stdio.js&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">z</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;zod&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">getSalt</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;./utils.js&quot;</span><span class="p">;</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">server</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">McpServer</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;fish-tank-calculator&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">version</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;1.0.0&quot;</span><span class="p">,</span>
+<span class="p">});</span>
+
+<span class="nx">server</span><span class="p">.</span><span class="nx">registerTool</span><span class="p">(</span>
+<span class="w">  </span><span class="s2">&quot;get_salt&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">title</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Get salt for a fish tank&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">description</span><span class="o">:</span>
+<span class="w">      </span><span class="s2">&quot;Get salt for a fish tank&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">inputSchema</span><span class="o">:</span><span class="w"> </span><span class="kt">z.object</span><span class="p">({</span>
+<span class="w">      </span><span class="nx">length</span><span class="o">:</span><span class="w"> </span><span class="kt">z.number</span><span class="p">().</span><span class="nx">describe</span><span class="p">(</span><span class="s2">&quot;The length of the fish tank, cm&quot;</span><span class="p">),</span>
+<span class="w">      </span><span class="nx">width</span><span class="o">:</span><span class="w"> </span><span class="kt">z</span>
+<span class="w">        </span><span class="p">.</span><span class="kt">number</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="nx">describe</span><span class="p">(</span>
+<span class="w">          </span><span class="s2">&quot;The width of the fish tank, cm&quot;</span>
+<span class="w">        </span><span class="p">),</span>
+<span class="w">      </span><span class="nx">height</span><span class="o">:</span><span class="w"> </span><span class="kt">z</span>
+<span class="w">        </span><span class="p">.</span><span class="kt">number</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="nx">describe</span><span class="p">(</span>
+<span class="w">          </span><span class="s2">&quot;The height of the fish tank, cm&quot;</span>
+<span class="w">        </span><span class="p">),</span>
+<span class="w">      </span><span class="nx">salinity</span><span class="o">:</span><span class="w"> </span><span class="kt">z</span>
+<span class="w">        </span><span class="p">.</span><span class="kt">number</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="nx">describe</span><span class="p">(</span>
+<span class="w">          </span><span class="s2">&quot;The salinity of the fish tank, in ‰&quot;</span>
+<span class="w">        </span><span class="p">),</span>
+<span class="w">    </span><span class="p">}),</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">input</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">salt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">getSalt</span><span class="p">(</span><span class="nx">input</span><span class="p">.</span><span class="nx">length</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="p">.</span><span class="nx">width</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="p">.</span><span class="nx">height</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="p">.</span><span class="nx">salinity</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="sb">`缸体盛水</span><span class="si">${</span><span class="nx">input</span><span class="p">.</span><span class="nx">length</span><span class="si">}</span><span class="sb">cm × 宽</span><span class="si">${</span><span class="nx">input</span><span class="p">.</span><span class="nx">width</span><span class="si">}</span><span class="sb">cm × 高</span><span class="si">${</span><span class="nx">input</span><span class="p">.</span><span class="nx">height</span><span class="si">}</span><span class="sb">cm = </span><span class="si">${</span><span class="nx">input</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">input</span><span class="p">.</span><span class="nx">width</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">input</span><span class="p">.</span><span class="nx">height</span><span class="si">}</span><span class="sb">L，需要</span><span class="si">${</span><span class="nx">salt</span><span class="si">}</span><span class="sb">g海盐。`</span><span class="p">;</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">content</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">          </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="kt">result</span><span class="p">,</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">      </span><span class="p">],</span>
+<span class="w">      </span><span class="nx">structuredContent</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">content</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">          </span><span class="p">{</span>
+<span class="w">            </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;text&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="kt">result</span><span class="p">,</span>
+<span class="w">          </span><span class="p">},</span>
+<span class="w">        </span><span class="p">],</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">};</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">);</span>
+
+<span class="k">async</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">transport</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">StdioServerTransport</span><span class="p">();</span>
+<span class="w">  </span><span class="k">await</span><span class="w"> </span><span class="nx">server</span><span class="p">.</span><span class="nx">connect</span><span class="p">(</span><span class="nx">transport</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="nx">main</span><span class="p">().</span><span class="k">catch</span><span class="p">((</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="nx">error</span><span class="p">);</span>
+<span class="w">  </span><span class="nx">process</span><span class="p">.</span><span class="nx">exit</span><span class="p">(</span><span class="mf">1</span><span class="p">);</span>
+<span class="p">});</span>
+</code></pre></div>
+<h2>src 目录下新增 utils.ts</h2>
+<div class="highlight"><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">getWaterVolumeInLiters</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">length</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">width</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">height</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">Math</span><span class="p">.</span><span class="nx">floor</span><span class="p">((</span><span class="nx">length</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">width</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">height</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1000</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">export</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">getSalt</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">length</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">width</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">height</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">salinity</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 「容器水量(公升) = 长(cm) × 宽(cm) ×高(cm) ÷ 1000」</span>
+<span class="w">  </span><span class="c1">// 「盐的份量(g) = 盐分浓度(%) × 容器水量(g) ÷ 100」</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">tankVolume</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">getWaterVolumeInLiters</span><span class="p">(</span><span class="nx">length</span><span class="p">,</span><span class="w"> </span><span class="nx">width</span><span class="p">,</span><span class="w"> </span><span class="nx">height</span><span class="p">);</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="nx">salinity</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1000</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="nx">tankVolume</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">1000</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><img alt="结果" src="/images/ai/mcp-1.png" /></p>
+<h2>总结</h2>
+<p>本文介绍了如何使用 MCP（Model Context Protocol）协议开发一个实用的工具服务器。主要内容包括：</p>
+<ol>
+<li>
+<p><strong>开发环境搭建</strong>：通过 npm 初始化项目，安装 <code>@modelcontextprotocol/sdk</code> 和 <code>zod</code> 等必要依赖，配置 TypeScript 编译和 MCP Inspector 调试工具。</p>
+</li>
+<li>
+<p><strong>基础 MCP Server 实现</strong>：使用 <code>StdioServerTransport</code> 作为传输层，通过 <code>registerTool</code> 方法注册工具。重点说明了 <code>structuredContent</code> 字段的重要性，当定义了 <code>outputSchema</code> 时，该字段必须存在并符合模式。</p>
+</li>
+<li>
+<p><strong>鱼缸盐度计算工具开发</strong>：将示例的天气查询工具改造为鱼缸盐度计算工具，实现了：</p>
+</li>
+<li>输入参数：鱼缸的长、宽、高（单位：cm）和盐度（单位：‰）</li>
+<li>计算逻辑：根据容器水量公式和盐分浓度公式计算所需海盐重量</li>
+<li>
+<p>输出结果：返回包含计算结果的中文描述文本</p>
+</li>
+<li>
+<p><strong>配置与使用</strong>：将 MCP Server 配置到 Cursor 编辑器中，通过 JSON 配置文件指定命令和参数，实现与 AI 助手的集成。</p>
+</li>
+</ol>
+<p>通过这个实践案例，展示了 MCP 协议在实际场景中的应用，为开发自定义工具服务器提供了完整的参考示例。</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>

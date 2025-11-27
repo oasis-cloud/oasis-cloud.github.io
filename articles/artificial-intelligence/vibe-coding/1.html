@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Vibe Coding 实践：使用 Cursor 为博客添加图片放大功能</title>
+        <link rel="stylesheet" href="../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../assets/pygments.css">
+        <script src="../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-artificial-intelligence-vibe-coding-1 node-articles-artificial-intelligence-vibe-coding node-articles-artificial-intelligence node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>Vibe Coding 实践：使用 Cursor 为博客添加图片放大功能</h1>
+                
+                
+                    <p class="author">作者：oasis</p>
+                
+                <hr>
+            </header>
+            <h2>什么是 Vibe Coding</h2>
+<p>Vibe coding 是一种新兴的软件开发实践，开发者通过自然语言提示词让 AI 编写代码，而不是完全由自己编写代码。这种实践方式由前 OpenAI 联合创始人、前特斯拉人工智能主管 Andrej Karpathy 提出。</p>
+<p>Vibe coding 的核心在于人机协作的迭代循环：开发者将需求以提示词的形式发送给 AI，AI 生成代码后，开发者进行测试验证，根据测试结果优化提示词，如此循环往复，直到功能满足需求。</p>
+<h2>工具选择</h2>
+<p>本文使用 Cursor 作为 Vibe coding 的工具。Cursor 是一款专为 AI 辅助编程设计的编辑器，能够很好地支持自然语言到代码的转换。接下来，我将通过一个实际案例来演示 Vibe coding 的完整流程。</p>
+<h2>发现问题，明确需求</h2>
+<p>我的博客中插入了一些图片，由于博客详情页面的展示区域较窄，我设置了图片的宽高限制。但在展示流程图等复杂图片时，遇到了问题：图片被压缩得比较小，无法看清细节。</p>
+<p>基于这个痛点，我决定为博客详情页添加图片点击放大功能。接下来通过 Cursor 来实现这个功能。</p>
+<h2>迭代优化提示词</h2>
+<h3>第一轮：基础功能</h3>
+<p>首先，我发送了一个简单的提示词：</p>
+<blockquote>
+<p>博客详情页中插入的图片需要支持鼠标点击放大。</p>
+</blockquote>
+<p><img alt="img" src="/images/ai/vibe-coding-1.png" /></p>
+<p>Cursor 生成了代码后，我选择接受更改并开始测试。第一次测试未通过，图片点击后无法放大。这说明提示词需要更详细一些。</p>
+<h3>第二轮：细化需求</h3>
+<p>我改进了提示词，增加了更多细节：</p>
+<blockquote>
+<p>例如一篇博客有 5 个图片，我只想点击每个图片，放大。</p>
+</blockquote>
+<p><img alt="img" src="/images/ai/vibe-coding-2.png" /></p>
+<p>这次测试通过了，点击图片后放大功能正常工作。但在测试过程中发现，放大后的图片可能会超出浏览器可视范围，影响用户体验。</p>
+<h3>第三轮：完善体验</h3>
+<p>继续优化提示词，增加尺寸限制：</p>
+<blockquote>
+<p>限制一下放大后的宽高，不要超过浏览器可视范围</p>
+</blockquote>
+<p><img alt="img" src="/images/ai/vibe-coding-3.png" /></p>
+<p>经过这次优化，图片放大功能已经能够正常工作，并且不会超出可视范围。</p>
+<h2>自动化测试</h2>
+<p>除了人工测试外，还可以通过 Chrome MCP（Model Context Protocol）进行自动化测试。将 Chrome MCP 添加到 Cursor 的 Tool &amp; MCP 配置中后，可以输入以下提示词：</p>
+<blockquote>
+<p>本地连接：http://localhost:8080/index.html。使用 chrome mcp 测试刚刚增加的图片放大功能。</p>
+</blockquote>
+<p><img alt="img" src="/images/ai/vibe-coding-4.png" /></p>
+<p>Cursor 会打开一个新的 Chrome 窗口，自动执行测试操作，并最终给出测试结果。这种方式可以更高效地验证功能的正确性。</p>
+<h2>部署新特性</h2>
+<p>功能开发完成后，将新添加的文件提交到 GitHub，等待 GitHub Actions 自动部署即可。</p>
+<h2>总结</h2>
+<p>通过这个简单的案例，我们可以看到 Vibe coding 的核心流程：</p>
+<ol>
+<li><strong>明确问题</strong>：识别实际需求和使用场景</li>
+<li><strong>编写提示词</strong>：用自然语言描述功能需求</li>
+<li><strong>测试验证</strong>：对 AI 生成的代码进行测试</li>
+<li><strong>迭代优化</strong>：根据测试结果不断改进提示词</li>
+<li><strong>自动化测试</strong>：利用工具进行更全面的验证</li>
+</ol>
+<p>Vibe coding 并不是完全依赖 AI，而是通过人机协作的方式，让开发者专注于需求分析和问题解决，而将具体的代码实现交给 AI。这种方式特别适合快速原型开发、功能迭代和解决常见问题。随着 AI 能力的不断提升，Vibe coding 将成为软件开发中越来越重要的实践方式。</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>

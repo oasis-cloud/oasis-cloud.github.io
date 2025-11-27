@@ -7,6 +7,7 @@
         <link rel="stylesheet" href="../../assets/fonts.css">
         <link rel="stylesheet" href="../../assets/graphite.css">
         <link rel="stylesheet" href="../../assets/pygments.css">
+        <script src="../../assets/image-zoom.js" defer></script>
         
         
     </head>
@@ -76,14 +77,14 @@
 <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">Down</span><span class="p">)</span><span class="w"> </span><span class="c1">// &#39;DOWN&#39;</span>
 </code></pre></div>
 <h2>字符串枚举 TypeScript 实现</h2>
-<div class="highlight"><pre><span></span><code>enum E {
-    Up = &#39;UP&#39;,
-    Down = &#39;DOWN&#39;,
-    Left = &#39;LEFT&#39;,
-    Right = &#39;RIGHT&#39;
-}
-console.log(E.Up) // &#39;UP&#39;
-console.log(E.Down) // &#39;DOWN&#39;
+<div class="highlight"><pre><span></span><code><span class="kd">enum</span><span class="w"> </span><span class="nx">E</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Up</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;UP&#39;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">Down</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;DOWN&#39;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">Left</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;LEFT&#39;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">Right</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;RIGHT&#39;</span>
+<span class="p">}</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">E</span><span class="p">.</span><span class="nx">Up</span><span class="p">)</span><span class="w"> </span><span class="c1">// &#39;UP&#39;</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">E</span><span class="p">.</span><span class="nx">Down</span><span class="p">)</span><span class="w"> </span><span class="c1">// &#39;DOWN&#39;</span>
 </code></pre></div>
 <h2>枚举重新赋值对比</h2>
 <div class="highlight"><pre><span></span><code><span class="cm">/*</span>

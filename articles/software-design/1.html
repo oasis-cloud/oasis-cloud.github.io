@@ -7,6 +7,7 @@
         <link rel="stylesheet" href="../../assets/fonts.css">
         <link rel="stylesheet" href="../../assets/graphite.css">
         <link rel="stylesheet" href="../../assets/pygments.css">
+        <script src="../../assets/image-zoom.js" defer></script>
         
         
     </head>
@@ -54,15 +55,19 @@
 </code></pre></div></p>
 <p>概念解析：</p>
 <ol>
-<li>process 是什么？</li>
+<li>process 是什么？<ul>
 <li>node.js 中 process 对象提供了当前 node.js 进程的信息，并对其进行控制。argv 是一个数组，包含启动 node.js 进程时的命令行参数</li>
 <li>node test.js -a describe1</li>
 <li>process.argv[0] 是 bin 文件的路径 /usr/local/bin/node</li>
 <li>process.argv[1] 是 执行的脚本文件 test.js</li>
 <li>process.argv[2] 是 参数 -a</li>
 <li>process.argv[2] 是 参数 describe1</li>
-<li>node.js 可以使用 import 吗？</li>
+</ul>
+</li>
+<li>node.js 可以使用 import 吗？<ul>
 <li>node.js 默认使用 require 方式，如果采用 import 方式的话，需要将 package.json 文件中的 type 设置为 module</li>
+</ul>
+</li>
 </ol>
 <p>代码 1 并不会正常工作，而是会报错：Callback muse be a function。所以需要给它添加一个 function，对数据进行处理。</p>
 <p>在 Node.js 中有这样一个观念需要明确：错误先行。至于为什么，我们看如下三个论点。</p>
@@ -86,11 +91,13 @@
 <p>在很多 node.js 项目中，我们经常看到 glob 模块。glob 是 &ldquo;global&rdquo; 的缩写。glob 是一个古老的 Unix 术语，用于按名称匹配一组文件。所以，我们在程序设计中很多概念是相同的，或者很多现有思想是可以借鉴的。</p>
 <p>概念解析：</p>
 <ol>
-<li>npm glob</li>
+<li>npm glob<ul>
 <li>https://www.npmjs.com/package/glob</li>
 <li>https://man7.org/linux/man-pages/man3/fnmatch.3.html</li>
 <li>https://www.gnu.org/software/bash/manual/html_node/Pattern-Matching.html</li>
 <li>https://www.linuxjournal.com/content/pattern-matching-bash</li>
+</ul>
+</li>
 </ol>
         </article>
         
