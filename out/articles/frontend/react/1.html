@@ -523,10 +523,29 @@ export default App
 <span class="w">  </span><span class="nx">workInProgressRoot</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
 <span class="w">  </span><span class="nx">workInProgress</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
 
+<span class="w">   </span><span class="c1">// Flush synchronously.</span>
+<span class="w">   </span><span class="nx">flushMutationEffects</span><span class="p">();</span>
+<span class="w">   </span><span class="nx">flushLayoutEffects</span><span class="p">();</span>
+<span class="w">   </span><span class="c1">// Skip flushAfterMutationEffects</span>
+<span class="w">   </span><span class="nx">flushSpawnedWork</span><span class="p">();</span>
+
 <span class="p">}</span>
 </code></pre></div>
 <h3>DOM 节点插入</h3>
-<p>处理 DOM 节点的插入：</p>
+<p><code>flushMutationEffects()</code> 中调用下面的方法处理 DOM 节点的插入：
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">flushMutationEffects</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="nx">commitMutationEffects</span><span class="p">(</span><span class="nx">root</span><span class="p">,</span><span class="w"> </span><span class="nx">finishedWork</span><span class="p">,</span><span class="w"> </span><span class="nx">lanes</span><span class="p">);</span>
+<span class="w">   </span><span class="c1">// --commitMutationEffectsOnFiber(finishedWork, root, committedLanes);</span>
+<span class="w">   </span><span class="c1">// ----recursivelyTraverseMutationEffects(root, finishedWork, lanes);</span>
+<span class="w">   </span><span class="c1">// ------commitMutationEffectsOnFiber(child, root, lanes);</span>
+<span class="w">   </span><span class="c1">// --------commitReconciliationEffects(finishedWork);</span>
+<span class="w">   </span><span class="c1">// ----------commitHostPlacement(finishedWork);</span>
+<span class="w">   </span><span class="c1">// ------------commitPlacement(finishedWork);</span>
+
+<span class="w">   </span><span class="nx">root</span><span class="p">.</span><span class="nx">current</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">finishedWork</span><span class="p">;</span>
+<span class="w">   </span><span class="nx">pendingEffectsStatus</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">PENDING_LAYOUT_PHASE</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></p>
 <div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">commitPlacement</span><span class="p">(</span><span class="nx">finishedWork</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="c1">// 1. 向上查找宿主父节点</span>
 <span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="nx">parentFiber</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">finishedWork</span><span class="p">.</span><span class="k">return</span><span class="p">;</span>
@@ -585,7 +604,8 @@ export default App
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
-<p>页面渲染完毕。</p>
+<p>页面渲染完毕，然后在 <code>flushMutationEffects()</code> 将 root.current 指向 FiberRoot。如下图中粉色区域进行了标注。</p>
+<p><img alt="双缓存机制" src="/images/react/React-1-9.png" /></p>
 <h2>总结</h2>
 <p>React 的初始化流程可以概括为以下几个关键步骤：</p>
 <ol>
@@ -605,6 +625,8 @@ export default App
 </ul>
 </li>
 </ol>
+<h2>问题</h2>
+<p>每次在 <code>prepareFreshStack</code> 中都会创建一个新的 WIP 树吗？</p>
         </article>
         
         <script src="https://giscus.app/client.js"
