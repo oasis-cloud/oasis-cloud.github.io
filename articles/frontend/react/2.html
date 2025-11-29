@@ -41,67 +41,65 @@
                 
                 <hr>
             </header>
-            <p>本文通过下述 Demo 分析 React v19.2.0 的状态更新流程。</p>
-<div class="highlight"><pre><span></span><code>import { useState } from &#39;react&#39;
-import { createRoot } from &#39;react-dom/client&#39;
+            <p>本文将基于下述 Demo 来分析 React v19.2.0 的状态更新流程。</p>
+<div class="highlight"><pre><span></span><code>import { useState } from &quot;react&quot;;
+import { createRoot } from &quot;react-dom/client&quot;;
 
 function App() {
-    // 断点 1: useState 初始化
+  // 断点 1: useState 初始化
+  debugger;
+  const [count, setCount] = useState(0);
+
+  // 断点 2: 组件渲染
+  console.log(&quot;渲染次数:&quot;, count);
+
+  const handleClick = () =&gt; {
+    // 断点 3: setState 调用
     debugger;
-    const [count, setCount] = useState(0);
+    setCount(count + 1);
+    // 断点 4: setState 调用后（注意：此时 count 还未更新）
+    debugger;
+  };
 
-    // 断点 2: 组件渲染
-    console.log(&#39;渲染次数:&#39;, count);
-
-    const handleClick = () =&gt; {
-        // 断点 3: setState 调用
-        debugger;
-        setCount(count + 1);
-        // 断点 4: setState 调用后（注意：此时 count 还未更新）
-        debugger;
-    };
-
-    return (
-        &lt;div&gt;
-            &lt;h1&gt;状态更新流程&lt;/h1&gt;
-            &lt;p onClick={handleClick}&gt;观察 setState 如何触发更新流程, {count}&lt;/p&gt;
-        &lt;/div&gt;
-    );
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;状态更新流程&lt;/h1&gt;
+      &lt;p onClick={handleClick}&gt;观察 setState 如何触发更新流程, {count}&lt;/p&gt;
+    &lt;/div&gt;
+  );
 }
 
 debugger;
-const root = createRoot(document.getElementById(&#39;root&#39;));
+const root = createRoot(document.getElementById(&quot;root&quot;));
 
 debugger;
 root.render(&lt;App /&gt;);
 </code></pre></div>
 <h2>useState(0) 的执行过程</h2>
-<p>在创建 App Fiber 的时候，会执行 <code>renderWithHooks</code>，之后调用 App 函数，触发 useState 的执行</p>
-<p><div class="highlight"><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">useState</span><span class="o">&lt;</span><span class="nx">S</span><span class="o">&gt;</span><span class="p">(</span>
-<span class="w">  </span><span class="nx">initialState</span><span class="o">:</span><span class="w"> </span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">S</span><span class="p">)</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nx">S</span><span class="p">,</span>
+<p>当创建 App Fiber 时，React 会先执行 <code>renderWithHooks</code>，然后调用 App 函数，从而触发 <code>useState</code> 的执行。</p>
+<div class="highlight"><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">useState</span><span class="o">&lt;</span><span class="nx">S</span><span class="o">&gt;</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">initialState</span><span class="o">:</span><span class="w"> </span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">S</span><span class="p">)</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nx">S</span>
 <span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="nx">S</span><span class="p">,</span><span class="w"> </span><span class="nx">Dispatch</span><span class="o">&lt;</span><span class="nx">BasicStateAction</span><span class="o">&lt;</span><span class="nx">S</span><span class="o">&gt;&gt;</span><span class="p">]</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">dispatcher</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">resolveDispatcher</span><span class="p">();</span>
-<span class="w">    </span><span class="c1">// initialState = 0</span>
+<span class="w">  </span><span class="c1">// initialState = 0</span>
 <span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">dispatcher</span><span class="p">.</span><span class="nx">useState</span><span class="p">(</span><span class="nx">initialState</span><span class="p">);</span>
 <span class="p">}</span>
 </code></pre></div>
-resolveDispatcher 会返回 packages/shared/ReactSharedInternals.js 中的 React.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE;</p>
-<p>__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE 实际上是 ReactSharedInternals。</p>
+<p><code>resolveDispatcher</code> 会返回 <code>packages/shared/ReactSharedInternals.js</code> 中的 <code>React.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE</code>，它实际上就是 <code>ReactSharedInternals</code>。</p>
 <div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">ReactSharedInternals</span><span class="o">:</span><span class="w"> </span><span class="kt">SharedStateClient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">({</span>
-<span class="w">                                                     </span><span class="nx">H</span><span class="o">:</span><span class="w"> </span><span class="kt">null</span><span class="p">,</span>
-<span class="w">                                                     </span><span class="nx">A</span><span class="o">:</span><span class="w"> </span><span class="kt">null</span><span class="p">,</span>
-<span class="w">                                                     </span><span class="nx">T</span><span class="o">:</span><span class="w"> </span><span class="kt">null</span><span class="p">,</span>
-<span class="w">                                                     </span><span class="nx">S</span><span class="o">:</span><span class="w"> </span><span class="kt">null</span><span class="p">,</span>
-<span class="w">                                                 </span><span class="p">}</span><span class="o">:</span><span class="w"> </span><span class="nx">any</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">H</span><span class="o">:</span><span class="w"> </span><span class="kt">null</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">A</span><span class="o">:</span><span class="w"> </span><span class="kt">null</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">T</span><span class="o">:</span><span class="w"> </span><span class="kt">null</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">S</span><span class="o">:</span><span class="w"> </span><span class="kt">null</span><span class="p">,</span>
+<span class="p">}</span><span class="o">:</span><span class="w"> </span><span class="nx">any</span><span class="p">);</span>
 </code></pre></div>
-<p>ReactSharedInternals.H 在 renderWithHooks 中被赋值。</p>
+<p><code>ReactSharedInternals.H</code> 会在 <code>renderWithHooks</code> 中被赋值：</p>
 <div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">renderWithHooks</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">ReactSharedInternals</span><span class="p">.</span><span class="nx">H</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">HooksDispatcherOnMountInDEV</span>
+<span class="w">  </span><span class="nx">ReactSharedInternals</span><span class="p">.</span><span class="nx">H</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">HooksDispatcherOnMountInDEV</span><span class="p">;</span>
 <span class="p">}</span>
 </code></pre></div>
-<p>所以 resolveDispathcer 返回了一个包含 useState 方法的对象。</p>
-<p>useState 方法中调用 mountState(initialState) 设置 workInProgressHook。并将 workInProgressFiler 和 queue 绑定到 dispatchSetState。
-然后返回状态值和绑定后的 dispatch。</p>
+<p>因此，<code>resolveDispatcher</code> 返回的是一个包含 <code>useState</code> 方法的对象。</p>
+<p>接下来，<code>useState</code> 方法会调用 <code>mountState(initialState)</code> 来设置 <code>workInProgressHook</code>，并将 <code>workInProgressFiber</code> 和 <code>queue</code> 绑定到 <code>dispatchSetState</code>，最后返回状态值和绑定后的 dispatch。</p>
 <div class="highlight"><pre><span></span><code><span class="c1">// The work-in-progress fiber. I&#39;ve named it differently to distinguish it from</span>
 <span class="c1">// the work-in-progress hook.</span>
 <span class="kd">let</span><span class="w"> </span><span class="nx">currentlyRenderingFiber</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">null</span><span class="o">:</span><span class="w"> </span><span class="kt">any</span><span class="p">);</span>
@@ -170,10 +168,10 @@ resolveDispatcher 会返回 packages/shared/ReactSharedInternals.js 中的 React
 <span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">workInProgressHook</span><span class="p">;</span>
 <span class="p">}</span>
 </code></pre></div>
-<p>workInProgressHook 的内存结构如下：</p>
+<p><code>workInProgressHook</code> 的内存结构如下：</p>
 <p><img alt="workInProgressHook" src="/images/react/React-2-1.png" /></p>
 <h2>setCount(count + 1) 的执行过程</h2>
-<p>当点击 p 元素，触发 dispatchSetState 方法（它已经绑定了正确的 FiberNode 和 queue）。对于本文中的 demo ，dispatchSetState 执行的时候，fiber 是 App 的 FiberNode。</p>
+<p>当点击 p 元素时，会触发 <code>dispatchSetState</code> 方法（该方法已经绑定了正确的 FiberNode 和 queue）。在本文的 demo 中，<code>dispatchSetState</code> 执行时，fiber 指向的是 App 的 FiberNode。</p>
 <div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">dispatchSetStateInternal</span><span class="o">&lt;</span><span class="nx">S</span><span class="p">,</span><span class="w"> </span><span class="nx">A</span><span class="o">&gt;</span><span class="p">(</span>
 <span class="w">    </span><span class="nx">fiber</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="p">,</span>
 <span class="w">    </span><span class="nx">queue</span><span class="o">:</span><span class="w"> </span><span class="kt">UpdateQueue</span><span class="o">&lt;</span><span class="nx">S</span><span class="p">,</span><span class="w"> </span><span class="nx">A</span><span class="o">&gt;</span><span class="p">,</span>
@@ -197,14 +195,223 @@ resolveDispatcher 会返回 packages/shared/ReactSharedInternals.js 中的 React
 <span class="w">    </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
-<p>enqueueConcurrentHookUpdate(fiber, queue, update, lane) 找到需要更新的 Root。然后通过 scheduleUpdateOnFiber 启动 Root 的调度。</p>
-<p>此时 Root 的 pendingLanes 为 2。</p>
-<p>attemptEarlyBailoutIfNoScheduledUpdate()
-bailoutOnAlreadyFinishedWork()
-updateFunctionComponent()
-finishRenderingHooks()
-useFiber()
-createWorkInProgress()</p>
+<p><code>enqueueConcurrentHookUpdate(fiber, queue, update, lane)</code> 会找到需要更新的 Root。</p>
+<p>然后通过 <code>scheduleUpdateOnFiber</code> 启动 Root（FiberRootNode）的调度。需要注意的是，此时的 <code>scheduleUpdateOnFiber</code> 不会调用 <code>prepareFreshStack(root, NoLanes)</code> 来创建新的 workInProgress，而是直接使用传递的参数 Root（FiberRootNode）。</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// 通过 markRootUpdated 设置 pendingLanes</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">markRootUpdated</span><span class="p">(</span><span class="nx">root</span><span class="o">:</span><span class="w"> </span><span class="kt">FiberRoot</span><span class="p">,</span><span class="w"> </span><span class="nx">updateLane</span><span class="o">:</span><span class="w"> </span><span class="kt">Lane</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">root</span><span class="p">.</span><span class="nx">pendingLanes</span><span class="w"> </span><span class="o">|=</span><span class="w"> </span><span class="nx">updateLane</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>此时 Root 的 <code>pendingLanes</code> 为 2。</p>
+<p>与初次构造不同，状态更新不会直接调用 <code>performSyncWorkOnRoot</code>，而是通过调度中心（scheduler）来处理。不过，其调用链路 <code>performSyncWorkOnRoot</code> → <code>renderRootSync</code> → <code>workLoopSync</code> 与初次构造中的一致。</p>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">renderRootSync</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">root</span><span class="o">:</span><span class="w"> </span><span class="kt">FiberRoot</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">lanes</span><span class="o">:</span><span class="w"> </span><span class="kt">Lanes</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">shouldYieldForPrerendering</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span>
+<span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">RootExitStatus</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// If the root or lanes have changed, throw out the existing stack</span>
+<span class="w">  </span><span class="c1">// and prepare a fresh one. Otherwise we&#39;ll continue where we left off.</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">workInProgressRoot</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="nx">root</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">workInProgressRootRenderLanes</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="nx">lanes</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">prepareFreshStack</span><span class="p">(</span><span class="nx">root</span><span class="p">,</span><span class="w"> </span><span class="nx">lanes</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="nx">outer</span><span class="o">:</span><span class="w"> </span><span class="kt">do</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">workLoopSync</span><span class="p">();</span>
+<span class="w">      </span><span class="nx">exitStatus</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">workInProgressRootExitStatus</span><span class="p">;</span>
+<span class="w">      </span><span class="k">break</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">thrownValue</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">handleThrow</span><span class="p">(</span><span class="nx">root</span><span class="p">,</span><span class="w"> </span><span class="nx">thrownValue</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="kc">true</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>在进入 <code>workLoopSync</code> 前，会调用 <code>prepareFreshStack</code> 刷新栈帧。在 <code>prepareFreshStack</code> 中，会使用 <code>root.current</code>（HostFiberRoot）来创建 workInProgress。</p>
+<p>此时的内存结构如下：</p>
+<p><img alt="xxx" src="/images/React/react-2-2.png" /></p>
+<p>之后会进入 <code>beginWork</code>。在 <code>beginWork</code> 中，会检测 Fiber 是否有待处理的更新。如果 Fiber 有子树，还会检查子树是否有更新；如果子树存在更新，则返回子树的 FiberNode。</p>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">beginWork</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">current</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">workInProgress</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">renderLanes</span><span class="o">:</span><span class="w"> </span><span class="kt">Lanes</span>
+<span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">Fiber</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">current</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">oldProps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">current</span><span class="p">.</span><span class="nx">memoizedProps</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">newProps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">workInProgress</span><span class="p">.</span><span class="nx">pendingProps</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="c1">// 既没有 props 也没有 legacy context 变化。检查是否存在待处理的</span>
+<span class="w">  </span><span class="c1">// update 或 context 更新.</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">hasScheduledUpdateOrContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">checkScheduledUpdateOrContext</span><span class="p">(</span>
+<span class="w">    </span><span class="nx">current</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">renderLanes</span>
+<span class="w">  </span><span class="p">);</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="o">!</span><span class="nx">hasScheduledUpdateOrContext</span><span class="w"> </span><span class="o">&amp;&amp;</span>
+<span class="w">    </span><span class="c1">// 如果这是错误或 suspense boundary 的第二遍处理，可能</span>
+<span class="w">    </span><span class="c1">// 没有在 `current` 上调度工作，因此我们检查此标志。</span>
+<span class="w">    </span><span class="p">(</span><span class="nx">workInProgress</span><span class="p">.</span><span class="nx">flags</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="nx">DidCapture</span><span class="p">)</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">NoFlags</span>
+<span class="w">  </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 没有待处理的更新或上下文。现在提前退出。</span>
+<span class="w">    </span><span class="nx">didReceiveUpdate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">attemptEarlyBailoutIfNoScheduledUpdate</span><span class="p">(</span>
+<span class="w">      </span><span class="nx">current</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">workInProgress</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">renderLanes</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">attemptEarlyBailoutIfNoScheduledUpdate</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">current</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">workInProgress</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">renderLanes</span><span class="o">:</span><span class="w"> </span><span class="kt">Lanes</span>
+<span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 此 fiber 没有任何待处理的工作。提前退出而不进入</span>
+<span class="w">  </span><span class="c1">// begin 阶段。在这个优化路径中仍需要做一些簿记工作，</span>
+<span class="w">  </span><span class="c1">// 主要是将一些东西推入栈中。</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">bailoutOnAlreadyFinishedWork</span><span class="p">(</span><span class="nx">current</span><span class="p">,</span><span class="w"> </span><span class="nx">workInProgress</span><span class="p">,</span><span class="w"> </span><span class="nx">renderLanes</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">bailoutOnAlreadyFinishedWork</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">current</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">workInProgress</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">renderLanes</span><span class="o">:</span><span class="w"> </span><span class="kt">Lanes</span>
+<span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">Fiber</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">current</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Reuse previous dependencies</span>
+<span class="w">    </span><span class="nx">workInProgress</span><span class="p">.</span><span class="nx">dependencies</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">current</span><span class="p">.</span><span class="nx">dependencies</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="c1">// 检查子节点是否有任何待处理的工作。</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">includesSomeLane</span><span class="p">(</span><span class="nx">renderLanes</span><span class="p">,</span><span class="w"> </span><span class="nx">workInProgress</span><span class="p">.</span><span class="nx">childLanes</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 子节点也没有任何工作。我们可以跳过它们。</span>
+<span class="w">    </span><span class="c1">// TODO: 一旦我们重新添加 resuming，我们应该检查子节点是否是</span>
+<span class="w">    </span><span class="c1">// work-in-progress 集合。如果是，我们需要转移它们的 effects。</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">current</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="c1">// 在提前退出之前，检查子节点中是否有任何 context 变化。</span>
+<span class="w">      </span><span class="nx">lazilyPropagateParentContextChanges</span><span class="p">(</span><span class="nx">current</span><span class="p">,</span><span class="w"> </span><span class="nx">workInProgress</span><span class="p">,</span><span class="w"> </span><span class="nx">renderLanes</span><span class="p">);</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">includesSomeLane</span><span class="p">(</span><span class="nx">renderLanes</span><span class="p">,</span><span class="w"> </span><span class="nx">workInProgress</span><span class="p">.</span><span class="nx">childLanes</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="c1">// 此 fiber 没有工作，但其子树有。克隆子</span>
+<span class="w">  </span><span class="c1">// fibers 并继续。</span>
+<span class="w">  </span><span class="nx">cloneChildFibers</span><span class="p">(</span><span class="nx">current</span><span class="p">,</span><span class="w"> </span><span class="nx">workInProgress</span><span class="p">);</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">workInProgress</span><span class="p">.</span><span class="nx">child</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>因为 workInProgress 上没有可调度的任务，所以 workInProgress 会指向 App FiberNode。</p>
+<p><img alt="App Fiber 的构建" src="/images/React/react-2-3.png" /></p>
+<p>接下来进入 App FiberNode 的处理。此时 <code>current</code> 是 <code>workInProgress.alternate</code>。由于当前节点的 <code>lanes != NoLanes</code>，所以会调用 <code>updateFunctionComponent</code> 函数。</p>
+<p>在 <code>updateFunctionComponent</code> 函数中，调用 App 内的 <code>useState</code> 会获取 <code>memoizedState</code> 经过计算后的最新值 <code>1</code>，之后创建 ReactElement，并调用 <code>reconcileChildren()</code> 生成下级子节点。</p>
+<p><img alt="App 下 ReactElement 的构建" src="/images/React/react-2-4.png" /></p>
+<p>App FiberNode 处理结束后，内存结构如下：</p>
+<p><img alt="div 的构建" src="/images/React/react-2-5.png" /></p>
+<p>下轮循环中，workInProgress 指向 div FiberNode。</p>
+<p>当处理到 p 下的第一个子 FiberNode 时，因为没有变更，所以会提前退出，进入 <code>completeUnitOfWork</code>。由于 <code>FiberNode.memoizedProps === newProps</code>，所以不会标记更新。</p>
+<p>接下来，workInProgress 指向 p 下的第二个子 FiberNode。在 <code>beginWork</code> 中会判断 <code>current.memoizedProps !== workInProgress.pendingProps</code>。由于 <code>current.memoizedProps</code> 为 0，而 <code>workInProgress.pendingProps</code> 为 1，所以会设置 <code>didReceiveUpdate</code> 为 true，不会提前退出。</p>
+<p>后面没有可以处理的子节点，所以进入 <code>completeWork</code> 阶段。由于 <code>FiberNode.memoizedProps !== newProps</code>，会通过 <code>markUpdate(workInProgress)</code> 标记更新（将 <code>workInProgress.flags</code> 设置为 Update）。</p>
+<p>注意：此时的 workInProgress 为 p 下的第二个子 FiberNode。</p>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">markUpdate</span><span class="p">(</span><span class="nx">workInProgress</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">workInProgress</span><span class="p">.</span><span class="nx">flags</span><span class="w"> </span><span class="o">|=</span><span class="w"> </span><span class="nx">Update</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>回溯到 p 的 FiberNode，由于 <code>FiberNode.memoizedProps !== newProps</code>，会通过 <code>markUpdate(workInProgress)</code> 标记更新（将 <code>workInProgress.flags</code> 设置为 Update）。</p>
+<p>回溯到 div 的 FiberNode，同样因为 <code>FiberNode.memoizedProps !== newProps</code>，会通过 <code>markUpdate(workInProgress)</code> 标记更新。</p>
+<p>回溯到 App 的 FiberNode，会修改 <code>subtreeFlags</code> 和 <code>childLanes</code>，这两个属性的值是根据子节点的对应属性进行位运算得出的。</p>
+<p>回溯到 Root 的 FiberNode，同样会修改 <code>subtreeFlags</code> 和 <code>childLanes</code>，这两个属性的值也是根据子节点的对应属性进行位运算得出的。</p>
+<p>至此，回溯节点过程结束，准备进入渲染阶段。</p>
+<p>渲染阶段的工作由 <code>commitMutationEffectsOnFiber</code> 方法完成：</p>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">commitMutationEffects</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">root</span><span class="o">:</span><span class="w"> </span><span class="kt">FiberRoot</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">finishedWork</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">committedLanes</span><span class="o">:</span><span class="w"> </span><span class="kt">Lanes</span>
+<span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">commitMutationEffectsOnFiber</span><span class="p">(</span><span class="nx">finishedWork</span><span class="p">,</span><span class="w"> </span><span class="nx">root</span><span class="p">,</span><span class="w"> </span><span class="nx">committedLanes</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">commitMutationEffectsOnFiber</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">finishedWork</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">root</span><span class="o">:</span><span class="w"> </span><span class="kt">FiberRoot</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">lanes</span><span class="o">:</span><span class="w"> </span><span class="kt">Lanes</span>
+<span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">prevEffectStart</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">pushComponentEffectStart</span><span class="p">();</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">prevEffectDuration</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">pushComponentEffectDuration</span><span class="p">();</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">prevEffectErrors</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">pushComponentEffectErrors</span><span class="p">();</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">prevEffectDidSpawnUpdate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">pushComponentEffectDidSpawnUpdate</span><span class="p">();</span>
+<span class="w">  </span><span class="c1">// 获取当前 fiber 的 alternate（用于对比）</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">current</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">finishedWork</span><span class="p">.</span><span class="nx">alternate</span><span class="p">;</span>
+<span class="w">  </span><span class="c1">// 获取 fiber 的 flags（标记需要执行的副作用）</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">flags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">finishedWork</span><span class="p">.</span><span class="nx">flags</span><span class="p">;</span>
+
+<span class="w">  </span><span class="k">switch</span><span class="w"> </span><span class="p">(</span><span class="nx">finishedWork</span><span class="p">.</span><span class="nx">tag</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="nx">FunctionComponent</span><span class="o">:</span>
+<span class="w">    </span><span class="kt">case</span><span class="w"> </span><span class="nx">ForwardRef</span><span class="o">:</span>
+<span class="w">    </span><span class="kt">case</span><span class="w"> </span><span class="nx">MemoComponent</span><span class="o">:</span>
+<span class="w">    </span><span class="kt">case</span><span class="w"> </span><span class="nx">SimpleMemoComponent</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">recursivelyTraverseMutationEffects</span><span class="p">(</span><span class="nx">root</span><span class="p">,</span><span class="w"> </span><span class="nx">finishedWork</span><span class="p">,</span><span class="w"> </span><span class="nx">lanes</span><span class="p">);</span>
+<span class="w">      </span><span class="nx">commitReconciliationEffects</span><span class="p">(</span><span class="nx">finishedWork</span><span class="p">,</span><span class="w"> </span><span class="nx">lanes</span><span class="p">);</span>
+
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">flags</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="nx">Update</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">commitHookEffectListUnmount</span><span class="p">(</span>
+<span class="w">          </span><span class="nx">HookInsertion</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nx">HookHasEffect</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">finishedWork</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">finishedWork</span><span class="p">.</span><span class="k">return</span>
+<span class="w">        </span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// TODO: Use a commitHookInsertionUnmountEffects wrapper to record timings.</span>
+<span class="w">        </span><span class="nx">commitHookEffectListMount</span><span class="p">(</span><span class="nx">HookInsertion</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nx">HookHasEffect</span><span class="p">,</span><span class="w"> </span><span class="nx">finishedWork</span><span class="p">);</span>
+<span class="w">        </span><span class="nx">commitHookLayoutUnmountEffects</span><span class="p">(</span>
+<span class="w">          </span><span class="nx">finishedWork</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">finishedWork</span><span class="p">.</span><span class="k">return</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">HookLayout</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nx">HookHasEffect</span>
+<span class="w">        </span><span class="p">);</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">      </span><span class="k">break</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="nx">HostText</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">recursivelyTraverseMutationEffects</span><span class="p">(</span><span class="nx">root</span><span class="p">,</span><span class="w"> </span><span class="nx">finishedWork</span><span class="p">,</span><span class="w"> </span><span class="nx">lanes</span><span class="p">);</span>
+<span class="w">      </span><span class="nx">commitReconciliationEffects</span><span class="p">(</span><span class="nx">finishedWork</span><span class="p">,</span><span class="w"> </span><span class="nx">lanes</span><span class="p">);</span>
+
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">flags</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="nx">Update</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">supportsMutation</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">finishedWork</span><span class="p">.</span><span class="nx">stateNode</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span>
+<span class="w">              </span><span class="s2">&quot;This should have a text node initialized. This error is likely &quot;</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s2">&quot;caused by a bug in React. Please file an issue.&quot;</span>
+<span class="w">            </span><span class="p">);</span>
+<span class="w">          </span><span class="p">}</span>
+
+<span class="w">          </span><span class="kd">const</span><span class="w"> </span><span class="nx">newText</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">finishedWork</span><span class="p">.</span><span class="nx">memoizedProps</span><span class="p">;</span>
+<span class="w">          </span><span class="c1">// For hydration we reuse the update path but we treat the oldProps</span>
+<span class="w">          </span><span class="c1">// as the newProps. The updatePayload will contain the real change in</span>
+<span class="w">          </span><span class="c1">// this case.</span>
+<span class="w">          </span><span class="kd">const</span><span class="w"> </span><span class="nx">oldText</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="o">=</span>
+<span class="w">            </span><span class="nx">current</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="nx">current.memoizedProps</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kt">newText</span><span class="p">;</span>
+
+<span class="w">          </span><span class="nx">commitHostTextUpdate</span><span class="p">(</span><span class="nx">finishedWork</span><span class="p">,</span><span class="w"> </span><span class="nx">newText</span><span class="p">,</span><span class="w"> </span><span class="nx">oldText</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">      </span><span class="k">break</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nx">popComponentEffectStart</span><span class="p">(</span><span class="nx">prevEffectStart</span><span class="p">);</span>
+<span class="w">  </span><span class="nx">popComponentEffectDuration</span><span class="p">(</span><span class="nx">prevEffectDuration</span><span class="p">);</span>
+<span class="w">  </span><span class="nx">popComponentEffectErrors</span><span class="p">(</span><span class="nx">prevEffectErrors</span><span class="p">);</span>
+<span class="w">  </span><span class="nx">popComponentEffectDidSpawnUpdate</span><span class="p">(</span><span class="nx">prevEffectDidSpawnUpdate</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><code>recursivelyTraverseMutationEffects</code> 会递归处理子节点：先处理删除（deletions），再递归处理子节点。</p>
+<p><code>commitReconciliationEffects</code> 处理协调相关副作用：处理 Placement（插入/重新排序）、处理 Hydrating（hydration 相关）。</p>
+<p>在 case 中，除了调用这两个方法外，还会根据 flags 处理特定副作用：</p>
+<ol>
+<li><strong>Update</strong>：更新相关副作用</li>
+<li><strong>Ref</strong>：ref 的附加/分离</li>
+<li><strong>ContentReset</strong>：内容重置</li>
+<li><strong>FormReset</strong>：表单重置</li>
+<li>其他特定 flag</li>
+</ol>
         </article>
         
         <script src="https://giscus.app/client.js"
