@@ -10,3 +10,4 @@ pymdown-extensions==10.0.1
 PyYAML==6.0
 shortcodes==5.4.0
 syntext==3.1.2
+Pillow==10.0.0

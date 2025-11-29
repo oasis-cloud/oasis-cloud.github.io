@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "ark watch",
-    "build": "ark build",
+    "build": "ark build && node scripts/post_build.js",
     "deploy": "node scripts/deploy.js"
   },
   "repository": {
@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/oasis-cloud/oasis-cloud.github.io#readme",
   "dependencies": {
-    "gh-pages": "^4.0.0"
+    "gh-pages": "^4.0.0",
+    "sharp": "^0.33.0"
   }
 }
