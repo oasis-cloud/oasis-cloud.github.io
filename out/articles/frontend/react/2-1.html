@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Oasis's Cloud</title>
+        <link rel="stylesheet" href="../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../assets/pygments.css">
+        <script src="../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-frontend-react-2-1 node-articles-frontend-react node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1></h1>
+                
+                
+                <hr>
+            </header>
+            <h2>初始渲染流程详解</h2>
+<h3>1. 创建 Root 和 FiberRoot</h3>
+<p>当执行 <code>createRoot(document.getElementById('root'))</code> 时：</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// packages/react-dom/src/client/ReactDOMRoot.js</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">createRoot</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">container</span><span class="o">:</span><span class="w"> </span><span class="kt">Container</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">options?</span><span class="o">:</span><span class="w"> </span><span class="kt">CreateRootOptions</span><span class="p">,</span>
+<span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">RootType</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">createRootImpl</span><span class="p">(</span><span class="nx">container</span><span class="p">,</span><span class="w"> </span><span class="nx">options</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>关键步骤：</strong>
+1. 创建 <code>FiberRoot</code> 节点（<code>createFiberRoot</code>）
+2. 创建根 <code>Fiber</code> 节点（<code>HostRoot</code>）
+3. 建立 <code>FiberRoot.current</code> 和 <code>Fiber.stateNode</code> 的双向引用
+4. 初始化 <code>pendingLanes</code>、<code>finishedLanes</code> 等调度相关属性</p>
+<h3>2. 调用 root.render()</h3>
+<p>当执行 <code>root.render(&lt;App /&gt;)</code> 时：</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// packages/react-dom/src/client/ReactDOMRoot.js</span>
+<span class="nx">render</span><span class="p">(</span><span class="nx">children</span><span class="o">:</span><span class="w"> </span><span class="kt">ReactNodeList</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">_internalRoot</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">updateContainer</span><span class="p">(</span><span class="nx">children</span><span class="p">,</span><span class="w"> </span><span class="nx">root</span><span class="p">,</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w"> </span><span class="kc">null</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>流程：</strong>
+1. 调用 <code>updateContainer</code> 创建更新对象
+2. 将更新对象加入 <code>HostRoot</code> Fiber 的更新队列
+3. 调用 <code>scheduleUpdateOnFiber</code> 调度更新</p>
+<h3>3. 调度初始渲染</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// packages/react-reconciler/src/ReactFiberWorkLoop.js</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">scheduleUpdateOnFiber</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">root</span><span class="o">:</span><span class="w"> </span><span class="kt">FiberRoot</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">fiber</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">lane</span><span class="o">:</span><span class="w"> </span><span class="kt">Lane</span><span class="p">,</span>
+<span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 标记 root 有待处理的更新</span>
+<span class="w">  </span><span class="nx">markRootUpdated</span><span class="p">(</span><span class="nx">root</span><span class="p">,</span><span class="w"> </span><span class="nx">lane</span><span class="p">);</span>
+
+<span class="w">  </span><span class="c1">// 确保 root 被调度</span>
+<span class="w">  </span><span class="nx">ensureRootIsScheduled</span><span class="p">(</span><span class="nx">root</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>关键点：</strong>
+- <code>markRootUpdated</code> 将 lane 添加到 <code>root.pendingLanes</code>
+- <code>ensureRootIsScheduled</code> 通过调度器（scheduler）安排渲染任务
+- 对于同步更新，会调用 <code>performSyncWorkOnRoot</code></p>
+<h3>4. 准备渲染栈</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// packages/react-reconciler/src/ReactFiberWorkLoop.js</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">renderRootSync</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">root</span><span class="o">:</span><span class="w"> </span><span class="kt">FiberRoot</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">lanes</span><span class="o">:</span><span class="w"> </span><span class="kt">Lanes</span><span class="p">,</span>
+<span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">RootExitStatus</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 如果 root 或 lanes 改变，准备新的工作栈</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">workInProgressRoot</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="nx">root</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">workInProgressRootRenderLanes</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="nx">lanes</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">prepareFreshStack</span><span class="p">(</span><span class="nx">root</span><span class="p">,</span><span class="w"> </span><span class="nx">lanes</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="c1">// 执行同步工作循环</span>
+<span class="w">  </span><span class="nx">workLoopSync</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong><code>prepareFreshStack</code> 的作用：</strong>
+1. 创建 <code>workInProgress</code> Fiber（从 <code>root.current</code> 克隆）
+2. 重置工作循环相关变量
+3. 设置 <code>workInProgressRoot</code> 和 <code>workInProgressRootRenderLanes</code></p>
+<h3>5. 工作循环（Render 阶段）</h3>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">workLoopSync</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="nx">workInProgress</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">performUnitOfWork</span><span class="p">(</span><span class="nx">workInProgress</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">performUnitOfWork</span><span class="p">(</span><span class="nx">unitOfWork</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">current</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">unitOfWork</span><span class="p">.</span><span class="nx">alternate</span><span class="p">;</span>
+<span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="nx">next</span><span class="p">;</span>
+
+<span class="w">  </span><span class="c1">// Begin 阶段：处理当前节点，返回子节点</span>
+<span class="w">  </span><span class="nx">next</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">beginWork</span><span class="p">(</span><span class="nx">current</span><span class="p">,</span><span class="w"> </span><span class="nx">unitOfWork</span><span class="p">,</span><span class="w"> </span><span class="nx">subtreeRenderLanes</span><span class="p">);</span>
+
+<span class="w">  </span><span class="nx">unitOfWork</span><span class="p">.</span><span class="nx">memoizedProps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">unitOfWork</span><span class="p">.</span><span class="nx">pendingProps</span><span class="p">;</span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">next</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 没有子节点，进入 Complete 阶段</span>
+<span class="w">    </span><span class="nx">completeUnitOfWork</span><span class="p">(</span><span class="nx">unitOfWork</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">workInProgress</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">next</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>处理顺序（深度优先）：</strong>
+1. <strong>HostRoot Fiber</strong> → <code>updateHostRoot</code>
+    - 处理根节点的更新队列
+    - 协调子节点（<code>reconcileChildren</code>）
+    - 返回 <code>App</code> Fiber</p>
+<ol>
+<li>
+<p><strong>App Fiber</strong> → <code>updateFunctionComponent</code></p>
+<ul>
+<li>调用 <code>renderWithHooks</code> 执行组件函数</li>
+<li>设置 <code>ReactSharedInternals.H = HooksDispatcherOnMount</code></li>
+<li>执行 <code>App()</code> 函数，触发 <code>useState(0)</code></li>
+<li><code>mountState</code> 创建 Hook 对象和更新队列</li>
+<li>返回 <code>[0, setCount]</code></li>
+<li>协调子节点，返回 <code>div</code> Fiber</li>
+</ul>
+</li>
+<li>
+<p><strong>div Fiber</strong> → <code>updateHostComponent</code></p>
+<ul>
+<li>协调子节点（<code>h1</code> 和 <code>p</code>）</li>
+<li>返回第一个子节点 <code>h1</code> Fiber</li>
+</ul>
+</li>
+<li>
+<p><strong>h1 Fiber</strong> → <code>updateHostComponent</code></p>
+<ul>
+<li>协调文本节点</li>
+<li>返回文本节点 Fiber</li>
+</ul>
+</li>
+<li>
+<p><strong>文本节点 Fiber</strong> → <code>updateHostText</code></p>
+<ul>
+<li>标记需要更新（<code>flags |= Update</code>）</li>
+<li>返回 <code>null</code>，进入 Complete 阶段</li>
+</ul>
+</li>
+</ol>
+<h3>6. Complete 阶段</h3>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">completeUnitOfWork</span><span class="p">(</span><span class="nx">unitOfWork</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="nx">completedWork</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">unitOfWork</span><span class="p">;</span>
+<span class="w">  </span><span class="k">do</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">current</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">completedWork</span><span class="p">.</span><span class="nx">alternate</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">returnFiber</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">completedWork</span><span class="p">.</span><span class="k">return</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// 完成当前节点的工作</span>
+<span class="w">    </span><span class="nx">completeWork</span><span class="p">(</span><span class="nx">current</span><span class="p">,</span><span class="w"> </span><span class="nx">completedWork</span><span class="p">,</span><span class="w"> </span><span class="nx">subtreeRenderLanes</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// 移动到兄弟节点</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">siblingFiber</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">completedWork</span><span class="p">.</span><span class="nx">sibling</span><span class="p">;</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">siblingFiber</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">workInProgress</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">siblingFiber</span><span class="p">;</span>
+<span class="w">      </span><span class="k">return</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// 没有兄弟节点，移动到父节点</span>
+<span class="w">    </span><span class="nx">completedWork</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">returnFiber</span><span class="p">;</span>
+<span class="w">    </span><span class="nx">workInProgress</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">completedWork</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="nx">completedWork</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="kc">null</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Complete 阶段的作用：</strong>
+1. 创建 DOM 节点（<code>createInstance</code>）
+2. 设置 DOM 属性（<code>updateProperties</code>）
+3. 将子节点添加到父节点（但不插入 DOM）
+4. 向上冒泡 <code>subtreeFlags</code> 和 <code>childLanes</code></p>
+<h3>7. Commit 阶段</h3>
+<p>渲染完成后，进入 Commit 阶段：</p>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">commitRoot</span><span class="p">(</span><span class="nx">root</span><span class="o">:</span><span class="w"> </span><span class="kt">FiberRoot</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">finishedWork</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">root</span><span class="p">.</span><span class="nx">finishedWork</span><span class="p">;</span>
+
+<span class="w">  </span><span class="c1">// BeforeMutation 阶段</span>
+<span class="w">  </span><span class="nx">commitBeforeMutationEffects</span><span class="p">(</span><span class="nx">root</span><span class="p">,</span><span class="w"> </span><span class="nx">finishedWork</span><span class="p">);</span>
+
+<span class="w">  </span><span class="c1">// Mutation 阶段：更新 DOM</span>
+<span class="w">  </span><span class="nx">commitMutationEffects</span><span class="p">(</span><span class="nx">root</span><span class="p">,</span><span class="w"> </span><span class="nx">finishedWork</span><span class="p">,</span><span class="w"> </span><span class="nx">committedLanes</span><span class="p">);</span>
+
+<span class="w">  </span><span class="c1">// Layout 阶段：执行 layout effects</span>
+<span class="w">  </span><span class="nx">commitLayoutEffects</span><span class="p">(</span><span class="nx">finishedWork</span><span class="p">,</span><span class="w"> </span><span class="nx">root</span><span class="p">,</span><span class="w"> </span><span class="nx">committedLanes</span><span class="p">);</span>
+
+<span class="w">  </span><span class="c1">// Passive 阶段：执行 passive effects（useEffect）</span>
+<span class="w">  </span><span class="nx">schedulePassiveEffects</span><span class="p">(</span><span class="nx">finishedWork</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Commit 三个阶段：</strong>
+1. <strong>BeforeMutation</strong>：执行 <code>getSnapshotBeforeUpdate</code> 等
+2. <strong>Mutation</strong>：插入/更新/删除 DOM 节点
+3. <strong>Layout</strong>：执行 <code>useLayoutEffect</code> 和 ref 回调</p>
+<hr />
+<h2>点击事件后的更新流程详解</h2>
+<h3>1. 事件触发</h3>
+<p>当用户点击 <code>&lt;p&gt;</code> 元素时，触发 <code>handleClick</code> 函数：</p>
+<div class="highlight"><pre><span></span><code>const handleClick = () =&gt; {
+  setCount(count + 1);  // count 此时为 0
+};
+</code></pre></div>
+<h3>2. dispatchSetState 调用</h3>
+<p><code>setCount</code> 实际上是 <code>dispatchSetState</code>，它已经绑定了 <code>App</code> Fiber 和对应的 <code>queue</code>：</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// packages/react-reconciler/src/ReactFiberHooks.js</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">dispatchSetState</span><span class="o">&lt;</span><span class="nx">S</span><span class="p">,</span><span class="w"> </span><span class="nx">A</span><span class="o">&gt;</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">fiber</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">queue</span><span class="o">:</span><span class="w"> </span><span class="kt">UpdateQueue</span><span class="o">&lt;</span><span class="nx">S</span><span class="p">,</span><span class="w"> </span><span class="nx">A</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">action</span><span class="o">:</span><span class="w"> </span><span class="kt">A</span><span class="p">,</span>
+<span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">lane</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">requestUpdateLane</span><span class="p">(</span><span class="nx">fiber</span><span class="p">);</span>
+<span class="w">  </span><span class="nx">dispatchSetStateInternal</span><span class="p">(</span><span class="nx">fiber</span><span class="p">,</span><span class="w"> </span><span class="nx">queue</span><span class="p">,</span><span class="w"> </span><span class="nx">action</span><span class="p">,</span><span class="w"> </span><span class="nx">lane</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>关键点：</strong>
+- <code>fiber</code> 是 <code>App</code> 的 Fiber 节点
+- <code>queue</code> 是 <code>useState</code> 创建的更新队列
+- <code>action</code> 是 <code>count + 1</code>（即 <code>1</code>）</p>
+<h3>3. 创建更新对象</h3>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">dispatchSetStateInternal</span><span class="o">&lt;</span><span class="nx">S</span><span class="p">,</span><span class="w"> </span><span class="nx">A</span><span class="o">&gt;</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">fiber</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">queue</span><span class="o">:</span><span class="w"> </span><span class="kt">UpdateQueue</span><span class="o">&lt;</span><span class="nx">S</span><span class="p">,</span><span class="w"> </span><span class="nx">A</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">action</span><span class="o">:</span><span class="w"> </span><span class="kt">A</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">lane</span><span class="o">:</span><span class="w"> </span><span class="kt">Lane</span><span class="p">,</span>
+<span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">update</span><span class="o">:</span><span class="w"> </span><span class="kt">Update</span><span class="o">&lt;</span><span class="nx">S</span><span class="p">,</span><span class="w"> </span><span class="nx">A</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">lane</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">revertLane</span><span class="o">:</span><span class="w"> </span><span class="kt">NoLane</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">gesture</span><span class="o">:</span><span class="w"> </span><span class="kt">null</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">action</span><span class="p">,</span><span class="w">  </span><span class="c1">// count + 1</span>
+<span class="w">    </span><span class="nx">hasEagerState</span><span class="o">:</span><span class="w"> </span><span class="kt">false</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">eagerState</span><span class="o">:</span><span class="w"> </span><span class="kt">null</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">next</span><span class="o">:</span><span class="w"> </span><span class="kt">null</span><span class="p">,</span>
+<span class="w">  </span><span class="p">};</span>
+
+<span class="w">  </span><span class="c1">// 将更新加入队列</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">enqueueConcurrentHookUpdate</span><span class="p">(</span><span class="nx">fiber</span><span class="p">,</span><span class="w"> </span><span class="nx">queue</span><span class="p">,</span><span class="w"> </span><span class="nx">update</span><span class="p">,</span><span class="w"> </span><span class="nx">lane</span><span class="p">);</span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">root</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">scheduleUpdateOnFiber</span><span class="p">(</span><span class="nx">root</span><span class="p">,</span><span class="w"> </span><span class="nx">fiber</span><span class="p">,</span><span class="w"> </span><span class="nx">lane</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>更新对象结构：</strong>
+- <code>lane</code>：优先级车道
+- <code>action</code>：更新函数或值（这里是 <code>1</code>）
+- <code>next</code>：指向下一个更新（形成链表）</p>
+<h3>4. 调度更新</h3>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">scheduleUpdateOnFiber</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">root</span><span class="o">:</span><span class="w"> </span><span class="kt">FiberRoot</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">fiber</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">lane</span><span class="o">:</span><span class="w"> </span><span class="kt">Lane</span><span class="p">,</span>
+<span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 标记 root 有更新</span>
+<span class="w">  </span><span class="nx">markRootUpdated</span><span class="p">(</span><span class="nx">root</span><span class="p">,</span><span class="w"> </span><span class="nx">lane</span><span class="p">);</span>
+
+<span class="w">  </span><span class="c1">// 确保 root 被调度</span>
+<span class="w">  </span><span class="nx">ensureRootIsScheduled</span><span class="p">(</span><span class="nx">root</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>关键点：</strong>
+- <code>markRootUpdated</code> 将 lane 添加到 <code>root.pendingLanes</code>
+- 对于同步更新，会立即调用 <code>performSyncWorkOnRoot</code></p>
+<h3>5. 重新进入渲染流程</h3>
+<p>更新流程与初始渲染类似，但有以下区别：</p>
+<h4>5.1 prepareFreshStack</h4>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">prepareFreshStack</span><span class="p">(</span><span class="nx">root</span><span class="o">:</span><span class="w"> </span><span class="kt">FiberRoot</span><span class="p">,</span><span class="w"> </span><span class="nx">lanes</span><span class="o">:</span><span class="w"> </span><span class="kt">Lanes</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">Fiber</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 从 root.current 克隆创建 workInProgress</span>
+<span class="w">  </span><span class="nx">root</span><span class="p">.</span><span class="nx">finishedWork</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">root</span><span class="p">.</span><span class="nx">finishedLanes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">NoLanes</span><span class="p">;</span>
+
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">timeoutHandle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">root</span><span class="p">.</span><span class="nx">timeoutHandle</span><span class="p">;</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">timeoutHandle</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="nx">noTimeout</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">root</span><span class="p">.</span><span class="nx">timeoutHandle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">noTimeout</span><span class="p">;</span>
+<span class="w">    </span><span class="nx">cancelTimeout</span><span class="p">(</span><span class="nx">timeoutHandle</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nx">workInProgress</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">createWorkInProgress</span><span class="p">(</span><span class="nx">root</span><span class="p">.</span><span class="nx">current</span><span class="p">,</span><span class="w"> </span><span class="kc">null</span><span class="p">);</span>
+<span class="w">  </span><span class="nx">workInProgressRoot</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">root</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">workInProgressRootRenderLanes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">lanes</span><span class="p">;</span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">workInProgress</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h4>5.2 beginWork 处理 App Fiber</h4>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">updateFunctionComponent</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">current</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">workInProgress</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">Component</span><span class="o">:</span><span class="w"> </span><span class="kt">any</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">nextProps</span><span class="o">:</span><span class="w"> </span><span class="kt">any</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">renderLanes</span><span class="o">:</span><span class="w"> </span><span class="kt">Lanes</span><span class="p">,</span>
+<span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 调用 renderWithHooks</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">nextChildren</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">renderWithHooks</span><span class="p">(</span>
+<span class="w">    </span><span class="nx">current</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">workInProgress</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">Component</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">nextProps</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">context</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">renderLanes</span><span class="p">,</span>
+<span class="w">  </span><span class="p">);</span>
+
+<span class="w">  </span><span class="c1">// 协调子节点</span>
+<span class="w">  </span><span class="nx">reconcileChildren</span><span class="p">(</span><span class="nx">current</span><span class="p">,</span><span class="w"> </span><span class="nx">workInProgress</span><span class="p">,</span><span class="w"> </span><span class="nx">nextChildren</span><span class="p">,</span><span class="w"> </span><span class="nx">renderLanes</span><span class="p">);</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">workInProgress</span><span class="p">.</span><span class="nx">child</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h4>5.3 renderWithHooks 处理更新</h4>
+<div class="highlight"><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">renderWithHooks</span><span class="o">&lt;</span><span class="nx">Props</span><span class="p">,</span><span class="w"> </span><span class="nx">SecondArg</span><span class="o">&gt;</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">current</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">workInProgress</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">Component</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">p</span><span class="o">:</span><span class="w"> </span><span class="kt">Props</span><span class="p">,</span><span class="w"> </span><span class="nx">arg</span><span class="o">:</span><span class="w"> </span><span class="kt">SecondArg</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">any</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">props</span><span class="o">:</span><span class="w"> </span><span class="kt">Props</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">secondArg</span><span class="o">:</span><span class="w"> </span><span class="kt">SecondArg</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">nextRenderLanes</span><span class="o">:</span><span class="w"> </span><span class="kt">Lanes</span><span class="p">,</span>
+<span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">any</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">renderLanes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">nextRenderLanes</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">currentlyRenderingFiber</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">workInProgress</span><span class="p">;</span>
+
+<span class="w">  </span><span class="c1">// 判断是 mount 还是 update</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">current</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">current</span><span class="p">.</span><span class="nx">memoizedState</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">ReactSharedInternals</span><span class="p">.</span><span class="nx">H</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">HooksDispatcherOnMount</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">ReactSharedInternals</span><span class="p">.</span><span class="nx">H</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">HooksDispatcherOnUpdate</span><span class="p">;</span><span class="w">  </span><span class="c1">// 更新时使用这个</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="c1">// 调用组件函数</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">children</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">Component</span><span class="p">(</span><span class="nx">props</span><span class="p">,</span><span class="w"> </span><span class="nx">secondArg</span><span class="p">);</span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">children</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h4>5.4 useState 更新逻辑</h4>
+<p>更新时，<code>useState</code> 会调用 <code>updateState</code>：</p>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">updateState</span><span class="o">&lt;</span><span class="nx">S</span><span class="o">&gt;</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">initialState</span><span class="o">:</span><span class="w"> </span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">S</span><span class="p">)</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nx">S</span><span class="p">,</span>
+<span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="nx">S</span><span class="p">,</span><span class="w"> </span><span class="nx">Dispatch</span><span class="o">&lt;</span><span class="nx">BasicStateAction</span><span class="o">&lt;</span><span class="nx">S</span><span class="o">&gt;&gt;</span><span class="p">]</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">updateReducer</span><span class="p">(</span><span class="nx">basicStateReducer</span><span class="p">,</span><span class="w"> </span><span class="nx">initialState</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">updateReducer</span><span class="o">&lt;</span><span class="nx">S</span><span class="p">,</span><span class="w"> </span><span class="nx">I</span><span class="p">,</span><span class="w"> </span><span class="nx">A</span><span class="o">&gt;</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">reducer</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">S</span><span class="p">,</span><span class="w"> </span><span class="nx">A</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">S</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">initialArg</span><span class="o">:</span><span class="w"> </span><span class="kt">I</span><span class="p">,</span>
+<span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="nx">S</span><span class="p">,</span><span class="w"> </span><span class="nx">Dispatch</span><span class="o">&lt;</span><span class="nx">A</span><span class="o">&gt;</span><span class="p">]</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">hook</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">updateWorkInProgressHook</span><span class="p">();</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">queue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">hook</span><span class="p">.</span><span class="nx">queue</span><span class="p">;</span>
+
+<span class="w">  </span><span class="c1">// 处理更新队列</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">pending</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">queue</span><span class="p">.</span><span class="nx">pending</span><span class="p">;</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">pending</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 计算新状态</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nx">baseState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">hook</span><span class="p">.</span><span class="nx">baseState</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nx">baseQueue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">hook</span><span class="p">.</span><span class="nx">baseQueue</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nx">update</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">pending</span><span class="p">.</span><span class="nx">next</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">do</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">updateLane</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">update</span><span class="p">.</span><span class="nx">lane</span><span class="p">;</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">isSubsetOfLanes</span><span class="p">(</span><span class="nx">renderLanes</span><span class="p">,</span><span class="w"> </span><span class="nx">updateLane</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 处理这个更新</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">update</span><span class="p">.</span><span class="nx">action</span><span class="p">;</span>
+<span class="w">        </span><span class="nx">baseState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">reducer</span><span class="p">(</span><span class="nx">baseState</span><span class="p">,</span><span class="w"> </span><span class="nx">action</span><span class="p">);</span><span class="w">  </span><span class="c1">// basicStateReducer(0, 1) = 1</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">      </span><span class="nx">update</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">update</span><span class="p">.</span><span class="nx">next</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="nx">update</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="nx">pending</span><span class="p">.</span><span class="nx">next</span><span class="p">);</span>
+
+<span class="w">    </span><span class="nx">hook</span><span class="p">.</span><span class="nx">memoizedState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">baseState</span><span class="p">;</span><span class="w">  </span><span class="c1">// 更新为 1</span>
+<span class="w">    </span><span class="nx">hook</span><span class="p">.</span><span class="nx">baseState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">baseState</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">[</span><span class="nx">hook</span><span class="p">.</span><span class="nx">memoizedState</span><span class="p">,</span><span class="w"> </span><span class="nx">queue</span><span class="p">.</span><span class="nx">dispatch</span><span class="p">];</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>关键步骤：</strong>
+1. 从 <code>current.memoizedState</code> 获取旧的 Hook 链表
+2. 创建新的 Hook 对象（复用结构）
+3. 处理更新队列，计算新状态：<code>basicStateReducer(0, 1) = 1</code>
+4. 返回 <code>[1, setCount]</code></p>
+<h3>6. 协调子节点（Reconciliation）</h3>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">reconcileChildren</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">current</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">workInProgress</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">nextChildren</span><span class="o">:</span><span class="w"> </span><span class="kt">any</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">renderLanes</span><span class="o">:</span><span class="w"> </span><span class="kt">Lanes</span><span class="p">,</span>
+<span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">current</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// mount 阶段</span>
+<span class="w">    </span><span class="nx">workInProgress</span><span class="p">.</span><span class="nx">child</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">mountChildFibers</span><span class="p">(</span>
+<span class="w">      </span><span class="nx">workInProgress</span><span class="p">,</span>
+<span class="w">      </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">nextChildren</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">renderLanes</span><span class="p">,</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// update 阶段：diff 算法</span>
+<span class="w">    </span><span class="nx">workInProgress</span><span class="p">.</span><span class="nx">child</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">reconcileChildFibers</span><span class="p">(</span>
+<span class="w">      </span><span class="nx">workInProgress</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">current</span><span class="p">.</span><span class="nx">child</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">nextChildren</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">renderLanes</span><span class="p">,</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>更新时的 diff 逻辑：</strong>
+- 比较新旧 ReactElement
+- 对于文本节点，如果内容改变，标记 <code>Update</code> flag
+- 复用可复用的 Fiber 节点</p>
+<h3>7. Complete 阶段标记更新</h3>
+<p>在 Complete 阶段，会标记需要更新的节点：</p>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">completeWork</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">current</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">workInProgress</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">renderLanes</span><span class="o">:</span><span class="w"> </span><span class="kt">Lanes</span><span class="p">,</span>
+<span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">Fiber</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">newProps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">workInProgress</span><span class="p">.</span><span class="nx">pendingProps</span><span class="p">;</span>
+
+<span class="w">  </span><span class="k">switch</span><span class="w"> </span><span class="p">(</span><span class="nx">workInProgress</span><span class="p">.</span><span class="nx">tag</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="nx">HostText</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">current</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">workInProgress</span><span class="p">.</span><span class="nx">stateNode</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">oldText</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">current</span><span class="p">.</span><span class="nx">memoizedProps</span><span class="p">;</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">newText</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">newProps</span><span class="p">;</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">oldText</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="nx">newText</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="c1">// 标记需要更新</span>
+<span class="w">          </span><span class="nx">markUpdate</span><span class="p">(</span><span class="nx">workInProgress</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>标记结果：</strong>
+- 文本节点：<code>flags |= Update</code>（值为 4）
+- 向上冒泡：<code>p.subtreeFlags |= Update</code>，<code>div.subtreeFlags |= Update</code>
+- 最终 <code>App.subtreeFlags</code> 包含所有子树的更新标志</p>
+<h3>8. Commit 阶段更新 DOM</h3>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">commitMutationEffects</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">root</span><span class="o">:</span><span class="w"> </span><span class="kt">FiberRoot</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">finishedWork</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">committedLanes</span><span class="o">:</span><span class="w"> </span><span class="kt">Lanes</span><span class="p">,</span>
+<span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">commitMutationEffectsOnFiber</span><span class="p">(</span><span class="nx">finishedWork</span><span class="p">,</span><span class="w"> </span><span class="nx">root</span><span class="p">,</span><span class="w"> </span><span class="nx">committedLanes</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">commitMutationEffectsOnFiber</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">finishedWork</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">root</span><span class="o">:</span><span class="w"> </span><span class="kt">FiberRoot</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">committedLanes</span><span class="o">:</span><span class="w"> </span><span class="kt">Lanes</span><span class="p">,</span>
+<span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">flags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">finishedWork</span><span class="p">.</span><span class="nx">flags</span><span class="p">;</span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">flags</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="nx">Update</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 更新文本内容</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">textInstance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">finishedWork</span><span class="p">.</span><span class="nx">stateNode</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">newText</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">finishedWork</span><span class="p">.</span><span class="nx">memoizedProps</span><span class="p">;</span>
+<span class="w">    </span><span class="nx">commitTextUpdate</span><span class="p">(</span><span class="nx">textInstance</span><span class="p">,</span><span class="w"> </span><span class="nx">newText</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="c1">// 递归处理子节点</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">flags</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="nx">ChildDeletion</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">commitDeletionEffects</span><span class="p">(</span><span class="nx">root</span><span class="p">,</span><span class="w"> </span><span class="nx">finishedWork</span><span class="p">,</span><span class="w"> </span><span class="nx">returnFiber</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>DOM 更新：</strong>
+- 找到需要更新的文本节点
+- 调用 <code>textInstance.textContent = newText</code> 更新内容
+- 页面显示 <code>count</code> 从 <code>0</code> 变为 <code>1</code></p>
+<hr />
+<h2>流程对比总结</h2>
+<h3>初始渲染流程</h3>
+<ol>
+<li><code>createRoot</code> → 创建 FiberRoot 和 HostRoot Fiber</li>
+<li><code>root.render</code> → 创建更新，调度渲染</li>
+<li><code>prepareFreshStack</code> → 创建 workInProgress</li>
+<li><code>workLoopSync</code> → 深度优先遍历构建 Fiber 树</li>
+<li><code>beginWork</code> → 创建 Fiber 节点，调用组件函数</li>
+<li><code>completeWork</code> → 创建 DOM 节点（但不插入）</li>
+<li><code>commitRoot</code> → 将 DOM 插入页面</li>
+</ol>
+<h3>更新流程</h3>
+<ol>
+<li><code>setCount(1)</code> → 创建更新对象，加入队列</li>
+<li><code>scheduleUpdateOnFiber</code> → 调度更新</li>
+<li><code>prepareFreshStack</code> → 从 current 克隆 workInProgress</li>
+<li><code>workLoopSync</code> → 重新遍历 Fiber 树</li>
+<li><code>beginWork</code> → 调用组件函数，<code>useState</code> 计算新状态</li>
+<li><code>reconcileChildren</code> → diff 算法，标记需要更新的节点</li>
+<li><code>completeWork</code> → 标记更新标志（flags）</li>
+<li><code>commitRoot</code> → 更新 DOM，页面显示新值</li>
+</ol>
+<h3>关键区别</h3>
+<ul>
+<li><strong>初始渲染</strong>：所有节点都是新建，<code>current === null</code></li>
+<li><strong>更新渲染</strong>：复用现有 Fiber，<code>current !== null</code>，通过 diff 找出变化</li>
+<li><strong>初始渲染</strong>：<code>useState</code> 调用 <code>mountState</code>，创建 Hook</li>
+<li><strong>更新渲染</strong>：<code>useState</code> 调用 <code>updateState</code> → <code>updateReducer</code>，处理更新队列计算新状态 </li>
+</ul>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>
