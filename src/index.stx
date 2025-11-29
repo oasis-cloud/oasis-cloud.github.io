@@ -23,6 +23,7 @@ subTitle: 目录
 * [Taro 构建流程源码分析](@root/articles/frontend/19.html)
 * [Taro 源码阅读笔记](@root/articles/frontend/20.html)
 * [React 基础渲染流程——基于 v19.2.0 版本](@root/articles/frontend/react/1.html)
+* [React 状态更新流程——基于 v19.2.0 版本](@root/articles/frontend/react/2.html)
 
 ## 工程化实践
 * [NutUI React CI/CD](@root/articles/github/5.html)
