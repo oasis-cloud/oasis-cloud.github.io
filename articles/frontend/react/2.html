@@ -227,7 +227,7 @@ root.render(&lt;App /&gt;);
 </code></pre></div>
 <p>在进入 <code>workLoopSync</code> 前，会调用 <code>prepareFreshStack</code> 刷新栈帧。在 <code>prepareFreshStack</code> 中，会使用 <code>root.current</code>（HostFiberRoot）来创建 workInProgress。</p>
 <p>此时的内存结构如下：</p>
-<p><img alt="xxx" src="/images/React/react-2-2.png" /></p>
+<p><img alt="new HostFiberRoot" src="/images/react/React-2-2.png" /></p>
 <p>之后会进入 <code>beginWork</code>。在 <code>beginWork</code> 中，会检测 Fiber 是否有待处理的更新。如果 Fiber 有子树，还会检查子树是否有更新；如果子树存在更新，则返回子树的 FiberNode。</p>
 <div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">beginWork</span><span class="p">(</span>
 <span class="w">  </span><span class="nx">current</span><span class="o">:</span><span class="w"> </span><span class="kt">Fiber</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
@@ -302,14 +302,14 @@ root.render(&lt;App /&gt;);
 <span class="p">}</span>
 </code></pre></div>
 <p>因为 workInProgress 上没有可调度的任务，所以 workInProgress 会指向 App FiberNode。</p>
-<p><img alt="App Fiber 的构建" src="/images/React/react-2-3.png" /></p>
+<p><img alt="App Fiber 的构建" src="/images/react/React-2-3.png" /></p>
 <p>接下来进入 App FiberNode 的处理。此时 <code>current</code> 是 <code>workInProgress.alternate</code>。由于当前节点的 <code>lanes != NoLanes</code>，所以会调用 <code>updateFunctionComponent</code> 函数。</p>
 <p>在 <code>updateFunctionComponent</code> 函数中，调用 App 内的 <code>useState</code> 会获取 <code>memoizedState</code> 经过计算后的最新值 <code>1</code>，之后创建 ReactElement，并调用 <code>reconcileChildren()</code> 生成下级子节点。</p>
-<p><img alt="App 下 ReactElement 的构建" src="/images/React/react-2-4.png" /></p>
-<p>App FiberNode 处理结束后，内存结构如下：</p>
-<p><img alt="div 的构建" src="/images/React/react-2-5.png" /></p>
-<p>下轮循环中，workInProgress 指向 div FiberNode。</p>
-<p>当处理到 p 下的第一个子 FiberNode 时，因为没有变更，所以会提前退出，进入 <code>completeUnitOfWork</code>。由于 <code>FiberNode.memoizedProps === newProps</code>，所以不会标记更新。</p>
+<p><img alt="App 下 ReactElement 的构建" src="/images/react/React-2-4.png" /></p>
+<p>App FiberNode 处理结束后，下轮循环中，workInProgress 指向 div FiberNode。</p>
+<p>当处理到 p 下的第一个子 FiberNode 时，</p>
+<p><img alt="div 的构建" src="/images/react/React-2-5.png" /></p>
+<p>因为没有变更，所以会提前退出，进入 <code>completeUnitOfWork</code>。由于 <code>FiberNode.memoizedProps === newProps</code>，所以不会标记更新。</p>
 <p>接下来，workInProgress 指向 p 下的第二个子 FiberNode。在 <code>beginWork</code> 中会判断 <code>current.memoizedProps !== workInProgress.pendingProps</code>。由于 <code>current.memoizedProps</code> 为 0，而 <code>workInProgress.pendingProps</code> 为 1，所以会设置 <code>didReceiveUpdate</code> 为 true，不会提前退出。</p>
 <p>后面没有可以处理的子节点，所以进入 <code>completeWork</code> 阶段。由于 <code>FiberNode.memoizedProps !== newProps</code>，会通过 <code>markUpdate(workInProgress)</code> 标记更新（将 <code>workInProgress.flags</code> 设置为 Update）。</p>
 <p>注意：此时的 workInProgress 为 p 下的第二个子 FiberNode。</p>
