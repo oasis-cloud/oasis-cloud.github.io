@@ -84,52 +84,47 @@
 <p>执行示例可参看：<a href="../../../articles/frontend/react/3-1.html">最小堆执行过程</a></p>
 <h2>调度器的工作流程</h2>
 <p><code>Scheduler.js</code> 中的初始化代码如下：</p>
-<p>```flow js
-let schedulePerformWorkUntilDeadline;
-if (typeof localSetImmediate === &lsquo;function&rsquo;) {
-    // Node.js 和旧版 IE。
-    // 我们更倾向于使用 setImmediate 有几个原因。
-    //
-    // 与 MessageChannel 不同，它不会阻止 Node.js 进程退出。
-    // （尽管这是 Scheduler 的 DOM 分支，但在 Node.js 15+（它有 MessageChannel）和 jsdom 的混合环境中，你可能会来到这里。）
-    // https://github.com/facebook/react/issues/20756
-    //
-    // 另外，它运行得更早，这正是我们想要的语义。
-    // 如果其他浏览器实现了它，最好使用它。
-    // 尽管这两种方式都不如原生调度。
-    schedulePerformWorkUntilDeadline = () =&gt; {
-        localSetImmediate(performWorkUntilDeadline);
-    };
-} else if (typeof MessageChannel !== &lsquo;undefined&rsquo;) {
-    // DOM 和 Worker 环境。
-    // 我们更倾向于使用 MessageChannel，因为它避免了 setTimeout 的 4ms 限制。
-    const channel = new MessageChannel();
-    const port = channel.port2;
-    channel.port1.onmessage = performWorkUntilDeadline;
-    schedulePerformWorkUntilDeadline = () =&gt; {
-        port.postMessage(null);
-    };
-} else {
-    // 我们应该只在非浏览器环境中回退到这里。
-    schedulePerformWorkUntilDeadline = () =&gt; {
-        localSetTimeout(performWorkUntilDeadline, 0);
-    };
-}
-<div class="highlight"><pre><span></span><code>在这段代码中会根据不同的环境进入不同的实现中。
-因为本文的实验在Chrome 中运行，所以只关注 MessageChannel 的流程。
-
-在 MessageChannel 的逻辑中初始化了 `schedulePerformWorkUnitlDeadline` 方法，所以这里需要有方法调用它，MessageChannel 才能工作。
-
-调用`schedulePerformWorkUnitlDeadline` 的关键是 `unstable_scheduleCallback`。
-
-react-reconciler 包中的 `scheduleTaskForRootDuringMicrotask()` 会调用 `scheduleCallback`，给 schedule 增加待处理的任务。
-
-```flow js
-const newCallbackNode = scheduleCallback(
-      schedulerPriorityLevel,
-      performWorkOnRootViaSchedulerTask.bind(null, root),
-    );
-</code></pre></div></p>
+<div class="highlight"><pre><span></span><code><span class="kd">let</span><span class="w"> </span><span class="nx">schedulePerformWorkUntilDeadline</span><span class="p">;</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="ow">typeof</span><span class="w"> </span><span class="nx">localSetImmediate</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;function&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Node.js 和旧版 IE。</span>
+<span class="w">    </span><span class="c1">// 我们更倾向于使用 setImmediate 有几个原因。</span>
+<span class="w">    </span><span class="c1">//</span>
+<span class="w">    </span><span class="c1">// 与 MessageChannel 不同，它不会阻止 Node.js 进程退出。</span>
+<span class="w">    </span><span class="c1">// （尽管这是 Scheduler 的 DOM 分支，但在 Node.js 15+（它有 MessageChannel）和 jsdom 的混合环境中，你可能会来到这里。）</span>
+<span class="w">    </span><span class="c1">// https://github.com/facebook/react/issues/20756</span>
+<span class="w">    </span><span class="c1">//</span>
+<span class="w">    </span><span class="c1">// 另外，它运行得更早，这正是我们想要的语义。</span>
+<span class="w">    </span><span class="c1">// 如果其他浏览器实现了它，最好使用它。</span>
+<span class="w">    </span><span class="c1">// 尽管这两种方式都不如原生调度。</span>
+<span class="w">    </span><span class="nx">schedulePerformWorkUntilDeadline</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">localSetImmediate</span><span class="p">(</span><span class="nx">performWorkUntilDeadline</span><span class="p">);</span>
+<span class="w">    </span><span class="p">};</span>
+<span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="ow">typeof</span><span class="w"> </span><span class="nx">MessageChannel</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="s1">&#39;undefined&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// DOM 和 Worker 环境。</span>
+<span class="w">    </span><span class="c1">// 我们更倾向于使用 MessageChannel，因为它避免了 setTimeout 的 4ms 限制。</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">channel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">MessageChannel</span><span class="p">();</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">channel</span><span class="p">.</span><span class="nx">port2</span><span class="p">;</span>
+<span class="w">    </span><span class="nx">channel</span><span class="p">.</span><span class="nx">port1</span><span class="p">.</span><span class="nx">onmessage</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">performWorkUntilDeadline</span><span class="p">;</span>
+<span class="w">    </span><span class="nx">schedulePerformWorkUntilDeadline</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">port</span><span class="p">.</span><span class="nx">postMessage</span><span class="p">(</span><span class="kc">null</span><span class="p">);</span>
+<span class="w">    </span><span class="p">};</span>
+<span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 我们应该只在非浏览器环境中回退到这里。</span>
+<span class="w">    </span><span class="nx">schedulePerformWorkUntilDeadline</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">localSetTimeout</span><span class="p">(</span><span class="nx">performWorkUntilDeadline</span><span class="p">,</span><span class="w"> </span><span class="mf">0</span><span class="p">);</span>
+<span class="w">    </span><span class="p">};</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>在这段代码中会根据不同的环境进入不同的实现中。
+因为本文的实验在Chrome 中运行，所以只关注 MessageChannel 的流程。</p>
+<p>在 MessageChannel 的逻辑中初始化了 <code>schedulePerformWorkUnitlDeadline</code> 方法，所以这里需要有方法调用它，MessageChannel 才能工作。</p>
+<p>调用<code>schedulePerformWorkUnitlDeadline</code> 的关键是 <code>unstable_scheduleCallback</code>。</p>
+<p>react-reconciler 包中的 <code>scheduleTaskForRootDuringMicrotask()</code> 会调用 <code>scheduleCallback</code>，给 schedule 增加待处理的任务。</p>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">newCallbackNode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">scheduleCallback</span><span class="p">(</span>
+<span class="w">      </span><span class="nx">schedulerPriorityLevel</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">performWorkOnRootViaSchedulerTask</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span><span class="w"> </span><span class="nx">root</span><span class="p">),</span>
+<span class="w">    </span><span class="p">);</span>
+</code></pre></div>
 <p>这样 react-reconciler 和 scheduler 就协同起来了。</p>
 <p>除了 <code>scheduleTaskForRootDuringMicrotask</code>外，还有其他地方会调用 <code>scheduleCallback</code>，例如：<code>commitRoot</code>、<code>flushPassiveEffectsImpl</code>等。</p>
 <p><code>unstable_scheduleCallback()</code> 会创建 Task 对象，计算过期时间，根据 startTime 决定放入哪个队列：
@@ -141,91 +136,93 @@ const newCallbackNode = scheduleCallback(
 - 浏览器: <code>MessageChannel.postMessage()</code>
 - 回退: <code>setTimeout()</code>  </p>
 <p><code>performWorkUntilDeadline()</code> [异步执行]</p>
-<p>```flow js
-const performWorkUntilDeadline = () =&gt; {
-  if (enableRequestPaint) {
-    needsPaint = false;
-  }
-  if (isMessageLoopRunning) {
-    const currentTime = getCurrentTime();
-    // 记录开始时间，以便我们可以测量主线程被阻塞了多长时间。
-    startTime = currentTime;</p>
-<pre><code>// 如果调度器任务抛出错误，退出当前浏览器任务，以便可以观察到错误。
-//
-// 故意不使用 try-catch，因为这会使某些调试技术变得更困难。
-// 相反，如果 `flushWork` 出错，那么 `hasMoreWork` 将保持为 true，我们会继续工作循环。
-let hasMoreWork = true;
-try {
-  hasMoreWork = flushWork(currentTime);
-} finally {
-  if (hasMoreWork) {
-    // 如果还有更多工作，在前一个消息事件的末尾调度下一个消息事件。
-    schedulePerformWorkUntilDeadline();
-  } else {
-    isMessageLoopRunning = false;
-  }
-}
-</code></pre>
-<p>}
-};
-<code>- 记录开始时间 startTime
-- 调用 flushWork(currentTime)</code>flow js
-function flushWork(initialTime: number) {
-  return workLoop(initialTime);
-}
-```</p>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">performWorkUntilDeadline</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">enableRequestPaint</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">needsPaint</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">isMessageLoopRunning</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">currentTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">getCurrentTime</span><span class="p">();</span>
+<span class="w">    </span><span class="c1">// 记录开始时间，以便我们可以测量主线程被阻塞了多长时间。</span>
+<span class="w">    </span><span class="nx">startTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">currentTime</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// 如果调度器任务抛出错误，退出当前浏览器任务，以便可以观察到错误。</span>
+<span class="w">    </span><span class="c1">//</span>
+<span class="w">    </span><span class="c1">// 故意不使用 try-catch，因为这会使某些调试技术变得更困难。</span>
+<span class="w">    </span><span class="c1">// 相反，如果 `flushWork` 出错，那么 `hasMoreWork` 将保持为 true，我们会继续工作循环。</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nx">hasMoreWork</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span>
+<span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">hasMoreWork</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">flushWork</span><span class="p">(</span><span class="nx">currentTime</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">finally</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">hasMoreWork</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 如果还有更多工作，在前一个消息事件的末尾调度下一个消息事件。</span>
+<span class="w">        </span><span class="nx">schedulePerformWorkUntilDeadline</span><span class="p">();</span>
+<span class="w">      </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">isMessageLoopRunning</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div>
+<ul>
+<li>记录开始时间 startTime</li>
+<li>调用 flushWork(currentTime)</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">flushWork</span><span class="p">(</span><span class="nx">initialTime</span><span class="o">:</span><span class="w"> </span><span class="nx">number</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">workLoop</span><span class="p">(</span><span class="nx">initialTime</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
 <p><code>flushWork(initialTime)</code>
 - 设置 isPerformingWork = true
 - 调用 workLoop(initialTime)
 - 清理状态和标记</p>
-<p><code>flow js
-function workLoop(initialTime: number) {
-  let currentTime = initialTime;
-  advanceTimers(currentTime);
-  currentTask = peek(taskQueue);
-  while (currentTask !== null) {
-    if (!enableAlwaysYieldScheduler) {
-      if (currentTask.expirationTime &gt; currentTime &amp;&amp; shouldYieldToHost()) {
-        break;
-      }
-    }
-    const callback = currentTask.callback;
-    if (typeof callback === 'function') {
-      currentTask.callback = null;
-      currentPriorityLevel = currentTask.priorityLevel;
-      const didUserCallbackTimeout = currentTask.expirationTime &lt;= currentTime;
-      const continuationCallback = callback(didUserCallbackTimeout);
-      currentTime = getCurrentTime();
-      if (typeof continuationCallback === 'function') {
-        // If a continuation is returned, immediately yield to the main thread
-        // regardless of how much time is left in the current time slice.
-        currentTask.callback = continuationCallback;
-        advanceTimers(currentTime);
-        return true;
-      } else {
-        if (currentTask === peek(taskQueue)) {
-          pop(taskQueue);
-        }
-        advanceTimers(currentTime);
-      }
-    } else {
-      pop(taskQueue);
-    }
-    currentTask = peek(taskQueue);
-    if (enableAlwaysYieldScheduler) {
-      if (currentTask === null || currentTask.expirationTime &gt; currentTime) {
-        // This currentTask hasn't expired we yield to the browser task.
-        break;
-      }
-    }
-  }
-  // Return whether there's additional work
-  if (currentTask !== null) {
-    return true;
-  } else {
-    return false;
-  }
-}</code></p>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">workLoop</span><span class="p">(</span><span class="nx">initialTime</span><span class="o">:</span><span class="w"> </span><span class="nx">number</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="nx">currentTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">initialTime</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">advanceTimers</span><span class="p">(</span><span class="nx">currentTime</span><span class="p">);</span>
+<span class="w">  </span><span class="nx">currentTask</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">peek</span><span class="p">(</span><span class="nx">taskQueue</span><span class="p">);</span>
+<span class="w">  </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="nx">currentTask</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">enableAlwaysYieldScheduler</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">currentTask</span><span class="p">.</span><span class="nx">expirationTime</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="nx">currentTime</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">shouldYieldToHost</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">break</span><span class="p">;</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">callback</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">currentTask</span><span class="p">.</span><span class="nx">callback</span><span class="p">;</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="ow">typeof</span><span class="w"> </span><span class="nx">callback</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;function&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">currentTask</span><span class="p">.</span><span class="nx">callback</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">      </span><span class="nx">currentPriorityLevel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">currentTask</span><span class="p">.</span><span class="nx">priorityLevel</span><span class="p">;</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">didUserCallbackTimeout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">currentTask</span><span class="p">.</span><span class="nx">expirationTime</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="nx">currentTime</span><span class="p">;</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">continuationCallback</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">callback</span><span class="p">(</span><span class="nx">didUserCallbackTimeout</span><span class="p">);</span>
+<span class="w">      </span><span class="nx">currentTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">getCurrentTime</span><span class="p">();</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="ow">typeof</span><span class="w"> </span><span class="nx">continuationCallback</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;function&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// If a continuation is returned, immediately yield to the main thread</span>
+<span class="w">        </span><span class="c1">// regardless of how much time is left in the current time slice.</span>
+<span class="w">        </span><span class="nx">currentTask</span><span class="p">.</span><span class="nx">callback</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">continuationCallback</span><span class="p">;</span>
+<span class="w">        </span><span class="nx">advanceTimers</span><span class="p">(</span><span class="nx">currentTime</span><span class="p">);</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span>
+<span class="w">      </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">currentTask</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">peek</span><span class="p">(</span><span class="nx">taskQueue</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="nx">pop</span><span class="p">(</span><span class="nx">taskQueue</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="nx">advanceTimers</span><span class="p">(</span><span class="nx">currentTime</span><span class="p">);</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">pop</span><span class="p">(</span><span class="nx">taskQueue</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">currentTask</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">peek</span><span class="p">(</span><span class="nx">taskQueue</span><span class="p">);</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">enableAlwaysYieldScheduler</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">currentTask</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">currentTask</span><span class="p">.</span><span class="nx">expirationTime</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="nx">currentTime</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// This currentTask hasn&#39;t expired we yield to the browser task.</span>
+<span class="w">        </span><span class="k">break</span><span class="p">;</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="c1">// Return whether there&#39;s additional work</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">currentTask</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
 <p><code>workLoop(currentTime)</code> [核心工作循环]
 - advanceTimers(): 将到期的延迟任务移到 taskQueue
 - 循环处理 taskQueue 中的任务：
