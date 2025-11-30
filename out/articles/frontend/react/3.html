@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>React scheduler</title>
+        <link rel="stylesheet" href="../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../assets/pygments.css">
+        <script src="../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-frontend-react-3 node-articles-frontend-react node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>React scheduler</h1>
+                
+                    <p class="subtitle">基于 v19.2.0 版本</p>
+                
+                
+                    <p class="author">作者：oasis</p>
+                
+                <hr>
+            </header>
+            <p>调度器的源码位于 React 代码仓库 <code>packages/scheduler</code> 目录。其结构如下：</p>
+<div class="highlight"><pre><span></span><code>scheduler
+|-src
+    |-forks
+|-index.js
+</code></pre></div>
+<p>index.js 作为入口文件，导出了 forks 下 <code>Scheduler.js</code> 的方法和变量。 在 <code>Scheduler.js</code> 的第一行导入了调度器优先级的定义：</p>
+<div class="highlight"><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">NoPriority</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0</span><span class="p">;</span><span class="w"> </span><span class="c1">// 无优先级：默认状态，通常表示任务尚未分配优先级</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">ImmediatePriority</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1</span><span class="p">;</span><span class="w"> </span><span class="c1">// 立即优先级：最高优先级</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">UserBlockingPriority</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">2</span><span class="p">;</span><span class="w"> </span><span class="c1">// 用户阻塞优先级：高优先级;用于用户交互相关的任务。例如：按钮点击、表单提交等用户直接触发的操作。</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">NormalPriority</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">3</span><span class="p">;</span><span class="w"> </span><span class="c1">// 普通优先级：默认优先级，例如：数据获取、状态更新等</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">LowPriority</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">4</span><span class="p">;</span><span class="w"> </span><span class="c1">// 低优先级：可延迟执行的任务。例如：预加载、分析数据上报等</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">IdlePriority</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">5</span><span class="p">;</span><span class="w"> </span><span class="c1">// 空闲优先级：最低优先级。仅在浏览器空闲时执行</span>
+</code></pre></div>
+<h2>优先级控制算法</h2>
+<p><code>Scheduler</code> 的优先级通过 <code>packages/scheduler/src/SchedulerMinHeap.js</code> 实现的最小堆进行管理。最小堆是基于完全二叉树实现的。因为完全二叉树具有如下特点：</p>
+<ol>
+<li>可以用数组存储顺序存储</li>
+</ol>
+<div class="highlight"><pre><span></span><code>完全二叉树：
+          1[0]
+        /     \
+      2[1]    3[2]
+     /   \   /
+   4[3] 5[4] 6[5]
+
+对应的数组：[1, 2, 3, 4, 5, 6]
+索引：     [0, 1, 2, 3, 4, 5]
+</code></pre></div>
+<ol>
+<li>父子节点索引关系固定</li>
+</ol>
+<p>对于索引为 i 的节点： 
+- 父节点索引：(i - 1) &gt;&gt;&gt; 1 或 Math.floor((i - 1) / 2)
+在 <code>siftUp</code> 方法中对应的代码：<code>const parentIndex = (index - 1) &gt;&gt;&gt; 1;</code>
+- 左子节点索引：i * 2 + 1
+- 右子节点索引：i * 2 + 2</p>
+<ol>
+<li>数组长度等于节点个数</li>
+</ol>
+<p>执行示例可参看：<a href="../../../articles/frontend/react/3-1.html">最小堆执行过程</a></p>
+<h2>调度器的工作流程</h2>
+<p><code>Scheduler.js</code> 中的初始化代码如下：</p>
+<p>```flow js
+let schedulePerformWorkUntilDeadline;
+if (typeof localSetImmediate === &lsquo;function&rsquo;) {
+    // Node.js 和旧版 IE。
+    // 我们更倾向于使用 setImmediate 有几个原因。
+    //
+    // 与 MessageChannel 不同，它不会阻止 Node.js 进程退出。
+    // （尽管这是 Scheduler 的 DOM 分支，但在 Node.js 15+（它有 MessageChannel）和 jsdom 的混合环境中，你可能会来到这里。）
+    // https://github.com/facebook/react/issues/20756
+    //
+    // 另外，它运行得更早，这正是我们想要的语义。
+    // 如果其他浏览器实现了它，最好使用它。
+    // 尽管这两种方式都不如原生调度。
+    schedulePerformWorkUntilDeadline = () =&gt; {
+        localSetImmediate(performWorkUntilDeadline);
+    };
+} else if (typeof MessageChannel !== &lsquo;undefined&rsquo;) {
+    // DOM 和 Worker 环境。
+    // 我们更倾向于使用 MessageChannel，因为它避免了 setTimeout 的 4ms 限制。
+    const channel = new MessageChannel();
+    const port = channel.port2;
+    channel.port1.onmessage = performWorkUntilDeadline;
+    schedulePerformWorkUntilDeadline = () =&gt; {
+        port.postMessage(null);
+    };
+} else {
+    // 我们应该只在非浏览器环境中回退到这里。
+    schedulePerformWorkUntilDeadline = () =&gt; {
+        localSetTimeout(performWorkUntilDeadline, 0);
+    };
+}
+<div class="highlight"><pre><span></span><code>在这段代码中会根据不同的环境进入不同的实现中。
+因为本文的实验在Chrome 中运行，所以只关注 MessageChannel 的流程。
+
+在 MessageChannel 的逻辑中初始化了 `schedulePerformWorkUnitlDeadline` 方法，所以这里需要有方法调用它，MessageChannel 才能工作。
+
+调用`schedulePerformWorkUnitlDeadline` 的关键是 `unstable_scheduleCallback`。
+
+react-reconciler 包中的 `scheduleTaskForRootDuringMicrotask()` 会调用 `scheduleCallback`，给 schedule 增加待处理的任务。
+
+```flow js
+const newCallbackNode = scheduleCallback(
+      schedulerPriorityLevel,
+      performWorkOnRootViaSchedulerTask.bind(null, root),
+    );
+</code></pre></div></p>
+<p>这样 react-reconciler 和 scheduler 就协同起来了。</p>
+<p>除了 <code>scheduleTaskForRootDuringMicrotask</code>外，还有其他地方会调用 <code>scheduleCallback</code>，例如：<code>commitRoot</code>、<code>flushPassiveEffectsImpl</code>等。</p>
+<p><code>unstable_scheduleCallback()</code> 会创建 Task 对象，计算过期时间，根据 startTime 决定放入哪个队列：
+- startTime &gt; currentTime → timerQueue（延迟任务）
+- startTime &lt;= currentTime → taskQueue（立即任务）</p>
+<p>之后调用 <code>requestHostCallback()</code></p>
+<p>调用 <code>schedulePerformWorkUntilDeadline()</code> 
+- Node.js: <code>setImmediate()</code>
+- 浏览器: <code>MessageChannel.postMessage()</code>
+- 回退: <code>setTimeout()</code>  </p>
+<p><code>performWorkUntilDeadline()</code> [异步执行]</p>
+<p>```flow js
+const performWorkUntilDeadline = () =&gt; {
+  if (enableRequestPaint) {
+    needsPaint = false;
+  }
+  if (isMessageLoopRunning) {
+    const currentTime = getCurrentTime();
+    // 记录开始时间，以便我们可以测量主线程被阻塞了多长时间。
+    startTime = currentTime;</p>
+<pre><code>// 如果调度器任务抛出错误，退出当前浏览器任务，以便可以观察到错误。
+//
+// 故意不使用 try-catch，因为这会使某些调试技术变得更困难。
+// 相反，如果 `flushWork` 出错，那么 `hasMoreWork` 将保持为 true，我们会继续工作循环。
+let hasMoreWork = true;
+try {
+  hasMoreWork = flushWork(currentTime);
+} finally {
+  if (hasMoreWork) {
+    // 如果还有更多工作，在前一个消息事件的末尾调度下一个消息事件。
+    schedulePerformWorkUntilDeadline();
+  } else {
+    isMessageLoopRunning = false;
+  }
+}
+</code></pre>
+<p>}
+};
+<code>- 记录开始时间 startTime
+- 调用 flushWork(currentTime)</code>flow js
+function flushWork(initialTime: number) {
+  return workLoop(initialTime);
+}
+```</p>
+<p><code>flushWork(initialTime)</code>
+- 设置 isPerformingWork = true
+- 调用 workLoop(initialTime)
+- 清理状态和标记</p>
+<p><code>flow js
+function workLoop(initialTime: number) {
+  let currentTime = initialTime;
+  advanceTimers(currentTime);
+  currentTask = peek(taskQueue);
+  while (currentTask !== null) {
+    if (!enableAlwaysYieldScheduler) {
+      if (currentTask.expirationTime &gt; currentTime &amp;&amp; shouldYieldToHost()) {
+        break;
+      }
+    }
+    const callback = currentTask.callback;
+    if (typeof callback === 'function') {
+      currentTask.callback = null;
+      currentPriorityLevel = currentTask.priorityLevel;
+      const didUserCallbackTimeout = currentTask.expirationTime &lt;= currentTime;
+      const continuationCallback = callback(didUserCallbackTimeout);
+      currentTime = getCurrentTime();
+      if (typeof continuationCallback === 'function') {
+        // If a continuation is returned, immediately yield to the main thread
+        // regardless of how much time is left in the current time slice.
+        currentTask.callback = continuationCallback;
+        advanceTimers(currentTime);
+        return true;
+      } else {
+        if (currentTask === peek(taskQueue)) {
+          pop(taskQueue);
+        }
+        advanceTimers(currentTime);
+      }
+    } else {
+      pop(taskQueue);
+    }
+    currentTask = peek(taskQueue);
+    if (enableAlwaysYieldScheduler) {
+      if (currentTask === null || currentTask.expirationTime &gt; currentTime) {
+        // This currentTask hasn't expired we yield to the browser task.
+        break;
+      }
+    }
+  }
+  // Return whether there's additional work
+  if (currentTask !== null) {
+    return true;
+  } else {
+    return false;
+  }
+}</code></p>
+<p><code>workLoop(currentTime)</code> [核心工作循环]
+- advanceTimers(): 将到期的延迟任务移到 taskQueue
+- 循环处理 taskQueue 中的任务：
+    - peek(taskQueue) 获取最高优先级任务
+    - 检查是否应该让出控制权 (shouldYieldToHost)
+    - 执行任务的 callback
+    - 如果 callback 返回 continuation，继续调度
+    - 任务完成后从队列移除
+- 返回是否有更多任务 (hasMoreWork)</p>
+<p>如果有更多任务，继续调度 <code>schedulePerformWorkUntilDeadline</code>, 否则停止工作循环：<code>isMessageLoopRuning = false</code></p>
+<h2>schedule 的 demo 演示</h2>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>
