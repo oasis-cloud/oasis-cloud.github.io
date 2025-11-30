@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Oasis's Cloud</title>
+        <link rel="stylesheet" href="../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../assets/pygments.css">
+        <script src="../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-frontend-react-3-2 node-articles-frontend-react node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1></h1>
+                
+                
+                <hr>
+            </header>
+            <h1>React Scheduler 执行入口和执行流程详解</h1>
+<h2>一、执行入口</h2>
+<h3>1.1 主要入口函数</h3>
+<p>React Scheduler 的核心入口函数是 <strong><code>unstable_scheduleCallback</code></strong>，这是外部（主要是 React Reconciler）调度任务的主要接口。</p>
+<p>```327:416:packages/scheduler/src/forks/Scheduler.js
+function unstable_scheduleCallback(
+  priorityLevel: PriorityLevel,
+  callback: Callback,
+  options?: {delay: number},
+): Task {
+  var currentTime = getCurrentTime();</p>
+<p>var startTime;
+  if (typeof options === &lsquo;object&rsquo; &amp;&amp; options !== null) {
+    var delay = options.delay;
+    if (typeof delay === &lsquo;number&rsquo; &amp;&amp; delay &gt; 0) {
+      startTime = currentTime + delay;
+    } else {
+      startTime = currentTime;
+    }
+  } else {
+    startTime = currentTime;
+  }</p>
+<p>var timeout;
+  switch (priorityLevel) {
+    case ImmediatePriority:
+      // Times out immediately
+      timeout = -1;
+      break;
+    case UserBlockingPriority:
+      // Eventually times out
+      timeout = userBlockingPriorityTimeout;
+      break;
+    case IdlePriority:
+      // Never times out
+      timeout = maxSigned31BitInt;
+      break;
+    case LowPriority:
+      // Eventually times out
+      timeout = lowPriorityTimeout;
+      break;
+    case NormalPriority:
+    default:
+      // Eventually times out
+      timeout = normalPriorityTimeout;
+      break;
+  }</p>
+<p>var expirationTime = startTime + timeout;</p>
+<p>var newTask: Task = {
+    id: taskIdCounter++,
+    callback,
+    priorityLevel,
+    startTime,
+    expirationTime,
+    sortIndex: -1,
+  };
+  if (enableProfiling) {
+    newTask.isQueued = false;
+  }</p>
+<p>if (startTime &gt; currentTime) {
+    // This is a delayed task.
+    newTask.sortIndex = startTime;
+    push(timerQueue, newTask);
+    if (peek(taskQueue) === null &amp;&amp; newTask === peek(timerQueue)) {
+      // All tasks are delayed, and this is the task with the earliest delay.
+      if (isHostTimeoutScheduled) {
+        // Cancel an existing timeout.
+        cancelHostTimeout();
+      } else {
+        isHostTimeoutScheduled = true;
+      }
+      // Schedule a timeout.
+      requestHostTimeout(handleTimeout, startTime - currentTime);
+    }
+  } else {
+    newTask.sortIndex = expirationTime;
+    push(taskQueue, newTask);
+    if (enableProfiling) {
+      markTaskStart(newTask, currentTime);
+      newTask.isQueued = true;
+    }
+    // Schedule a host callback, if needed. If we&rsquo;re already performing work,
+    // wait until the next time we yield.
+    if (!isHostCallbackScheduled &amp;&amp; !isPerformingWork) {
+      isHostCallbackScheduled = true;
+      requestHostCallback();
+    }
+  }</p>
+<p>return newTask;
+}
+<div class="highlight"><pre><span></span><code>### 1.2 调用链入口
+
+从 React Reconciler 的调用链：
+</code></pre></div>
+React Reconciler (ReactFiberRootScheduler.js)
+  ↓
+scheduleCallback() 
+  ↓
+Scheduler.unstable_scheduleCallback()
+  ↓
+unstable_scheduleCallback() [Scheduler.js]
+<div class="highlight"><pre><span></span><code>## 二、完整执行流程
+
+### 2.1 流程图
+</code></pre></div>
+┌─────────────────────────────────────────────────────────────┐
+│  1. React Reconciler 调用 scheduleCallback()                │
+│     - 传入优先级和回调函数                                   │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────────┐
+│  2. unstable_scheduleCallback()                            │
+│     - 创建 Task 对象                                        │
+│     - 计算 expirationTime（过期时间）                       │
+│     - 根据 startTime 决定放入哪个队列：                      │
+│       • startTime &gt; currentTime → timerQueue（延迟任务）    │
+│       • startTime &lt;= currentTime → taskQueue（立即任务）   │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+         ┌───────────┴───────────┐
+         │                       │
+         ▼                       ▼
+┌──────────────────┐   ┌──────────────────────┐
+│ 延迟任务          │   │ 立即任务              │
+│ timerQueue       │   │ taskQueue            │
+│                  │   │                      │
+│ requestHostTimeout│   │ requestHostCallback()│
+│ (handleTimeout)  │   │                      │
+└────────┬─────────┘   └──────────┬───────────┘
+         │                        │
+         │                        │
+         └───────────┬────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────────┐
+│  3. requestHostCallback()                                  │
+│     - 设置 isMessageLoopRunning = true                     │
+│     - 调用 schedulePerformWorkUntilDeadline()              │
+│       • Node.js: setImmediate()                            │
+│       • 浏览器: MessageChannel.postMessage()              │
+│       • 回退: setTimeout()                                 │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────────┐
+│  4. performWorkUntilDeadline() [异步执行]                   │
+│     - 记录开始时间 startTime                                │
+│     - 调用 flushWork(currentTime)                          │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────────┐
+│  5. flushWork(initialTime)                                 │
+│     - 设置 isPerformingWork = true                         │
+│     - 调用 workLoop(initialTime)                           │
+│     - 清理状态和标记                                        │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────────┐
+│  6. workLoop(currentTime) [核心工作循环]                     │
+│     - advanceTimers(): 将到期的延迟任务移到 taskQueue       │
+│     - 循环处理 taskQueue 中的任务：                        │
+│       ① peek(taskQueue) 获取最高优先级任务                  │
+│       ② 检查是否应该让出控制权 (shouldYieldToHost)         │
+│       ③ 执行任务的 callback                                │
+│       ④ 如果 callback 返回 continuation，继续调度         │
+│       ⑤ 任务完成后从队列移除                               │
+│     - 返回是否有更多工作 (hasMoreWork)                     │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+         ┌───────────┴───────────┐
+         │                       │
+    hasMoreWork=true      hasMoreWork=false
+         │                       │
+         ▼                       ▼
+┌──────────────────┐   ┌──────────────────────┐
+│ 继续调度          │   │ 停止工作循环          │
+│ schedulePerform  │   │ isMessageLoopRunning │
+│ WorkUntilDeadline│   │ = false              │
+└──────────────────┘   └──────────────────────┘
+<div class="highlight"><pre><span></span><code>### 2.2 关键函数详解
+
+#### 2.2.1 `requestHostCallback()` - 请求主机回调
+
+```544:549:packages/scheduler/src/forks/Scheduler.js
+function requestHostCallback() {
+  if (!isMessageLoopRunning) {
+    isMessageLoopRunning = true;
+    schedulePerformWorkUntilDeadline();
+  }
+}
+</code></pre></div></p>
+<p><strong>作用</strong>：启动消息循环，通过平台 API（setImmediate/MessageChannel/setTimeout）异步执行工作。</p>
+<h4>2.2.2 <code>performWorkUntilDeadline()</code> - 执行工作直到截止时间</h4>
+<p>```485:510:packages/scheduler/src/forks/Scheduler.js
+const performWorkUntilDeadline = () =&gt; {
+  if (enableRequestPaint) {
+    needsPaint = false;
+  }
+  if (isMessageLoopRunning) {
+    const currentTime = getCurrentTime();
+    // 记录开始时间，以便我们可以测量主线程被阻塞了多长时间。
+    startTime = currentTime;</p>
+<pre><code>// 如果调度器任务抛出错误，退出当前浏览器任务，以便可以观察到错误。
+//
+// 故意不使用 try-catch，因为这会使某些调试技术变得更困难。
+// 相反，如果 `flushWork` 出错，那么 `hasMoreWork` 将保持为 true，我们会继续工作循环。
+let hasMoreWork = true;
+try {
+  hasMoreWork = flushWork(currentTime);
+} finally {
+  if (hasMoreWork) {
+    // 如果还有更多工作，在前一个消息事件的末尾调度下一个消息事件。
+    schedulePerformWorkUntilDeadline();
+  } else {
+    isMessageLoopRunning = false;
+  }
+}
+</code></pre>
+<p>}
+};
+<code>``
+
+**作用**：
+- 记录开始时间
+- 调用</code>flushWork` 执行实际工作
+- 根据返回值决定是否继续调度
+</p>
+<h4>2.2.3 <code>flushWork()</code> - 刷新工作</h4>
+<p><code>144:186:packages/scheduler/src/forks/Scheduler.js
+function flushWork(initialTime: number) {
+  if (enableProfiling) {
+    markSchedulerUnsuspended(initialTime);
+  }
+
+  // We'll need a host callback the next time work is scheduled.
+  isHostCallbackScheduled = false;
+  if (isHostTimeoutScheduled) {
+    // We scheduled a timeout but it's no longer needed. Cancel it.
+    isHostTimeoutScheduled = false;
+    cancelHostTimeout();
+  }
+
+  isPerformingWork = true;
+  const previousPriorityLevel = currentPriorityLevel;
+  try {
+    if (enableProfiling) {
+      try {
+        return workLoop(initialTime);
+      } catch (error) {
+        if (currentTask !== null) {
+          const currentTime = getCurrentTime();
+          // $FlowFixMe[incompatible-call] found when upgrading Flow
+          markTaskErrored(currentTask, currentTime);
+          // $FlowFixMe[incompatible-use] found when upgrading Flow
+          currentTask.isQueued = false;
+        }
+        throw error;
+      }
+    } else {
+      // No catch in prod code path.
+      return workLoop(initialTime);
+    }
+  } finally {
+    currentTask = null;
+    currentPriorityLevel = previousPriorityLevel;
+    isPerformingWork = false;
+    if (enableProfiling) {
+      const currentTime = getCurrentTime();
+      markSchedulerSuspended(currentTime);
+    }
+  }
+}</code></p>
+<p><strong>作用</strong>：
+- 设置工作状态标志
+- 调用 <code>workLoop</code> 执行工作循环
+- 清理状态和错误处理</p>
+<h4>2.2.4 <code>workLoop()</code> - 核心工作循环</h4>
+<p>```188:258:packages/scheduler/src/forks/Scheduler.js
+function workLoop(initialTime: number) {
+  let currentTime = initialTime;
+  advanceTimers(currentTime);
+  currentTask = peek(taskQueue);
+  while (currentTask !== null) {
+    if (!enableAlwaysYieldScheduler) {
+      if (currentTask.expirationTime &gt; currentTime &amp;&amp; shouldYieldToHost()) {
+        // This currentTask hasn&rsquo;t expired, and we&rsquo;ve reached the deadline.
+        break;
+      }
+    }
+    // $FlowFixMe[incompatible-use] found when upgrading Flow
+    const callback = currentTask.callback;
+    if (typeof callback === &lsquo;function&rsquo;) {
+      // $FlowFixMe[incompatible-use] found when upgrading Flow
+      currentTask.callback = null;
+      // $FlowFixMe[incompatible-use] found when upgrading Flow
+      currentPriorityLevel = currentTask.priorityLevel;
+      // $FlowFixMe[incompatible-use] found when upgrading Flow
+      const didUserCallbackTimeout = currentTask.expirationTime &lt;= currentTime;
+      if (enableProfiling) {
+        // $FlowFixMe[incompatible-call] found when upgrading Flow
+        markTaskRun(currentTask, currentTime);
+      }
+      const continuationCallback = callback(didUserCallbackTimeout);
+      currentTime = getCurrentTime();
+      if (typeof continuationCallback === &lsquo;function&rsquo;) {
+        // If a continuation is returned, immediately yield to the main thread
+        // regardless of how much time is left in the current time slice.
+        // $FlowFixMe[incompatible-use] found when upgrading Flow
+        currentTask.callback = continuationCallback;
+        if (enableProfiling) {
+          // $FlowFixMe[incompatible-call] found when upgrading Flow
+          markTaskYield(currentTask, currentTime);
+        }
+        advanceTimers(currentTime);
+        return true;
+      } else {
+        if (enableProfiling) {
+          // $FlowFixMe[incompatible-call] found when upgrading Flow
+          markTaskCompleted(currentTask, currentTime);
+          // $FlowFixMe[incompatible-use] found when upgrading Flow
+          currentTask.isQueued = false;
+        }
+        if (currentTask === peek(taskQueue)) {
+          pop(taskQueue);
+        }
+        advanceTimers(currentTime);
+      }
+    } else {
+      pop(taskQueue);
+    }
+    currentTask = peek(taskQueue);
+    if (enableAlwaysYieldScheduler) {
+      if (currentTask === null || currentTask.expirationTime &gt; currentTime) {
+        // This currentTask hasn&rsquo;t expired we yield to the browser task.
+        break;
+      }
+    }
+  }
+  // Return whether there&rsquo;s additional work
+  if (currentTask !== null) {
+    return true;
+  } else {
+    const firstTimer = peek(timerQueue);
+    if (firstTimer !== null) {
+      requestHostTimeout(handleTimeout, firstTimer.startTime - currentTime);
+    }
+    return false;
+  }
+}
+<div class="highlight"><pre><span></span><code>**核心逻辑**：
+1. **advanceTimers()**: 将到期的延迟任务从 `timerQueue` 移到 `taskQueue`
+2. **循环处理任务**：
+    - 从 `taskQueue` 获取最高优先级任务（最小堆的根节点）
+    - 检查是否应该让出控制权（`shouldYieldToHost()`）
+    - 执行任务的 `callback`
+    - 如果返回 `continuation`，继续调度
+    - 任务完成后从队列移除
+3. **返回状态**：是否有更多工作需要处理
+
+#### 2.2.5 `advanceTimers()` - 推进定时器
+
+```103:125:packages/scheduler/src/forks/Scheduler.js
+function advanceTimers(currentTime: number) {
+  // Check for tasks that are no longer delayed and add them to the queue.
+  let timer = peek(timerQueue);
+  while (timer !== null) {
+    if (timer.callback === null) {
+      // Timer was cancelled.
+      pop(timerQueue);
+    } else if (timer.startTime &lt;= currentTime) {
+      // Timer fired. Transfer to the task queue.
+      pop(timerQueue);
+      timer.sortIndex = timer.expirationTime;
+      push(taskQueue, timer);
+      if (enableProfiling) {
+        markTaskStart(timer, currentTime);
+        timer.isQueued = true;
+      }
+    } else {
+      // Remaining timers are pending.
+      return;
+    }
+    timer = peek(timerQueue);
+  }
+}
+</code></pre></div></p>
+<p><strong>作用</strong>：将到期的延迟任务从 <code>timerQueue</code> 转移到 <code>taskQueue</code>，使其可以被执行。</p>
+<h4>2.2.6 <code>shouldYieldToHost()</code> - 是否应该让出控制权</h4>
+<p>```447:460:packages/scheduler/src/forks/Scheduler.js
+function shouldYieldToHost(): boolean {
+  if (!enableAlwaysYieldScheduler &amp;&amp; enableRequestPaint &amp;&amp; needsPaint) {
+    // Yield now.
+    return true;
+  }
+  const timeElapsed = getCurrentTime() - startTime;
+  if (timeElapsed &lt; frameInterval) {
+    // The main thread has only been blocked for a really short amount of time;
+    // smaller than a single frame. Don&rsquo;t yield yet.
+    return false;
+  }
+  // Yield now.
+  return true;
+}
+<div class="highlight"><pre><span></span><code>**作用**：检查是否应该让出控制权给浏览器，避免长时间阻塞主线程。
+
+## 三、数据结构
+
+### 3.1 两个优先级队列
+
+1. **`taskQueue`** - 立即执行的任务队列（最小堆）
+    - 按 `expirationTime` 排序
+    - 使用最小堆快速获取最高优先级任务
+
+2. **`timerQueue`** - 延迟任务队列（最小堆）
+    - 按 `startTime` 排序
+    - 到期后转移到 `taskQueue`
+
+### 3.2 Task 对象结构
+
+```47:57:packages/scheduler/src/forks/Scheduler.js
+export opaque type Task = {
+  id: number,
+  callback: Callback | null,
+  priorityLevel: PriorityLevel,
+  startTime: number,
+  expirationTime: number,
+  sortIndex: number,
+  isQueued?: boolean,
+};
+</code></pre></div></p>
+<h2>四、执行示例</h2>
+<h3>4.1 典型执行流程示例</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// 1. React Reconciler 调度任务</span>
+<span class="nx">scheduleCallback</span><span class="p">(</span><span class="nx">NormalPriority</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">performWorkOnRoot</span><span class="p">(</span><span class="nx">root</span><span class="p">);</span>
+<span class="p">});</span>
+
+<span class="c1">// 2. Scheduler 内部流程</span>
+<span class="c1">// - unstable_scheduleCallback() 创建 Task</span>
+<span class="c1">// - push(taskQueue, task)</span>
+<span class="c1">// - requestHostCallback()</span>
+<span class="c1">// - schedulePerformWorkUntilDeadline() (使用 MessageChannel)</span>
+<span class="c1">// - performWorkUntilDeadline() 异步执行</span>
+<span class="c1">// - flushWork()</span>
+<span class="c1">// - workLoop()</span>
+<span class="c1">//   - advanceTimers()</span>
+<span class="c1">//   - 循环执行 taskQueue 中的任务</span>
+<span class="c1">//   - 执行 callback: performWorkOnRoot()</span>
+<span class="c1">//   - 检查 shouldYieldToHost()</span>
+<span class="c1">//   - 返回 hasMoreWork</span>
+</code></pre></div>
+<h3>4.2 时间切片（Time Slicing）</h3>
+<p>Scheduler 通过 <code>shouldYieldToHost()</code> 实现时间切片：
+- 每次执行任务前检查是否超过时间限制（<code>frameInterval</code>）
+- 如果超过，让出控制权，让浏览器处理其他任务
+- 下次通过 <code>schedulePerformWorkUntilDeadline()</code> 继续执行</p>
+<h2>五、关键设计点</h2>
+<ol>
+<li><strong>异步执行</strong>：使用 MessageChannel/setImmediate/setTimeout 实现异步调度</li>
+<li><strong>优先级队列</strong>：使用最小堆快速获取最高优先级任务</li>
+<li><strong>时间切片</strong>：通过 <code>shouldYieldToHost()</code> 避免长时间阻塞主线程</li>
+<li><strong>延迟任务</strong>：支持延迟执行的任务（<code>timerQueue</code>）</li>
+<li><strong>任务延续</strong>：支持任务返回 continuation callback 继续执行</li>
+</ol>
+<h2>六、总结</h2>
+<p>React Scheduler 的执行流程是一个<strong>事件驱动的异步任务调度系统</strong>：</p>
+<ol>
+<li><strong>入口</strong>：<code>unstable_scheduleCallback()</code> 接收任务并加入队列</li>
+<li><strong>调度</strong>：<code>requestHostCallback()</code> 启动异步执行</li>
+<li><strong>执行</strong>：<code>performWorkUntilDeadline()</code> → <code>flushWork()</code> → <code>workLoop()</code></li>
+<li><strong>循环</strong>：<code>workLoop()</code> 循环处理任务，直到队列为空或需要让出控制权</li>
+<li><strong>让出</strong>：通过 <code>shouldYieldToHost()</code> 检查，必要时让出控制权给浏览器</li>
+</ol>
+<p>这个设计使得 React 能够高效地调度和执行任务，同时保持应用的响应性。</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>

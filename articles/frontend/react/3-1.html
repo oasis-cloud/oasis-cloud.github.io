@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Oasis's Cloud</title>
+        <link rel="stylesheet" href="../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../assets/pygments.css">
+        <script src="../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-frontend-react-3-1 node-articles-frontend-react node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1></h1>
+                
+                
+                <hr>
+            </header>
+            <p>用具体例子说明最小堆的工作过程：</p>
+<h2>示例：任务调度最小堆</h2>
+<p>假设有以下任务需要调度：</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// 任务格式：{ id: number, sortIndex: number }</span>
+<span class="c1">// sortIndex 越小，优先级越高</span>
+
+<span class="nx">任务1</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="nx">sortIndex</span><span class="o">:</span><span class="w"> </span><span class="mf">5</span><span class="w"> </span><span class="p">}</span><span class="w">  </span><span class="c1">// 优先级 5</span>
+<span class="nx">任务2</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="mf">2</span><span class="p">,</span><span class="w"> </span><span class="nx">sortIndex</span><span class="o">:</span><span class="w"> </span><span class="mf">3</span><span class="w"> </span><span class="p">}</span><span class="w">  </span><span class="c1">// 优先级 3</span>
+<span class="nx">任务3</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="mf">3</span><span class="p">,</span><span class="w"> </span><span class="nx">sortIndex</span><span class="o">:</span><span class="w"> </span><span class="mf">7</span><span class="w"> </span><span class="p">}</span><span class="w">  </span><span class="c1">// 优先级 7</span>
+<span class="nx">任务4</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="mf">4</span><span class="p">,</span><span class="w"> </span><span class="nx">sortIndex</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="w"> </span><span class="p">}</span><span class="w">  </span><span class="c1">// 优先级 1 (最高)</span>
+<span class="nx">任务5</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="mf">5</span><span class="p">,</span><span class="w"> </span><span class="nx">sortIndex</span><span class="o">:</span><span class="w"> </span><span class="mf">4</span><span class="w"> </span><span class="p">}</span><span class="w">  </span><span class="c1">// 优先级 4</span>
+</code></pre></div>
+<h3>步骤1：插入任务（push）</h3>
+<p>初始堆为空：<code>heap = []</code></p>
+<h4>插入任务1 (sortIndex: 5)</h4>
+<p><div class="highlight"><pre><span></span><code>heap = [任务1]
+       [5]
+</code></pre></div>
+堆只有一个元素，无需调整。</p>
+<h4>插入任务2 (sortIndex: 3)</h4>
+<p><div class="highlight"><pre><span></span><code>插入后：heap = [任务1, 任务2]
+                [5,    3]
+
+siftUp 过程：
+- 任务2 在索引1，父节点是索引0的任务1
+- compare(任务1, 任务2) = 5 - 3 = 2 &gt; 0，父节点更大
+- 交换：heap = [任务2, 任务1]
+                [3,    5]
+</code></pre></div>
+结果：<code>heap = [任务2(3), 任务1(5)]</code></p>
+<h4>插入任务3 (sortIndex: 7)</h4>
+<p><div class="highlight"><pre><span></span><code>插入后：heap = [任务2, 任务1, 任务3]
+                [3,    5,    7]
+
+siftUp 过程：
+- 任务3 在索引2，父节点是索引0的任务2
+- compare(任务2, 任务3) = 3 - 7 = -4 &lt; 0，父节点更小
+- 无需交换，直接返回
+</code></pre></div>
+结果：<code>heap = [任务2(3), 任务1(5), 任务3(7)]</code></p>
+<h4>插入任务4 (sortIndex: 1) - 最高优先级</h4>
+<p><div class="highlight"><pre><span></span><code>插入后：heap = [任务2, 任务1, 任务3, 任务4]
+                [3,    5,    7,    1]
+
+siftUp 过程（第1轮）：
+- 任务4 在索引3，父节点是索引1的任务1
+- compare(任务1, 任务4) = 5 - 1 = 4 &gt; 0，父节点更大
+- 交换：heap = [任务2, 任务4, 任务3, 任务1]
+                [3,    1,    7,    5]
+
+siftUp 过程（第2轮）：
+- 任务4 现在在索引1，父节点是索引0的任务2
+- compare(任务2, 任务4) = 3 - 1 = 2 &gt; 0，父节点更大
+- 交换：heap = [任务4, 任务2, 任务3, 任务1]
+                [1,    3,    7,    5]
+</code></pre></div>
+结果：<code>heap = [任务4(1), 任务2(3), 任务3(7), 任务1(5)]</code></p>
+<h4>插入任务5 (sortIndex: 4)</h4>
+<p><div class="highlight"><pre><span></span><code>插入后：heap = [任务4, 任务2, 任务3, 任务1, 任务5]
+                [1,    3,    7,    5,    4]
+
+siftUp 过程：
+- 任务5 在索引4，父节点是索引1的任务2
+- compare(任务2, 任务5) = 3 - 4 = -1 &lt; 0，父节点更小
+- 无需交换
+</code></pre></div>
+最终堆：<code>heap = [任务4(1), 任务2(3), 任务3(7), 任务1(5), 任务5(4)]</code></p>
+<h3>步骤2：查看堆顶（peek）</h3>
+<p><div class="highlight"><pre><span></span><code><span class="nx">peek</span><span class="p">(</span><span class="nx">heap</span><span class="p">)</span><span class="w"> </span><span class="c1">// 返回任务4 { id: 4, sortIndex: 1 }</span>
+</code></pre></div>
+返回优先级最高的任务，不删除。</p>
+<h3>步骤3：弹出堆顶（pop）</h3>
+<h4>弹出任务4</h4>
+<p><div class="highlight"><pre><span></span><code>初始：heap = [任务4, 任务2, 任务3, 任务1, 任务5]
+             [1,    3,    7,    5,    4]
+
+步骤1：保存根节点任务4
+步骤2：用最后一个节点任务5替换根节点
+       heap = [任务5, 任务2, 任务3, 任务1]
+              [4,    3,    7,    5]
+
+步骤3：siftDown 调整（第1轮）：
+- 任务5 在索引0，左子节点是索引1的任务2，右子节点是索引2的任务3
+- compare(任务2, 任务5) = 3 - 4 = -1 &lt; 0，左子节点更小
+- compare(任务3, 任务2) = 7 - 3 = 4 &gt; 0，左子节点更小
+- 与左子节点交换：heap = [任务2, 任务5, 任务3, 任务1]
+                          [3,    4,    7,    5]
+
+步骤4：siftDown 调整（第2轮）：
+- 任务5 现在在索引1，左子节点是索引3的任务1
+- compare(任务1, 任务5) = 5 - 4 = 1 &gt; 0，子节点更大
+- 无需交换，退出
+</code></pre></div>
+结果：<code>heap = [任务2(3), 任务5(4), 任务3(7), 任务1(5)]</code>，返回任务4。</p>
+<h3>步骤4：继续弹出</h3>
+<h4>弹出任务2</h4>
+<p><div class="highlight"><pre><span></span><code>初始：heap = [任务2, 任务5, 任务3, 任务1]
+             [3,    4,    7,    5]
+
+用任务1替换根节点：
+heap = [任务1, 任务5, 任务3]
+       [5,    4,    7]
+
+siftDown：
+- compare(任务5, 任务1) = 4 - 5 = -1 &lt; 0，左子节点更小
+- 交换：heap = [任务5, 任务1, 任务3]
+              [4,    5,    7]
+</code></pre></div>
+结果：<code>heap = [任务5(4), 任务1(5), 任务3(7)]</code>，返回任务2。</p>
+<h3>完整操作序列总结</h3>
+<div class="highlight"><pre><span></span><code>操作序列：
+push(任务1) → [任务1(5)]
+push(任务2) → [任务2(3), 任务1(5)]
+push(任务3) → [任务2(3), 任务1(5), 任务3(7)]
+push(任务4) → [任务4(1), 任务2(3), 任务3(7), 任务1(5)]
+push(任务5) → [任务4(1), 任务2(3), 任务3(7), 任务1(5), 任务5(4)]
+
+pop() → 返回任务4(1), 堆变为: [任务2(3), 任务5(4), 任务3(7), 任务1(5)]
+pop() → 返回任务2(3), 堆变为: [任务5(4), 任务1(5), 任务3(7)]
+pop() → 返回任务5(4), 堆变为: [任务1(5), 任务3(7)]
+pop() → 返回任务1(5), 堆变为: [任务3(7)]
+pop() → 返回任务3(7), 堆变为: []
+</code></pre></div>
+<h2>关键点</h2>
+<ol>
+<li>最小堆保证根节点始终是最小值（最高优先级）</li>
+<li><code>siftUp</code>：插入时从下往上调整</li>
+<li><code>siftDown</code>：删除时从上往下调整</li>
+<li>时间复杂度：push 和 pop 都是 O(log n)，peek 是 O(1)</li>
+<li>比较规则：先比较 <code>sortIndex</code>，相同则比较 <code>id</code></li>
+</ol>
+<p>这样 React Scheduler 可以高效地按优先级调度任务。</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>
