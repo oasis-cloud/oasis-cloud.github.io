@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>从零构建大模型（一）</title>
+        <link rel="stylesheet" href="../../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../../assets/pygments.css">
+        <script src="../../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-artificial-intelligence-books-build-a-llm-ch1 node-articles-artificial-intelligence-books-build-a-llm node-articles-artificial-intelligence-books node-articles-artificial-intelligence node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>从零构建大模型（一）</h1>
+                
+                    <p class="subtitle">理解大语言模型</p>
+                
+                
+                    <p class="author">作者：oasis</p>
+                
+                <hr>
+            </header>
+            <h2>什么是大语言模型（LLM）</h2>
+<p>大语言模型是一种用于理解、生成和响应类似人类语言文本的神经网络。其主要特征：
+1. 深度神经网络
+2. 大规模文本数据训练</p>
+<p>由于大语言模型（LLM）能够生成文本，因此也被称为生成式人工智能（GenAI、Generative Artificial Intelligence）</p>
+<p>大语言模型是深度学习技术的具体应用，深度学习是机器学习的一个分支，主要使用多层神经网络</p>
+<h2>大语言模型的构建阶段</h2>
+<p>大语言模型的构建通常包括预训练（pre-training）和微调（fine-tuning）。预训练是在大规模、多样化的数据集上进行的（网络资料、图书、研究论文等），目的是让大模型形成全面
+的语言理解能力。</p>
+<p>微调阶段会在规模较小的特定任务或领域数据集上对模型进行针对性训练，目的是进一步提升其特定能力（例如：代码生成能力、分类、文本总结、翻译等）。</p>
+<p>大模型的微调是在标注数据集上进行训练，从而得到特定的能力。微调大模型最流行的两种方法：
+1. 指令微调
+2. 分类任务微调</p>
+<p>人自出生之日便开始了预训练，自上学之后，便开启了微调。</p>
+<h2>Transformer 架构</h2>
+<p>Transformer 架构由两个子模块构成：
+1. 编码器：负责处理输入文本，将文本编码为一系列数值表示或向量，以捕捉上下文信息。上下文信息的捕捉动作，是自注意力机制（self-attention mechanism）实现的。
+2. 解码器：负责接收这些编码向量，并据此生成输出文本。</p>
+<p><img alt="Transformer架构" src="/images/build-a-llm/ch01-2.png" /></p>
+<h2>构建大语言模型路线图</h2>
+<p><img alt="build path" src="/images/build-a-llm/ch01-1.png" /></p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>

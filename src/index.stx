@@ -13,6 +13,14 @@ subTitle: 目录
 * [人工智能概念](@root/articles/artificial-intelligence/books/AI-modern-approach/1.html)
 * [人工智能中的表达形式和问题求解方法](@root/articles/artificial-intelligence/books/AI-modern-approach/2.html)
 * [人工智能中的问题求解方法](@root/articles/artificial-intelligence/books/人工智能现代方法/3.html)
+* [从零构建大语言模型（一）](@root/articles/artificial-intelligence/books/build-a-llm/1.html)
+* [从零构建大语言模型（二）](@root/articles/artificial-intelligence/books/build-a-llm/2.html)
+* [从零构建大语言模型（三）](@root/articles/artificial-intelligence/books/build-a-llm/3.html)
+* [从零构建大语言模型（四）](@root/articles/artificial-intelligence/books/build-a-llm/4.html)
+* [从零构建大语言模型（五）](@root/articles/artificial-intelligence/books/build-a-llm/5.html)
+* [从零构建大语言模型（六）](@root/articles/artificial-intelligence/books/build-a-llm/6.html)
+* [从零构建大语言模型（七）](@root/articles/artificial-intelligence/books/build-a-llm/7.html)
+
 
 ## 源码分析
 * [源码分析——Redux](@root/articles/frontend/21.html)
@@ -73,14 +81,14 @@ subTitle: 目录
 * [文件备份](@root/articles/software-design/4.html)
 * [数据表](@root/articles/software-design/5.html)
 * [构建正则表达式](@root/articles/software-design/6.html)
-
-## 读书笔记
 * [构造数据抽象](@root/articles/sicp/2.html)
 * [构造过程抽象](@root/articles/sicp/1.html)
 * [软件设计的哲学](@root/articles/philosophy-of-software-design/1.html)
 * [软件设计的哲学-设计原则总结](@root/articles/philosophy-of-software-design/2.html)
 * [软件设计的哲学-警示信号](@root/articles/philosophy-of-software-design/3.html)
 * [编程格调](@root/articles/1.html)
+
+## 读书笔记
 * [深度工作](@root/articles/books/shendugongzuo/1.html)
 * [可变思考](@root/articles/books/kebiansikao/1.html)
 * [点石成金](@root/articles/books/dontmakemethink/1.html)
