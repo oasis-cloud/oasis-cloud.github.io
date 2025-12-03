@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Oasis's Cloud</title>
+        <link rel="stylesheet" href="../../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../../assets/pygments.css">
+        <script src="../../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-artificial-intelligence-books-build-a-llm-2-1 node-articles-artificial-intelligence-books-build-a-llm node-articles-artificial-intelligence-books node-articles-artificial-intelligence node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1></h1>
+                
+                
+                <hr>
+            </header>
+            <p>您说得非常到位！这确实是理解Transformer架构的关键点。让我用通俗的方式解释这个看似矛盾的现象：</p>
+<h2><strong>🔍 核心矛盾</strong></h2>
+<p><strong>词元ID嵌入</strong>：确定性的、位置无关的（“猫”这个词无论在哪都是“猫”）
+<strong>自注意力机制</strong>：也是位置无关的（不看词的顺序）</p>
+<p>那么问题来了：<strong>两个都不关心位置的东西组合在一起，模型怎么知道词的顺序呢？</strong></p>
+<h2><strong>🏀 类比：篮球队员的故事</strong></h2>
+<p>想象一个篮球比赛场景：</p>
+<h3><strong>1. 词元ID嵌入 = 球员技能卡</strong></h3>
+<ul>
+<li>每个球员（词）有一张技能卡</li>
+<li>库里：三分神射手</li>
+<li>詹姆斯：全能战士</li>
+<li>技能卡本身<strong>不包含位置信息</strong>（没说库里是控卫还是分卫）</li>
+</ul>
+<h3><strong>2. 自注意力机制 = 战术讨论会</strong></h3>
+<ul>
+<li>教练（模型）让5个球员开战术会</li>
+<li>每个人都要看其他4个人是谁，然后决定自己该干嘛</li>
+<li><strong>但问题</strong>：如果不知道谁打什么位置，会议会混乱！</li>
+</ul>
+<div class="highlight"><pre><span></span><code>例子：这5个球员是：库里、杜兰特、詹姆斯、戴维斯、约基奇
+如果没有位置信息，可能：
+- 库里以为自己该当中锋（因为约基奇不在？）
+- 约基奇以为自己该投三分（因为库里在场？）
+</code></pre></div>
+<h3><strong>3. 位置编码 = 球员位置背号</strong></h3>
+<p>这就是解决方案！给每个位置加上“背号”：
+- 1号位（控卫）
+- 2号位（分卫）
+- 3号位（小前锋）
+- 4号位（大前锋）
+- 5号位（中锋）</p>
+<p>现在战术讨论时：
+<div class="highlight"><pre><span></span><code>库里（词嵌入：神射手 + 位置：1号位）→ 我知道我是控球后卫
+约基奇（词嵌入：内线核心 + 位置：5号位）→ 我知道我是中锋
+</code></pre></div></p>
+<h2><strong>💡 为什么两个“位置无关”需要“位置相关”？</strong></h2>
+<h3><strong>场景A：没有位置编码</strong></h3>
+<div class="highlight"><pre><span></span><code>句子1：&quot;猫追老鼠&quot;
+句子2：&quot;老鼠追猫&quot;
+
+自注意力看到的：
+猫：有“猫”特征，注意“追”和“老鼠”
+老鼠：有“老鼠”特征，注意“追”和“猫”
+
+模型可能混淆：到底谁追谁？
+</code></pre></div>
+<h3><strong>场景B：有了位置编码</strong></h3>
+<div class="highlight"><pre><span></span><code>&quot;猫[位置1] 追[位置2] 老鼠[位置3]&quot;
+&quot;老鼠[位置1] 追[位置2] 猫[位置3]&quot;
+
+现在：
+- 位置1的词关注位置2和3的词
+- 模型能学到：“位置1的主语 → 位置2的动词 → 位置3的宾语”
+</code></pre></div>
+<h2><strong>🎯 位置编码的“魔法”</strong></h2>
+<h3><strong>方式1：绝对位置编码（GPS坐标）</strong></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># 像给每个词一个固定地址</span>
+<span class="n">位置1</span><span class="err">：</span><span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+<span class="n">位置2</span><span class="err">：</span><span class="p">[</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+<span class="n">位置3</span><span class="err">：</span><span class="p">[</span><span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+</code></pre></div>
+<h3><strong>方式2：相对位置编码（距离描述）</strong></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># 描述词之间的距离关系</span>
+<span class="err">“</span><span class="n">我</span><span class="p">[</span><span class="n">当前</span><span class="p">]</span> <span class="n">和</span> <span class="n">爱</span><span class="p">[</span><span class="n">距离</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="n">的关系是</span><span class="err">？”</span>
+<span class="err">“</span><span class="n">我</span><span class="p">[</span><span class="n">当前</span><span class="p">]</span> <span class="n">和</span> <span class="n">你</span><span class="p">[</span><span class="n">距离</span><span class="o">+</span><span class="mi">2</span><span class="p">]</span> <span class="n">的关系是</span><span class="err">？”</span>
+</code></pre></div>
+<h2><strong>📊 实际例子：为什么位置很重要</strong></h2>
+<h3><strong>英文例子</strong></h3>
+<div class="highlight"><pre><span></span><code>输入1：&quot;I not only like apples but also oranges&quot;（我不仅喜欢苹果也喜欢橙子）
+输入2：&quot;I like not only apples but also oranges&quot;（我喜欢不仅苹果也橙子）
+
+词嵌入相同：&quot;I&quot;, &quot;not&quot;, &quot;only&quot;, &quot;like&quot;, &quot;apples&quot;, &quot;but&quot;, &quot;also&quot;, &quot;oranges&quot;
+
+没有位置信息时，两个句子对模型来说可能一样！
+但实际语法结构完全不同。
+</code></pre></div>
+<h3><strong>中文例子</strong></h3>
+<div class="highlight"><pre><span></span><code>&quot;妈妈打孩子&quot; vs &quot;孩子打妈妈&quot;
+词完全相同，顺序不同，意思完全相反！
+</code></pre></div>
+<h2><strong>⚙️ 技术实现类比</strong></h2>
+<p>想象你在组装家具：</p>
+<ol>
+<li>
+<p><strong>零件（词元ID嵌入）</strong>：</p>
+<ul>
+<li>木板A、木板B、螺丝、把手</li>
+<li>每个零件有固定属性</li>
+</ul>
+</li>
+<li>
+<p><strong>组装手册（自注意力）</strong>：</p>
+<ul>
+<li>“看所有零件，决定怎么组装”</li>
+<li>但手册没说哪个零件在哪</li>
+</ul>
+</li>
+<li>
+<p><strong>零件编号（位置编码）</strong>：</p>
+<ul>
+<li>木板A（1号位置）</li>
+<li>木板B（2号位置）</li>
+<li>螺丝（3号位置）</li>
+<li>把手（4号位置）</li>
+</ul>
+</li>
+<li>
+<p><strong>完整信息</strong>：</p>
+<ul>
+<li><strong>零件特征</strong> + <strong>位置编号</strong> + <strong>组装规则</strong></li>
+<li>这样才能正确组装！</li>
+</ul>
+</li>
+</ol>
+<h2><strong>🎭 更形象的比喻</strong></h2>
+<p><strong>没有位置编码的Transformer就像：</strong>
+- 看一场<strong>静音且打乱顺序</strong>的电影截图
+- 你知道画面里有什么（词嵌入）
+- 你知道人物间的关系（自注意力）
+- 但<strong>不知道事情发生的先后顺序</strong>
+- 结局可能变成开头，对话顺序全乱</p>
+<p><strong>加上位置编码后：</strong>
+- 恢复了<strong>时间轴</strong>
+- 知道哪个画面在前，哪个在后
+- 能理解因果关系和发展逻辑</p>
+<h2><strong>💎 总结</strong></h2>
+<p><strong>确定性词元ID嵌入</strong>保证了：
+- “猫”永远是“猫”，不会变成“狗”
+- 可重现性：每次“猫”都映射到相同向量</p>
+<p><strong>自注意力的位置无关性</strong>意味着：
+- 它天生“顺序盲”
+- 需要外部帮助理解顺序</p>
+<p><strong>位置编码的注入</strong>解决了：
+- 告诉模型“谁在前，谁在后”
+- 让模型理解语言的时间/逻辑顺序
+- 让两个“位置无关”的东西能处理“位置相关”的任务</p>
+<p>就像<strong>天赋（词嵌入）+ 规则（自注意力）+ 顺序感（位置编码）= 真正的语言理解</strong>！</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>
