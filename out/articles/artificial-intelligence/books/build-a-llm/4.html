@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Oasis's Cloud</title>
+        <title>从零构建大模型（四）</title>
         <link rel="stylesheet" href="../../../../assets/fonts.css">
         <link rel="stylesheet" href="../../../../assets/graphite.css">
         <link rel="stylesheet" href="../../../../assets/pygments.css">
@@ -32,17 +32,32 @@
         </header>
         <article class="main">
             <header class="title">
-                <h1></h1>
+                <h1>从零构建大模型（四）</h1>
                 
+                    <p class="subtitle">从头实现GPT模型进行文本生成</p>
+                
+                
+                    <p class="author">作者：oasis</p>
                 
                 <hr>
             </header>
-            <hr />
-<p>title: &ldquo;从零构建大模型（四）&rdquo;
-subTitle: &ldquo;从头实现GPT模型进行文本生成&rdquo;
-author: oasis
-tags: [llm]</p>
-<hr />
+            <p>Transformer 块包含如下部分：</p>
+<ol>
+<li>层归一化</li>
+<li>GELU 激活函数</li>
+<li>前馈神经网络</li>
+<li>快接连接</li>
+</ol>
+<h2>层归一化</h2>
+<p>层归一化的主要思想是调整神经网络层的激活（输出），使其均值为0且方差（单位方差）为1。这种调整有助于加速权重的有效收敛，并确保训练过程的一致性和可靠性。</p>
+<p>层归一化通常在多头注意力模块的前后进行，同时层归一化还应用于最终输出层之前。</p>
+<p>均值和方差的计算方法：</p>
+<p><img alt="img.png" src="/images/build-a-llm/ch04-1.png" /></p>
+<div class="highlight"><pre><span></span><code>样本特征：x = [2, 4, 6, 8]  (d=4)
+设：ε = 0.00001, γ = [1,1,1,1], β = [0,0,0,0]
+</code></pre></div>
+<p>层归一化是在特征维度上进行归一化。层归一化是对每个输入独立进行归一化，不受批次大小的限制，因此更灵活和稳定。在资源受限的环境中部署模型时尤为重要。</p>
+<h2>GELU 激活函数</h2>
         </article>
         
         <script src="https://giscus.app/client.js"
