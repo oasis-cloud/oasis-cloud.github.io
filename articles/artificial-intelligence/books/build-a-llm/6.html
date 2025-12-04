@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Oasis's Cloud</title>
+        <title>从零构建大模型（六）</title>
         <link rel="stylesheet" href="../../../../assets/fonts.css">
         <link rel="stylesheet" href="../../../../assets/graphite.css">
         <link rel="stylesheet" href="../../../../assets/pygments.css">
@@ -32,17 +32,89 @@
         </header>
         <article class="main">
             <header class="title">
-                <h1></h1>
+                <h1>从零构建大模型（六）</h1>
                 
+                    <p class="subtitle">针对分类的微调</p>
+                
+                
+                    <p class="author">作者：oasis</p>
                 
                 <hr>
             </header>
-            <hr />
-<p>title: &ldquo;从零构建大模型（六）&rdquo;
-subTitle: &ldquo;针对分类的微调&rdquo;
-author: oasis
-tags: [llm]</p>
-<hr />
+            <p>针对分类微调的整体步骤：</p>
+<ol>
+<li>选择微调策略<ul>
+<li>先判断任务是否属于“需要把文本映射到一组固定类别”的场景，例如垃圾消息检测、情感分析等；若是，则采用分类微调而非指令微调。</li>
+<li>原因：分类微调在遇到明确类别标签时更直接、计算也更轻量。</li>
+</ul>
+</li>
+<li>准备数据集<ul>
+<li>下载并清洗数据，将原始类别标签（如“ham”“spam”）映射为连续整数。</li>
+<li>对数据集做下采样、随机拆分（常见比例 70% 训练 / 10% 验证 / 20% 测试）。</li>
+<li>原因：保证类别平衡且有独立的评估集，避免后续过拟合难以发现。</li>
+</ul>
+</li>
+<li>初始化带有预训练权重的模型<ul>
+<li>用与预训练时相同的配置创建 GPT 等模型，再把官方权重加载进来。</li>
+<li>原因：保留语言模型已学到的通用语言表示，再在此基础上做少量调整即可适应新任务。</li>
+</ul>
+</li>
+<li>创建数据加载器<ul>
+<li>将所有消息填充到数据集中最长消息的长度或批次长度</li>
+<li>原因：避免信息丢失，而从降低模型性能</li>
+</ul>
+</li>
+<li><strong>替换输出层（添加分类头）</strong><ul>
+<li>将原始输出层替换成适配新类别数的小型层；例如二分类就用 2 个输出节点。</li>
+<li>可选择只微调最后几层或全部层，通常只微调靠近输出的层既有效又省计算。</li>
+<li>原因：输出层负责把深层语义映射为类别分数，新任务需要新的映射；局部微调在保持效果的同时降低显存与时间开销。</li>
+</ul>
+</li>
+<li>定义损失函数与评估指标<ul>
+<li>对每个批量计算交叉熵损失，并在批量上取 softmax 后求 argmax 得到类别预测，从而统计准确率。</li>
+<li>原因：交叉熵是可微且与准确率优化目标一致的替代函数；准确率直观反映分类性能。</li>
+</ul>
+</li>
+<li>在有监督数据上微调模型<ul>
+<li>设置优化器、训练轮数，写训练循环：前向计算、反向传播、参数更新；每轮后评估训练/验证损失与准确率。</li>
+<li>原因：通过最小化交叉熵损失让模型把更多注意力集中在正确类别，同时用验证集监控过拟合。</li>
+</ul>
+</li>
+<li>评估与测试<ul>
+<li>微调结束后，在测试集上计算最终准确率、混淆矩阵等指标，确认模型泛化能力。</li>
+<li>原因：独立测试集能给出对未知数据的可靠评估。</li>
+</ul>
+</li>
+<li>部署与复用<ul>
+<li>将模型保存（torch.save）以便后续加载、推理或再微调。</li>
+<li>原因：便于集成到实际系统或进一步迁移学习。</li>
+</ul>
+</li>
+</ol>
+<h2>替换输出层（添加分类头）</h2>
+<p>分类头初识时映射不对，但损失函数知道正确答案，并通过反向传播进行纠正。<strong>反向传播是在计算损失之后</strong>。</p>
+<div class="highlight"><pre><span></span><code><span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_epochs</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">batch_idx</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">train_loader</span><span class="p">):</span>
+        <span class="c1"># ----- 前向传播阶段 -----</span>
+        <span class="n">input_ids</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s1">&#39;input_ids&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s1">&#39;labels&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># 模型前向（你定义的架构）</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">input_ids</span><span class="p">)</span>      <span class="c1"># → 前向传播</span>
+
+        <span class="c1"># 计算损失</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+
+        <span class="c1"># ----- 反向传播阶段 -----</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>           <span class="c1"># 清空旧梯度</span>
+        <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>                 <span class="c1"># 🎯 反向传播自动计算梯度</span>
+
+        <span class="c1"># ----- 参数更新阶段 -----</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>                <span class="c1"># 根据梯度更新参数</span>
+
+        <span class="c1"># ----- 可选：梯度裁剪 -----</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">clip_grad_norm_</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">max_norm</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+</code></pre></div>
         </article>
         
         <script src="https://giscus.app/client.js"

@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Oasis's Cloud</title>
+        <title>从零构建大模型（七）</title>
         <link rel="stylesheet" href="../../../../assets/fonts.css">
         <link rel="stylesheet" href="../../../../assets/graphite.css">
         <link rel="stylesheet" href="../../../../assets/pygments.css">
@@ -32,17 +32,64 @@
         </header>
         <article class="main">
             <header class="title">
-                <h1></h1>
+                <h1>从零构建大模型（七）</h1>
                 
+                    <p class="subtitle">通过微调遵循人类指令</p>
+                
+                
+                    <p class="author">作者：oasis</p>
                 
                 <hr>
             </header>
-            <hr />
-<p>title: &ldquo;从零构建大模型（七）&rdquo;
-subTitle: &ldquo;通过微调遵循人类指令&rdquo;
-author: oasis
-tags: [llm]</p>
-<hr />
+            <p>指令微调也被称为有监督指令微调。它要解决的问题：预训练后的大语言模型在执行特定指令时往往表现不佳，比如无法完整像“纠正这段文字的语法”或“将这段话变为被动语态“</p>
+<p>指令微调需要在一个明确提供输入-输出对的数据集上训练模型。下面列举了数据样本（提示词风格样本）：</p>
+<div class="highlight"><pre><span></span><code>{
+  &#39;instruction&#39;: &quot;What is an antonym of &#39;complicated&#39;?&quot;,
+  &#39;input&#39;: &#39;&#39;,
+  &#39;output&#39;: &quot;An antonym of &#39;complicated&#39; is &#39;simple&#39;.&quot;
+}
+或
+{
+  &#39;instruction&#39;: &#39;Identify the correct spelling of the following word.&#39;,
+  &#39;input&#39;: &#39;Ocassion&#39;,
+  &#39;output&#39;: &quot;The correct spelling is &#39;Occasion.&#39;&quot;
+}
+</code></pre></div>
+<p>指令微调整合训练批次的处理稍微复杂一些。
+1. 首先适用提示词模板制作格式化数据
+    - 将输入格式化为指令-回复模板
+2. 将格式化数据词元化
+    - 将指令-回复样本变成词元 ID
+3. 用填充词元调整到同一长度
+    - 在每个数据样本后加入足够的填充词元，使得同批次样本长度相同
+4. 创建目标词元 ID 用于训练
+    - 创建一个用于模型学习的目标词元 ID 列表，此列表由输入词元向右移动一个词，再加上一个填充词元得到
+5. 用占位符替换部分填充词元
+    - 将部分填充词元替换为 -100，使得模型在学习时不计算这部分损失</p>
+<p>指令-回复模板如下：</p>
+<div class="highlight"><pre><span></span><code>Below is an instruction that describe a task. Write a response that appropriately complete the request.
+
+### Instruction
+Identify the correct spelling of the following word.
+
+### Input
+Ocassion
+
+### Response
+The correct spelling is &#39;Occasion&#39;.
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>Below is an instruction that describe a task. Write a response that appropriately complete the request.
+
+### Instruction
+Convert 45 kilometers to meters.
+
+### Response
+45 kilometers is 45000 meters.
+</code></pre></div>
+<p>将部分填充词元替换为 -100，使得模型在学习时不计算这部分损失。为什么设置 -100 ？因为 PyTorch 中 cross_entropy 函数的 ignore_index 默认值为 -100。</p>
+<p>利用这个 ignore_index 来忽略那些用于填充训练示例以使每个批次具有相同长度的额外结束符（填充）词元。然而，我们需要在目标中保留结束符词元ID50256，因为它有助于大语言模型学习生成结束符词元，从而在适当的时候结束回复。</p>
+<h2>评价标准</h2>
+<p>通过 <a href="https://ollama.com/library/llama3.1">Llama 3</a> 模型进行评估。用另外一种大模型进行评估。</p>
         </article>
         
         <script src="https://giscus.app/client.js"
