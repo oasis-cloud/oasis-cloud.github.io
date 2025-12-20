@@ -23,7 +23,7 @@ subTitle: 目录
 * [源码分析——Immerjs](@root/articles/frontend/immerjs/2.html)
 * [源码分析——async-validator](@root/articles/frontend/12.html)
 * [源码分析——nrm](@root/articles/frontend/6.html)
-* [next-intl request.mjs 中 getRequestConfig 的调用流程解析]()
+* [next-intl request.mjs 中 getRequestConfig 的调用流程解析](@root/articles/nextjs-ecosystem/next-intl/1.html)
 * [Taro 运行时机制解析](@root/articles/frontend/18.html)
 * [Taro 构建流程源码分析](@root/articles/frontend/19.html)
 * [Taro 源码阅读笔记](@root/articles/frontend/20.html)
