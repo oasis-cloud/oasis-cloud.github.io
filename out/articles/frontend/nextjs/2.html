@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>[mini-next.js] 文件系统路由：Pages Router 实现</title>
+        <link rel="stylesheet" href="../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../assets/pygments.css">
+        <script src="../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-frontend-nextjs-2 node-articles-frontend-nextjs node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>[mini-next.js] 文件系统路由：Pages Router 实现</h1>
+                
+                
+                    <p class="author">作者：oasis</p>
+                
+                <hr>
+            </header>
+            <h2>概述</h2>
+<p>文件系统路由是 Next.js 的核心特性之一。它允许开发者通过文件系统结构来定义路由，无需手动配置路由表。本文将深入分析并实现 Pages Router。</p>
+<h2>核心概念</h2>
+<h3>文件即路由</h3>
+<p>在 Pages Router 中，<code>pages</code> 目录下的文件结构直接映射到 URL 路径：</p>
+<div class="highlight"><pre><span></span><code>pages/
+├── index.js          → /
+├── about.js          → /about
+├── contact.js        → /contact
+└── posts/
+    ├── index.js      → /posts
+    └── [id].js       → /posts/:id
+</code></pre></div>
+<h3>路由规则</h3>
+<ol>
+<li><strong>index.js 特殊处理</strong>：<code>pages/index.js</code> 映射到根路径 <code>/</code></li>
+<li><strong>文件路径 = URL 路径</strong>：<code>pages/about.js</code> → <code>/about</code></li>
+<li><strong>目录嵌套</strong>：<code>pages/posts/index.js</code> → <code>/posts</code></li>
+<li><strong>动态路由</strong>：<code>pages/posts/[id].js</code> → <code>/posts/:id</code></li>
+</ol>
+<h2>功能分析</h2>
+<h3>1. 路由扫描</h3>
+<p>需要扫描 <code>pages</code> 目录，构建路由映射表：</p>
+<p><strong>输入</strong>：<code>pages</code> 目录路径<br />
+<strong>输出</strong>：路由映射表（静态路由 + 动态路由）</p>
+<p><strong>算法</strong>：
+1. 递归遍历 <code>pages</code> 目录
+2. 识别页面文件（<code>.js</code>, <code>.jsx</code>, <code>.ts</code>, <code>.tsx</code>）
+3. 将文件路径转换为 URL 路径
+4. 识别动态路由（<code>[param]</code> 文件名）
+5. 构建路由映射</p>
+<h3>2. 路由匹配</h3>
+<p>根据 URL 路径匹配对应的路由：</p>
+<p><strong>输入</strong>：URL 路径（如 <code>/posts/123</code>）<br />
+<strong>输出</strong>：路由信息 + 动态参数</p>
+<p><strong>算法</strong>：
+1. 先尝试精确匹配静态路由
+2. 如果失败，尝试动态路由匹配
+3. 提取动态路由参数
+4. 返回匹配的路由信息</p>
+<h3>3. 动态路由处理</h3>
+<p>处理文件名中的 <code>[param]</code> 语法：</p>
+<ul>
+<li><code>[id].js</code> → 匹配单个参数</li>
+<li>需要生成正则表达式进行匹配</li>
+<li>提取参数值</li>
+</ul>
+<h2>逐步实现</h2>
+<h3>步骤 1：创建路由类结构</h3>
+<div class="highlight"><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nx">FileSystemRouter</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kr">constructor</span><span class="p">(</span><span class="nx">pagesDir</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">pagesDir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">pagesDir</span><span class="p">;</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">routes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Map</span><span class="p">();</span><span class="w">        </span><span class="c1">// 静态路由</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">dynamicRoutes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Map</span><span class="p">();</span><span class="w"> </span><span class="c1">// 动态路由</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>设计说明</strong>：
+- 使用 <code>Map</code> 存储路由，查找效率高
+- 分离静态和动态路由，匹配时先尝试静态路由</p>
+<h3>步骤 2：实现文件扫描</h3>
+<div class="highlight"><pre><span></span><code><span class="nx">scanRoutes</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">this</span><span class="p">.</span><span class="nx">routes</span><span class="p">.</span><span class="nx">clear</span><span class="p">();</span>
+<span class="w">  </span><span class="k">this</span><span class="p">.</span><span class="nx">dynamicRoutes</span><span class="p">.</span><span class="nx">clear</span><span class="p">();</span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">fs</span><span class="p">.</span><span class="nx">existsSync</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">pagesDir</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="k">this</span><span class="p">.</span><span class="nx">_scanDirectory</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">pagesDir</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>关键点</strong>：
+- 清空旧路由，支持重新扫描
+- 检查目录是否存在
+- 从根目录开始递归扫描</p>
+<h3>步骤 3：递归扫描目录</h3>
+<div class="highlight"><pre><span></span><code><span class="nx">_scanDirectory</span><span class="p">(</span><span class="nx">dir</span><span class="p">,</span><span class="w"> </span><span class="nx">routePath</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">files</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">fs</span><span class="p">.</span><span class="nx">readdirSync</span><span class="p">(</span><span class="nx">dir</span><span class="p">);</span>
+
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">file</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">files</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">filePath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">path</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="nx">dir</span><span class="p">,</span><span class="w"> </span><span class="nx">file</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">stat</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">fs</span><span class="p">.</span><span class="nx">statSync</span><span class="p">(</span><span class="nx">filePath</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">stat</span><span class="p">.</span><span class="nx">isDirectory</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="c1">// 递归扫描子目录</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">newRoutePath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">routePath</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="nx">file</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="sb">`</span><span class="si">${</span><span class="nx">routePath</span><span class="si">}</span><span class="sb">/</span><span class="si">${</span><span class="nx">file</span><span class="si">}</span><span class="sb">`</span><span class="p">;</span>
+<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">_scanDirectory</span><span class="p">(</span><span class="nx">filePath</span><span class="p">,</span><span class="w"> </span><span class="nx">newRoutePath</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">_isPageFile</span><span class="p">(</span><span class="nx">file</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="c1">// 处理页面文件</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">route</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">_getRouteFromFile</span><span class="p">(</span><span class="nx">routePath</span><span class="p">,</span><span class="w"> </span><span class="nx">file</span><span class="p">);</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">fullPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">filePath</span><span class="p">;</span>
+
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">route</span><span class="p">.</span><span class="nx">isDynamic</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">dynamicRoutes</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="nx">route</span><span class="p">.</span><span class="nx">pattern</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="p">...</span><span class="nx">route</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">filePath</span><span class="o">:</span><span class="w"> </span><span class="nx">fullPath</span><span class="p">,</span>
+<span class="w">        </span><span class="p">});</span>
+<span class="w">      </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">routes</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="nx">route</span><span class="p">.</span><span class="nx">path</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="p">...</span><span class="nx">route</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">filePath</span><span class="o">:</span><span class="w"> </span><span class="nx">fullPath</span><span class="p">,</span>
+<span class="w">        </span><span class="p">});</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>关键点</strong>：
+- 区分文件和目录
+- 递归处理子目录
+- 只处理页面文件（排除 <code>_app.js</code> 等特殊文件）</p>
+<h3>步骤 4：识别页面文件</h3>
+<div class="highlight"><pre><span></span><code><span class="nx">_isPageFile</span><span class="p">(</span><span class="nx">filename</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="sr">/\.(js|jsx|ts|tsx)$/</span><span class="p">.</span><span class="nx">test</span><span class="p">(</span><span class="nx">filename</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>
+<span class="w">         </span><span class="o">!</span><span class="nx">filename</span><span class="p">.</span><span class="nx">startsWith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>
+<span class="w">         </span><span class="nx">filename</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="s1">&#39;api&#39;</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>规则</strong>：
+- 支持 <code>.js</code>, <code>.jsx</code>, <code>.ts</code>, <code>.tsx</code> 扩展名
+- 排除以 <code>_</code> 开头的文件（如 <code>_app.js</code>）
+- 排除 <code>api</code> 目录（API 路由单独处理）</p>
+<h3>步骤 5：从文件生成路由信息</h3>
+<div class="highlight"><pre><span></span><code><span class="nx">_getRouteFromFile</span><span class="p">(</span><span class="nx">routePath</span><span class="p">,</span><span class="w"> </span><span class="nx">filename</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 移除文件扩展名</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">filename</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/\.(js|jsx|ts|tsx)$/</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="p">);</span>
+
+<span class="w">  </span><span class="c1">// index.js 映射到父路径</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">name</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;index&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">routePath</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s1">&#39;/&#39;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="sb">`/</span><span class="si">${</span><span class="nx">routePath</span><span class="si">}</span><span class="sb">`</span><span class="p">;</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">path</span><span class="p">,</span><span class="w"> </span><span class="nx">isDynamic</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nx">params</span><span class="o">:</span><span class="w"> </span><span class="p">[]</span><span class="w"> </span><span class="p">};</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="c1">// 处理动态路由 [id].js -&gt; /:id</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">dynamicMatch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">name</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/^\[(.+)\]$/</span><span class="p">);</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">dynamicMatch</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">paramName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">dynamicMatch</span><span class="p">[</span><span class="mf">1</span><span class="p">];</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">fullPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">routePath</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="w"> </span>
+<span class="w">      </span><span class="o">?</span><span class="w"> </span><span class="sb">`/</span><span class="si">${</span><span class="nx">name</span><span class="si">}</span><span class="sb">`</span><span class="w"> </span>
+<span class="w">      </span><span class="o">:</span><span class="w"> </span><span class="sb">`/</span><span class="si">${</span><span class="nx">routePath</span><span class="si">}</span><span class="sb">/</span><span class="si">${</span><span class="nx">name</span><span class="si">}</span><span class="sb">`</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">pattern</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">_createDynamicPattern</span><span class="p">(</span><span class="nx">routePath</span><span class="p">,</span><span class="w"> </span><span class="nx">paramName</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="nx">fullPath</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">pattern</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">isDynamic</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">params</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="nx">paramName</span><span class="p">],</span>
+<span class="w">    </span><span class="p">};</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="c1">// 普通路由</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">routePath</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="w"> </span>
+<span class="w">    </span><span class="o">?</span><span class="w"> </span><span class="sb">`/</span><span class="si">${</span><span class="nx">name</span><span class="si">}</span><span class="sb">`</span><span class="w"> </span>
+<span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="sb">`/</span><span class="si">${</span><span class="nx">routePath</span><span class="si">}</span><span class="sb">/</span><span class="si">${</span><span class="nx">name</span><span class="si">}</span><span class="sb">`</span><span class="p">;</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">path</span><span class="p">,</span><span class="w"> </span><span class="nx">isDynamic</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nx">params</span><span class="o">:</span><span class="w"> </span><span class="p">[]</span><span class="w"> </span><span class="p">};</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>处理逻辑</strong>：
+1. <strong>index.js</strong>：映射到父路径
+2. <strong>[id].js</strong>：识别为动态路由，生成匹配模式
+3. <strong>普通文件</strong>：直接映射到 URL 路径</p>
+<h3>步骤 6：创建动态路由匹配模式</h3>
+<div class="highlight"><pre><span></span><code><span class="nx">_createDynamicPattern</span><span class="p">(</span><span class="nx">routePath</span><span class="p">,</span><span class="w"> </span><span class="nx">paramName</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 转义特殊字符</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">escapedPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">routePath</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/[.*+?^${}()|[\]\\]/g</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;\\$&amp;&#39;</span><span class="p">);</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">routePath</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">RegExp</span><span class="p">(</span><span class="sb">`^/([^/]+)$`</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">RegExp</span><span class="p">(</span><span class="sb">`^/</span><span class="si">${</span><span class="nx">escapedPath</span><span class="si">}</span><span class="sb">/([^/]+)$`</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>关键点</strong>：
+- 转义路径中的特殊字符（如 <code>.</code>, <code>+</code> 等）
+- 生成正则表达式匹配动态参数
+- <code>([^/]+)</code> 匹配非斜杠字符</p>
+<p><strong>示例</strong>：
+- <code>pages/posts/[id].js</code> → <code>/^\/posts\/([^\/]+)$/</code>
+- 匹配 <code>/posts/123</code>，提取 <code>id = "123"</code></p>
+<h3>步骤 7：实现路由匹配</h3>
+<div class="highlight"><pre><span></span><code><span class="nx">matchRoute</span><span class="p">(</span><span class="nx">urlPath</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 先尝试精确匹配</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">routes</span><span class="p">.</span><span class="nx">has</span><span class="p">(</span><span class="nx">urlPath</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">routes</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">urlPath</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="c1">// 尝试动态路由匹配</span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="p">[</span><span class="nx">pattern</span><span class="p">,</span><span class="w"> </span><span class="nx">route</span><span class="p">]</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">dynamicRoutes</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">match</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">urlPath</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="nx">pattern</span><span class="p">);</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">match</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">params</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{};</span>
+<span class="w">      </span><span class="nx">route</span><span class="p">.</span><span class="nx">params</span><span class="p">.</span><span class="nx">forEach</span><span class="p">((</span><span class="nx">paramName</span><span class="p">,</span><span class="w"> </span><span class="nx">index</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">params</span><span class="p">[</span><span class="nx">paramName</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">match</span><span class="p">[</span><span class="nx">index</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1</span><span class="p">];</span>
+<span class="w">      </span><span class="p">});</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="p">...</span><span class="nx">route</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">params</span><span class="p">,</span>
+<span class="w">      </span><span class="p">};</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>匹配策略</strong>：
+1. <strong>优先精确匹配</strong>：O(1) 时间复杂度
+2. <strong>动态路由匹配</strong>：遍历所有动态路由模式
+3. <strong>提取参数</strong>：将匹配结果转换为参数对象</p>
+<h2>完整实现</h2>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nx">fs</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;fs&#39;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">path</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;path&#39;</span><span class="p">;</span>
+
+<span class="k">export</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nx">FileSystemRouter</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kr">constructor</span><span class="p">(</span><span class="nx">pagesDir</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">pagesDir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">pagesDir</span><span class="p">;</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">routes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Map</span><span class="p">();</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">dynamicRoutes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Map</span><span class="p">();</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nx">scanRoutes</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">routes</span><span class="p">.</span><span class="nx">clear</span><span class="p">();</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">dynamicRoutes</span><span class="p">.</span><span class="nx">clear</span><span class="p">();</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">fs</span><span class="p">.</span><span class="nx">existsSync</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">pagesDir</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">return</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">_scanDirectory</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">pagesDir</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nx">_scanDirectory</span><span class="p">(</span><span class="nx">dir</span><span class="p">,</span><span class="w"> </span><span class="nx">routePath</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">files</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">fs</span><span class="p">.</span><span class="nx">readdirSync</span><span class="p">(</span><span class="nx">dir</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">file</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">files</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">filePath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">path</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="nx">dir</span><span class="p">,</span><span class="w"> </span><span class="nx">file</span><span class="p">);</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">stat</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">fs</span><span class="p">.</span><span class="nx">statSync</span><span class="p">(</span><span class="nx">filePath</span><span class="p">);</span>
+
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">stat</span><span class="p">.</span><span class="nx">isDirectory</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">newRoutePath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">routePath</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="nx">file</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="sb">`</span><span class="si">${</span><span class="nx">routePath</span><span class="si">}</span><span class="sb">/</span><span class="si">${</span><span class="nx">file</span><span class="si">}</span><span class="sb">`</span><span class="p">;</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">_scanDirectory</span><span class="p">(</span><span class="nx">filePath</span><span class="p">,</span><span class="w"> </span><span class="nx">newRoutePath</span><span class="p">);</span>
+<span class="w">      </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">_isPageFile</span><span class="p">(</span><span class="nx">file</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">route</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">_getRouteFromFile</span><span class="p">(</span><span class="nx">routePath</span><span class="p">,</span><span class="w"> </span><span class="nx">file</span><span class="p">);</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">fullPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">filePath</span><span class="p">;</span>
+
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">route</span><span class="p">.</span><span class="nx">isDynamic</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="k">this</span><span class="p">.</span><span class="nx">dynamicRoutes</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="nx">route</span><span class="p">.</span><span class="nx">pattern</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="p">...</span><span class="nx">route</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">filePath</span><span class="o">:</span><span class="w"> </span><span class="nx">fullPath</span><span class="p">,</span>
+<span class="w">          </span><span class="p">});</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="k">this</span><span class="p">.</span><span class="nx">routes</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="nx">route</span><span class="p">.</span><span class="nx">path</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="p">...</span><span class="nx">route</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">filePath</span><span class="o">:</span><span class="w"> </span><span class="nx">fullPath</span><span class="p">,</span>
+<span class="w">          </span><span class="p">});</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nx">_isPageFile</span><span class="p">(</span><span class="nx">filename</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="sr">/\.(js|jsx|ts|tsx)$/</span><span class="p">.</span><span class="nx">test</span><span class="p">(</span><span class="nx">filename</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>
+<span class="w">           </span><span class="o">!</span><span class="nx">filename</span><span class="p">.</span><span class="nx">startsWith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>
+<span class="w">           </span><span class="nx">filename</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="s1">&#39;api&#39;</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nx">_getRouteFromFile</span><span class="p">(</span><span class="nx">routePath</span><span class="p">,</span><span class="w"> </span><span class="nx">filename</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">filename</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/\.(js|jsx|ts|tsx)$/</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">name</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;index&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">routePath</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s1">&#39;/&#39;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="sb">`/</span><span class="si">${</span><span class="nx">routePath</span><span class="si">}</span><span class="sb">`</span><span class="p">;</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">path</span><span class="p">,</span><span class="w"> </span><span class="nx">isDynamic</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nx">params</span><span class="o">:</span><span class="w"> </span><span class="p">[]</span><span class="w"> </span><span class="p">};</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">dynamicMatch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">name</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/^\[(.+)\]$/</span><span class="p">);</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">dynamicMatch</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">paramName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">dynamicMatch</span><span class="p">[</span><span class="mf">1</span><span class="p">];</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">fullPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">routePath</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="w"> </span>
+<span class="w">        </span><span class="o">?</span><span class="w"> </span><span class="sb">`/</span><span class="si">${</span><span class="nx">name</span><span class="si">}</span><span class="sb">`</span><span class="w"> </span>
+<span class="w">        </span><span class="o">:</span><span class="w"> </span><span class="sb">`/</span><span class="si">${</span><span class="nx">routePath</span><span class="si">}</span><span class="sb">/</span><span class="si">${</span><span class="nx">name</span><span class="si">}</span><span class="sb">`</span><span class="p">;</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">pattern</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">_createDynamicPattern</span><span class="p">(</span><span class="nx">routePath</span><span class="p">,</span><span class="w"> </span><span class="nx">paramName</span><span class="p">);</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="nx">fullPath</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">pattern</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">isDynamic</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">params</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="nx">paramName</span><span class="p">],</span>
+<span class="w">      </span><span class="p">};</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">routePath</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="w"> </span>
+<span class="w">      </span><span class="o">?</span><span class="w"> </span><span class="sb">`/</span><span class="si">${</span><span class="nx">name</span><span class="si">}</span><span class="sb">`</span><span class="w"> </span>
+<span class="w">      </span><span class="o">:</span><span class="w"> </span><span class="sb">`/</span><span class="si">${</span><span class="nx">routePath</span><span class="si">}</span><span class="sb">/</span><span class="si">${</span><span class="nx">name</span><span class="si">}</span><span class="sb">`</span><span class="p">;</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">path</span><span class="p">,</span><span class="w"> </span><span class="nx">isDynamic</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nx">params</span><span class="o">:</span><span class="w"> </span><span class="p">[]</span><span class="w"> </span><span class="p">};</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nx">_createDynamicPattern</span><span class="p">(</span><span class="nx">routePath</span><span class="p">,</span><span class="w"> </span><span class="nx">paramName</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">escapedPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">routePath</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/[.*+?^${}()|[\]\\]/g</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;\\$&amp;&#39;</span><span class="p">);</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">routePath</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">RegExp</span><span class="p">(</span><span class="sb">`^/([^/]+)$`</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">RegExp</span><span class="p">(</span><span class="sb">`^/</span><span class="si">${</span><span class="nx">escapedPath</span><span class="si">}</span><span class="sb">/([^/]+)$`</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nx">matchRoute</span><span class="p">(</span><span class="nx">urlPath</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">routes</span><span class="p">.</span><span class="nx">has</span><span class="p">(</span><span class="nx">urlPath</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">routes</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">urlPath</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="p">[</span><span class="nx">pattern</span><span class="p">,</span><span class="w"> </span><span class="nx">route</span><span class="p">]</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">dynamicRoutes</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">match</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">urlPath</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="nx">pattern</span><span class="p">);</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">match</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">params</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{};</span>
+<span class="w">        </span><span class="nx">route</span><span class="p">.</span><span class="nx">params</span><span class="p">.</span><span class="nx">forEach</span><span class="p">((</span><span class="nx">paramName</span><span class="p">,</span><span class="w"> </span><span class="nx">index</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="nx">params</span><span class="p">[</span><span class="nx">paramName</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">match</span><span class="p">[</span><span class="nx">index</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1</span><span class="p">];</span>
+<span class="w">        </span><span class="p">});</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="p">...</span><span class="nx">route</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">params</span><span class="p">,</span>
+<span class="w">        </span><span class="p">};</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2>测试示例</h2>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">router</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">FileSystemRouter</span><span class="p">(</span><span class="s1">&#39;./pages&#39;</span><span class="p">);</span>
+
+<span class="c1">// 扫描路由</span>
+<span class="nx">router</span><span class="p">.</span><span class="nx">scanRoutes</span><span class="p">();</span>
+
+<span class="c1">// 测试静态路由</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">aboutRoute</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">router</span><span class="p">.</span><span class="nx">matchRoute</span><span class="p">(</span><span class="s1">&#39;/about&#39;</span><span class="p">);</span>
+<span class="c1">// { path: &#39;/about&#39;, filePath: &#39;./pages/about.js&#39;, ... }</span>
+
+<span class="c1">// 测试动态路由</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">postRoute</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">router</span><span class="p">.</span><span class="nx">matchRoute</span><span class="p">(</span><span class="s1">&#39;/posts/123&#39;</span><span class="p">);</span>
+<span class="c1">// { path: &#39;/posts/[id]&#39;, filePath: &#39;./pages/posts/[id].js&#39;, params: { id: &#39;123&#39; }, ... }</span>
+</code></pre></div>
+<h2>总结</h2>
+<p>Pages Router 的核心是<strong>文件系统到 URL 路径的映射</strong>：</p>
+<ol>
+<li><strong>扫描阶段</strong>：遍历文件系统，构建路由映射表</li>
+<li><strong>匹配阶段</strong>：根据 URL 路径查找对应的文件</li>
+<li><strong>参数提取</strong>：从动态路由中提取参数值</li>
+</ol>
+<p>这个实现虽然简化，但包含了 Next.js Pages Router 的核心逻辑。在下一篇文章中，我们将实现开发服务器，将路由系统与 HTTP 服务器结合起来。</p>
+<hr />
+<p><strong>相关文件</strong>：
+- <code>src/router/file-system-router.js</code> - 完整实现
+- <code>examples/basic-app/pages/</code> - 示例页面</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>
