@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Oasis's Cloud</title>
+        <link rel="stylesheet" href="../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../assets/pygments.css">
+        <script src="../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-frontend-nextjs-04-ssr node-articles-frontend-nextjs node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1></h1>
+                
+                
+                <hr>
+            </header>
+            <h1>04. 服务端渲染：SSR 实现</h1>
+<h2>概述</h2>
+<p>服务端渲染（Server-Side Rendering, SSR）是 Next.js 的核心特性之一。它允许在服务器端将 React 组件渲染为 HTML 字符串，然后发送给客户端。本文将深入分析并实现 SSR 的核心功能。</p>
+<h2>核心概念</h2>
+<h3>什么是 SSR？</h3>
+<p><strong>传统客户端渲染（CSR）</strong>：
+<div class="highlight"><pre><span></span><code>1. 浏览器请求 HTML
+2. 服务器返回空的 HTML + JS
+3. 浏览器执行 JS，渲染页面
+</code></pre></div></p>
+<p><strong>服务端渲染（SSR）</strong>：
+<div class="highlight"><pre><span></span><code>1. 浏览器请求 HTML
+2. 服务器渲染 React 组件为 HTML
+3. 浏览器直接显示 HTML
+4. 浏览器执行 JS，进行 hydration（水合）
+</code></pre></div></p>
+<h3>SSR 的优势</h3>
+<ol>
+<li><strong>SEO 友好</strong>：搜索引擎可以直接抓取 HTML 内容</li>
+<li><strong>首屏加载快</strong>：浏览器立即显示内容，无需等待 JS 执行</li>
+<li><strong>更好的性能</strong>：减少客户端计算负担</li>
+</ol>
+<h2>功能分析</h2>
+<h3>1. React 组件渲染</h3>
+<p><strong>输入</strong>：React 组件 + Props<br />
+<strong>输出</strong>：HTML 字符串</p>
+<p><strong>技术</strong>：使用 <code>react-dom/server</code> 的 <code>renderToString</code></p>
+<h3>2. HTML 文档生成</h3>
+<p><strong>输入</strong>：组件渲染的 HTML<br />
+<strong>输出</strong>：完整的 HTML 文档</p>
+<p><strong>包含</strong>：
+- HTML 结构（<code>&lt;html&gt;</code>, <code>&lt;head&gt;</code>, <code>&lt;body&gt;</code>）
+- 元数据（<code>&lt;meta&gt;</code>, <code>&lt;title&gt;</code>）
+- 样式和脚本引用</p>
+<h3>3. Props 传递</h3>
+<p><strong>来源</strong>：
+- 动态路由参数（<code>/posts/:id</code> → <code>{ id: "123" }</code>）
+- 查询参数（<code>?name=value</code> → <code>{ name: "value" }</code>）</p>
+<h2>逐步实现</h2>
+<h3>步骤 1：创建渲染器模块结构</h3>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nx">React</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;react&#39;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">renderToString</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;react-dom/server&#39;</span><span class="p">;</span>
+
+<span class="k">export</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">renderPage</span><span class="p">(</span><span class="nx">Component</span><span class="p">,</span><span class="w"> </span><span class="nx">props</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{})</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 渲染逻辑</span>
+<span class="p">}</span>
+
+<span class="k">export</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">generateHTML</span><span class="p">(</span><span class="nx">body</span><span class="p">,</span><span class="w"> </span><span class="nx">title</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;Mini Next.js&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// HTML 生成逻辑</span>
+<span class="p">}</span>
+
+<span class="k">export</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">renderFullPage</span><span class="p">(</span><span class="nx">Component</span><span class="p">,</span><span class="w"> </span><span class="nx">props</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{},</span><span class="w"> </span><span class="nx">options</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{})</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 完整渲染流程</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>设计说明</strong>：
+- 分离关注点：组件渲染、HTML 生成、完整流程
+- 可复用：每个函数职责单一</p>
+<h3>步骤 2：实现组件渲染</h3>
+<div class="highlight"><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">renderPage</span><span class="p">(</span><span class="nx">Component</span><span class="p">,</span><span class="w"> </span><span class="nx">props</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{})</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 渲染 React 组件为 HTML 字符串</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">html</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">renderToString</span><span class="p">(</span><span class="nx">React</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="nx">Component</span><span class="p">,</span><span class="w"> </span><span class="nx">props</span><span class="p">));</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">html</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s1">&#39;SSR render error:&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="nx">error</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>关键点</strong>：
+- 使用 <code>React.createElement</code> 创建元素
+- <code>renderToString</code> 将组件树转换为 HTML 字符串
+- 错误处理：捕获渲染错误</p>
+<p><strong>示例</strong>：
+<div class="highlight"><pre><span></span><code><span class="c1">// 组件</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">Home</span><span class="p">({</span><span class="w"> </span><span class="nx">name</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="o">&lt;</span><span class="nx">h1</span><span class="o">&gt;</span><span class="nx">Hello</span><span class="w"> </span><span class="p">{</span><span class="nx">name</span><span class="p">}</span><span class="o">&lt;</span><span class="err">/h1&gt;;</span>
+<span class="p">}</span>
+
+<span class="c1">// 渲染</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">html</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">renderPage</span><span class="p">(</span><span class="nx">Home</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;World&#39;</span><span class="w"> </span><span class="p">});</span>
+<span class="c1">// 输出: &#39;&lt;h1&gt;Hello World&lt;/h1&gt;&#39;</span>
+</code></pre></div></p>
+<h3>步骤 3：实现 HTML 文档生成</h3>
+<div class="highlight"><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">generateHTML</span><span class="p">(</span><span class="nx">body</span><span class="p">,</span><span class="w"> </span><span class="nx">title</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;Mini Next.js&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="sb">`&lt;!DOCTYPE html&gt;</span>
+<span class="sb">&lt;html lang=&quot;zh-CN&quot;&gt;</span>
+<span class="sb">&lt;head&gt;</span>
+<span class="sb">  &lt;meta charset=&quot;UTF-8&quot;&gt;</span>
+<span class="sb">  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;</span>
+<span class="sb">  &lt;title&gt;</span><span class="si">${</span><span class="nx">title</span><span class="si">}</span><span class="sb">&lt;/title&gt;</span>
+<span class="sb">  &lt;style&gt;</span>
+<span class="sb">    * {</span>
+<span class="sb">      margin: 0;</span>
+<span class="sb">      padding: 0;</span>
+<span class="sb">      box-sizing: border-box;</span>
+<span class="sb">    }</span>
+<span class="sb">    body {</span>
+<span class="sb">      font-family: -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, &#39;Roboto&#39;, &#39;Oxygen&#39;,</span>
+<span class="sb">        &#39;Ubuntu&#39;, &#39;Cantarell&#39;, &#39;Fira Sans&#39;, &#39;Droid Sans&#39;, &#39;Helvetica Neue&#39;,</span>
+<span class="sb">        sans-serif;</span>
+<span class="sb">      -webkit-font-smoothing: antialiased;</span>
+<span class="sb">      -moz-osx-font-smoothing: grayscale;</span>
+<span class="sb">      line-height: 1.6;</span>
+<span class="sb">      color: #333;</span>
+<span class="sb">    }</span>
+<span class="sb">    #__next {</span>
+<span class="sb">      min-height: 100vh;</span>
+<span class="sb">    }</span>
+<span class="sb">  &lt;/style&gt;</span>
+<span class="sb">&lt;/head&gt;</span>
+<span class="sb">&lt;body&gt;</span>
+<span class="sb">  &lt;div id=&quot;__next&quot;&gt;</span><span class="si">${</span><span class="nx">body</span><span class="si">}</span><span class="sb">&lt;/div&gt;</span>
+<span class="sb">  &lt;script&gt;</span>
+<span class="sb">    // 客户端 hydration 脚本</span>
+<span class="sb">    // 在真实 Next.js 中，这里会加载编译后的客户端代码</span>
+<span class="sb">    console.log(&#39;Page loaded&#39;);</span>
+<span class="sb">  &lt;/script&gt;</span>
+<span class="sb">&lt;/body&gt;</span>
+<span class="sb">&lt;/html&gt;`</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>关键点</strong>：
+- 完整的 HTML5 文档结构
+- 内联样式（简化实现）
+- <code>#__next</code> 容器（Next.js 约定）
+- 客户端脚本占位符</p>
+<p><strong>设计说明</strong>：
+- 使用模板字符串生成 HTML
+- 转义 <code>body</code> 内容（React 已处理）
+- 预留 hydration 脚本位置</p>
+<h3>步骤 4：实现完整渲染流程</h3>
+<div class="highlight"><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">renderFullPage</span><span class="p">(</span><span class="nx">Component</span><span class="p">,</span><span class="w"> </span><span class="nx">props</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{},</span><span class="w"> </span><span class="nx">options</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{})</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">renderPage</span><span class="p">(</span><span class="nx">Component</span><span class="p">,</span><span class="w"> </span><span class="nx">props</span><span class="p">);</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">generateHTML</span><span class="p">(</span><span class="nx">body</span><span class="p">,</span><span class="w"> </span><span class="nx">options</span><span class="p">.</span><span class="nx">title</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>流程</strong>：
+1. 渲染组件为 HTML
+2. 生成完整 HTML 文档
+3. 返回最终 HTML</p>
+<h2>完整实现</h2>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nx">React</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;react&#39;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">renderToString</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;react-dom/server&#39;</span><span class="p">;</span>
+
+<span class="cm">/**</span>
+<span class="cm"> * 渲染页面组件为 HTML</span>
+<span class="cm"> */</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">renderPage</span><span class="p">(</span><span class="nx">Component</span><span class="p">,</span><span class="w"> </span><span class="nx">props</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{})</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 渲染 React 组件为 HTML 字符串</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">html</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">renderToString</span><span class="p">(</span><span class="nx">React</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="nx">Component</span><span class="p">,</span><span class="w"> </span><span class="nx">props</span><span class="p">));</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">html</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s1">&#39;SSR render error:&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="nx">error</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="cm">/**</span>
+<span class="cm"> * 生成完整的 HTML 文档</span>
+<span class="cm"> */</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">generateHTML</span><span class="p">(</span><span class="nx">body</span><span class="p">,</span><span class="w"> </span><span class="nx">title</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;Mini Next.js&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="sb">`&lt;!DOCTYPE html&gt;</span>
+<span class="sb">&lt;html lang=&quot;zh-CN&quot;&gt;</span>
+<span class="sb">&lt;head&gt;</span>
+<span class="sb">  &lt;meta charset=&quot;UTF-8&quot;&gt;</span>
+<span class="sb">  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;</span>
+<span class="sb">  &lt;title&gt;</span><span class="si">${</span><span class="nx">title</span><span class="si">}</span><span class="sb">&lt;/title&gt;</span>
+<span class="sb">  &lt;style&gt;</span>
+<span class="sb">    * {</span>
+<span class="sb">      margin: 0;</span>
+<span class="sb">      padding: 0;</span>
+<span class="sb">      box-sizing: border-box;</span>
+<span class="sb">    }</span>
+<span class="sb">    body {</span>
+<span class="sb">      font-family: -apple-system, BlinkMacSystemFont, &#39;Segoe UI&#39;, &#39;Roboto&#39;, &#39;Oxygen&#39;,</span>
+<span class="sb">        &#39;Ubuntu&#39;, &#39;Cantarell&#39;, &#39;Fira Sans&#39;, &#39;Droid Sans&#39;, &#39;Helvetica Neue&#39;,</span>
+<span class="sb">        sans-serif;</span>
+<span class="sb">      -webkit-font-smoothing: antialiased;</span>
+<span class="sb">      -moz-osx-font-smoothing: grayscale;</span>
+<span class="sb">      line-height: 1.6;</span>
+<span class="sb">      color: #333;</span>
+<span class="sb">    }</span>
+<span class="sb">    #__next {</span>
+<span class="sb">      min-height: 100vh;</span>
+<span class="sb">    }</span>
+<span class="sb">  &lt;/style&gt;</span>
+<span class="sb">&lt;/head&gt;</span>
+<span class="sb">&lt;body&gt;</span>
+<span class="sb">  &lt;div id=&quot;__next&quot;&gt;</span><span class="si">${</span><span class="nx">body</span><span class="si">}</span><span class="sb">&lt;/div&gt;</span>
+<span class="sb">  &lt;script&gt;</span>
+<span class="sb">    // 客户端 hydration 脚本</span>
+<span class="sb">    // 在真实 Next.js 中，这里会加载编译后的客户端代码</span>
+<span class="sb">    console.log(&#39;Page loaded&#39;);</span>
+<span class="sb">  &lt;/script&gt;</span>
+<span class="sb">&lt;/body&gt;</span>
+<span class="sb">&lt;/html&gt;`</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="cm">/**</span>
+<span class="cm"> * 渲染完整的页面</span>
+<span class="cm"> */</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">renderFullPage</span><span class="p">(</span><span class="nx">Component</span><span class="p">,</span><span class="w"> </span><span class="nx">props</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{},</span><span class="w"> </span><span class="nx">options</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{})</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">renderPage</span><span class="p">(</span><span class="nx">Component</span><span class="p">,</span><span class="w"> </span><span class="nx">props</span><span class="p">);</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">generateHTML</span><span class="p">(</span><span class="nx">body</span><span class="p">,</span><span class="w"> </span><span class="nx">options</span><span class="p">.</span><span class="nx">title</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2>使用示例</h2>
+<h3>在开发服务器中使用</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// src/server/dev-server.js</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">renderFullPage</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;../renderer/ssr-renderer.js&#39;</span><span class="p">;</span>
+
+<span class="k">async</span><span class="w"> </span><span class="nx">handlePageRoute</span><span class="p">(</span><span class="nx">req</span><span class="p">,</span><span class="w"> </span><span class="nx">res</span><span class="p">,</span><span class="w"> </span><span class="nx">pathname</span><span class="p">,</span><span class="w"> </span><span class="nx">url</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">route</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">router</span><span class="p">.</span><span class="nx">matchRoute</span><span class="p">(</span><span class="nx">pathname</span><span class="p">);</span>
+
+<span class="w">  </span><span class="c1">// 加载组件</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">Component</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">moduleLoader</span><span class="p">.</span><span class="nx">loadModule</span><span class="p">(</span><span class="nx">route</span><span class="p">.</span><span class="nx">filePath</span><span class="p">);</span>
+
+<span class="w">  </span><span class="c1">// 准备 props</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">props</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="p">...</span><span class="nx">route</span><span class="p">.</span><span class="nx">params</span><span class="p">,</span><span class="w">  </span><span class="c1">// 动态路由参数</span>
+<span class="w">    </span><span class="nx">query</span><span class="o">:</span><span class="w"> </span><span class="nb">Object</span><span class="p">.</span><span class="nx">fromEntries</span><span class="p">(</span><span class="nx">url</span><span class="p">.</span><span class="nx">searchParams</span><span class="p">),</span><span class="w">  </span><span class="c1">// 查询参数</span>
+<span class="w">  </span><span class="p">};</span>
+
+<span class="w">  </span><span class="c1">// 渲染页面</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">html</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">renderFullPage</span><span class="p">(</span><span class="nx">Component</span><span class="p">,</span><span class="w"> </span><span class="nx">props</span><span class="p">);</span>
+
+<span class="w">  </span><span class="c1">// 返回响应</span>
+<span class="w">  </span><span class="nx">res</span><span class="p">.</span><span class="nx">writeHead</span><span class="p">(</span><span class="mf">200</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s1">&#39;Content-Type&#39;</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;text/html; charset=utf-8&#39;</span><span class="w"> </span><span class="p">});</span>
+<span class="w">  </span><span class="nx">res</span><span class="p">.</span><span class="nx">end</span><span class="p">(</span><span class="nx">html</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3>页面组件示例</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// pages/about.js</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">React</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;react&#39;</span><span class="p">;</span>
+
+<span class="k">export</span><span class="w"> </span><span class="k">default</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">About</span><span class="p">({</span><span class="w"> </span><span class="nx">query</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">h1</span><span class="o">&gt;</span><span class="nx">About</span><span class="w"> </span><span class="nx">Page</span><span class="o">&lt;</span><span class="err">/h1&gt;</span>
+<span class="w">      </span><span class="p">{</span><span class="nx">query</span><span class="p">.</span><span class="nx">name</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span><span class="nx">Hello</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="nx">query</span><span class="p">.</span><span class="nx">name</span><span class="p">}</span><span class="o">!&lt;</span><span class="err">/p&gt;}</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+<span class="w">  </span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>访问 <code>/about?name=World</code></strong>：
+- <code>query</code> = <code>{ name: 'World' }</code>
+- 渲染结果包含 <code>&lt;p&gt;Hello, World!&lt;/p&gt;</code></p>
+<h3>动态路由示例</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// pages/posts/[id].js</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">React</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;react&#39;</span><span class="p">;</span>
+
+<span class="k">export</span><span class="w"> </span><span class="k">default</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">Post</span><span class="p">({</span><span class="w"> </span><span class="nx">id</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">h1</span><span class="o">&gt;</span><span class="nx">Post</span><span class="w"> </span><span class="err">#</span><span class="p">{</span><span class="nx">id</span><span class="p">}</span><span class="o">&lt;</span><span class="err">/h1&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span><span class="nx">This</span><span class="w"> </span><span class="nx">is</span><span class="w"> </span><span class="nx">post</span><span class="w"> </span><span class="kd">with</span><span class="w"> </span><span class="nx">ID</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="nx">id</span><span class="p">}</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+<span class="w">  </span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>访问 <code>/posts/123</code></strong>：
+- <code>id</code> = <code>"123"</code>
+- 渲染结果包含 <code>&lt;h1&gt;Post #123&lt;/h1&gt;</code></p>
+<h2>SSR 流程详解</h2>
+<h3>1. 请求到达</h3>
+<div class="highlight"><pre><span></span><code>浏览器请求: GET /about
+    ↓
+服务器接收请求
+</code></pre></div>
+<h3>2. 路由匹配</h3>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">route</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">router</span><span class="p">.</span><span class="nx">matchRoute</span><span class="p">(</span><span class="s1">&#39;/about&#39;</span><span class="p">);</span>
+<span class="c1">// { path: &#39;/about&#39;, filePath: &#39;./pages/about.js&#39;, ... }</span>
+</code></pre></div>
+<h3>3. 组件加载</h3>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">Component</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">moduleLoader</span><span class="p">.</span><span class="nx">loadModule</span><span class="p">(</span><span class="s1">&#39;./pages/about.js&#39;</span><span class="p">);</span>
+<span class="c1">// Component = About 函数组件</span>
+</code></pre></div>
+<h3>4. Props 准备</h3>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">props</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">query</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;World&#39;</span><span class="w"> </span><span class="p">}</span><span class="w">  </span><span class="c1">// 从 URL 查询参数提取</span>
+<span class="p">};</span>
+</code></pre></div>
+<h3>5. 组件渲染</h3>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">html</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">renderToString</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">React</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="nx">Component</span><span class="p">,</span><span class="w"> </span><span class="nx">props</span><span class="p">)</span>
+<span class="p">);</span>
+<span class="c1">// html = &#39;&lt;div&gt;&lt;h1&gt;About Page&lt;/h1&gt;&lt;p&gt;Hello, World!&lt;/p&gt;&lt;/div&gt;&#39;</span>
+</code></pre></div>
+<h3>6. HTML 文档生成</h3>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">fullHTML</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">generateHTML</span><span class="p">(</span><span class="nx">html</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;About&#39;</span><span class="p">);</span>
+<span class="c1">// 完整的 HTML 文档，包含 &lt;html&gt;, &lt;head&gt;, &lt;body&gt; 等</span>
+</code></pre></div>
+<h3>7. 响应返回</h3>
+<div class="highlight"><pre><span></span><code><span class="nx">res</span><span class="p">.</span><span class="nx">writeHead</span><span class="p">(</span><span class="mf">200</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s1">&#39;Content-Type&#39;</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;text/html; charset=utf-8&#39;</span><span class="w"> </span><span class="p">});</span>
+<span class="nx">res</span><span class="p">.</span><span class="nx">end</span><span class="p">(</span><span class="nx">fullHTML</span><span class="p">);</span>
+</code></pre></div>
+<h2>与真实 Next.js 的差异</h2>
+<h3>已实现</h3>
+<ul>
+<li>✅ React 组件服务端渲染</li>
+<li>✅ Props 传递（路由参数、查询参数）</li>
+<li>✅ HTML 文档生成</li>
+</ul>
+<h3>未实现（简化）</h3>
+<ul>
+<li>❌ <strong>Hydration</strong>：客户端 JavaScript 激活</li>
+<li>❌ <strong>代码分割</strong>：按路由分割代码</li>
+<li>❌ <strong>CSS 处理</strong>：CSS Modules、Tailwind 等</li>
+<li>❌ <strong>流式渲染</strong>：Streaming SSR</li>
+<li>❌ <strong>Suspense</strong>：React Suspense 支持</li>
+</ul>
+<h2>总结</h2>
+<p>SSR 的核心是<strong>在服务器端将 React 组件转换为 HTML</strong>：</p>
+<ol>
+<li><strong>组件渲染</strong>：使用 <code>renderToString</code> 将组件树转换为 HTML</li>
+<li><strong>HTML 生成</strong>：包装成完整的 HTML 文档</li>
+<li><strong>Props 传递</strong>：将路由参数和查询参数传递给组件</li>
+</ol>
+<p>这个实现虽然简化，但包含了 Next.js SSR 的核心逻辑。在下一篇文章中，我们将实现 <strong>App Router</strong>，它提供了更强大的嵌套布局功能。</p>
+<hr />
+<p><strong>相关文件</strong>：
+- <code>src/renderer/ssr-renderer.js</code> - 完整实现
+- <code>examples/basic-app/pages/</code> - 示例页面</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>

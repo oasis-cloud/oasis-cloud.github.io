@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>[next-intl] request.mjs 中 getRequestConfig 的调用流程解析</title>
+        <link rel="stylesheet" href="../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../assets/pygments.css">
+        <script src="../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-nextjs-ecosystem-next-intl-1 node-articles-nextjs-ecosystem-next-intl node-articles-nextjs-ecosystem node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>[next-intl] request.mjs 中 getRequestConfig 的调用流程解析</h1>
+                
+                
+                    <p class="author">作者：oasis</p>
+                
+                <hr>
+            </header>
+            <p>使用 next-intl是需要向 next.config.js 中加入如下配置：</p>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nx">createNextIntlPlugin</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;next-intl/plugin&#39;</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">nextConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">withNextIntl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">createNextIntlPlugin</span><span class="p">({</span>
+<span class="w">    </span><span class="nx">requestConfig</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;./i18n/request.mjs&#39;</span><span class="p">,</span>
+<span class="p">})</span>
+
+<span class="k">export</span><span class="w"> </span><span class="k">default</span><span class="w"> </span><span class="nx">withNextIntl</span><span class="p">(</span><span class="nx">nextConfig</span><span class="p">)</span>
+</code></pre></div>
+<p>createNextIntlPlugin 会创建 <code>next-intl/config</code> 的别名：</p>
+<p><a href="https://github.com/amannn/next-intl/blob/v4.6.1/packages/next-intl/src/plugin/getNextConfig.tsx#L141">https://github.com/amannn/next-intl/blob/v4.6.1/packages/next-intl/src/plugin/getNextConfig.tsx#L141</a>
+<div class="highlight"><pre><span></span><code><span class="c1">// Assign alias for `next-intl/config`</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">resolveAlias</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Turbo aliases don&#39;t work with absolute</span>
+<span class="w">    </span><span class="c1">// paths (see error handling above)</span>
+<span class="w">    </span><span class="s1">&#39;next-intl/config&#39;</span><span class="o">:</span><span class="w"> </span><span class="nx">resolveI18nPath</span><span class="p">(</span><span class="nx">pluginConfig</span><span class="p">.</span><span class="nx">requestConfig</span><span class="p">)</span>
+<span class="p">};</span>
+</code></pre></div></p>
+<p>当 Server Component 调用 next-intl 的服务器端函数时触发，例如：</p>
+<ul>
+<li>getMessages()</li>
+<li>getTranslations()</li>
+<li>getFormatter()</li>
+</ul>
+<h2>执行顺序</h2>
+<p>请求到达 → Middleware 处理 → Server Component 渲染 → 调用 getMessages/getTranslations → getRequestConfig 执行</p>
+<h2>执行特点</h2>
+<ul>
+<li>每个请求都会执行一次</li>
+<li>在 React Server Component 渲染过程中执行</li>
+<li>可以访问 cookies()、headers() 等 Next.js 服务器端 API</li>
+<li>返回的配置会被缓存，供该请求的后续 Server Component 使用</li>
+</ul>
+<h2>总结</h2>
+<p>getRequestConfig 通过别名机制隐藏调用过程，这样更容易解耦配置和引用的两个步骤。</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>

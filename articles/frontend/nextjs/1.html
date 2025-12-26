@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>[mini-next.js] 总览：Next.js 核心架构分析</title>
+        <link rel="stylesheet" href="../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../assets/pygments.css">
+        <script src="../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-frontend-nextjs-1 node-articles-frontend-nextjs node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>[mini-next.js] 总览：Next.js 核心架构分析</h1>
+                
+                
+                    <p class="author">作者：oasis</p>
+                
+                <hr>
+            </header>
+            <h2>引言</h2>
+<p>Next.js 是一个基于 React 的全栈框架，它提供了文件系统路由、服务端渲染、静态生成等强大功能。本文将从宏观角度分析 Next.js 的核心架构，为后续深入实现打下基础。</p>
+<h2>Next.js 的核心功能模块</h2>
+<h3>1. 路由系统 (Routing)</h3>
+<p>Next.js 提供了两种路由系统：</p>
+<ul>
+<li><strong>Pages Router</strong>：基于 <code>pages</code> 目录的文件系统路由</li>
+<li><strong>App Router</strong>：基于 <code>app</code> 目录的新路由系统（Next.js 13+）</li>
+</ul>
+<p><strong>核心职责</strong>：
+- 扫描文件系统，构建路由映射表
+- 匹配 URL 路径到对应的页面组件
+- 处理动态路由参数</p>
+<h3>2. 开发服务器 (Development Server)</h3>
+<p><strong>核心职责</strong>：
+- 启动 HTTP 服务器
+- 处理客户端请求
+- 路由匹配和页面渲染
+- 提供热重载功能
+- 服务静态资源</p>
+<h3>3. 渲染系统 (Rendering)</h3>
+<p>Next.js 支持多种渲染模式：</p>
+<ul>
+<li><strong>SSR (Server-Side Rendering)</strong>：服务端渲染</li>
+<li><strong>SSG (Static Site Generation)</strong>：静态生成</li>
+<li><strong>CSR (Client-Side Rendering)</strong>：客户端渲染</li>
+</ul>
+<p><strong>核心职责</strong>：
+- 在服务端渲染 React 组件为 HTML
+- 处理布局嵌套（App Router）
+- 生成完整的 HTML 文档</p>
+<h3>4. 模块加载器 (Module Loader)</h3>
+<p><strong>核心职责</strong>：
+- 动态加载页面组件
+- 缓存模块以提高性能
+- 支持热重载时的缓存清除</p>
+<h3>5. 文件监听器 (File Watcher)</h3>
+<p><strong>核心职责</strong>：
+- 监听文件系统变化
+- 触发路由重新扫描
+- 清除相关模块缓存</p>
+<h2>整体架构图</h2>
+<div class="highlight"><pre><span></span><code>┌─────────────────────────────────────────┐
+│           CLI 命令入口                    │
+│    (dev.js, build.js, start.js)          │
+└──────────────┬──────────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────────┐
+│         开发服务器 (DevServer)           │
+│  ┌──────────────┐  ┌──────────────┐    │
+│  │  HTTP Server │  │ File Watcher │    │
+│  └──────┬───────┘  └──────┬───────┘    │
+└─────────┼─────────────────┼────────────┘
+           │                 │
+           ▼                 ▼
+┌──────────────────┐  ┌──────────────┐
+│   路由系统       │  │ 模块加载器   │
+│  ┌────────────┐ │  │              │
+│  │Pages Router│ │  │  - 加载组件  │
+│  └────────────┘ │  │  - 缓存管理  │
+│  ┌────────────┐ │  │  - 热重载    │
+│  │App Router │ │  └──────────────┘
+│  └────────────┘ │
+└────────┬────────┘
+         │
+         ▼
+┌──────────────────┐
+│   渲染系统       │
+│  ┌────────────┐ │
+│  │SSR Renderer│ │
+│  └────────────┘ │
+│  ┌────────────┐ │
+│  │App Renderer│ │
+│  └────────────┘ │
+└─────────────────┘
+</code></pre></div>
+<h2>请求处理流程</h2>
+<h3>Pages Router 流程</h3>
+<div class="highlight"><pre><span></span><code>1. HTTP 请求到达
+   ↓
+2. 解析 URL 路径
+   ↓
+3. Pages Router 匹配路由
+   ↓
+4. 模块加载器加载页面组件
+   ↓
+5. SSR 渲染器渲染组件为 HTML
+   ↓
+6. 返回 HTML 响应
+</code></pre></div>
+<h3>App Router 流程</h3>
+<div class="highlight"><pre><span></span><code>1. HTTP 请求到达
+   ↓
+2. 解析 URL 路径
+   ↓
+3. App Router 匹配路由
+   ↓
+4. 加载所有相关布局（从根到当前路由）
+   ↓
+5. 加载页面组件
+   ↓
+6. App 渲染器嵌套渲染布局和页面
+   ↓
+7. 返回 HTML 响应
+</code></pre></div>
+<h2>核心数据结构</h2>
+<h3>路由信息</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// Pages Router</span>
+<span class="p">{</span>
+<span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;/about&#39;</span><span class="p">,</span><span class="w">           </span><span class="c1">// URL 路径</span>
+<span class="w">  </span><span class="nx">filePath</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;/path/to/pages/about.js&#39;</span><span class="p">,</span><span class="w">  </span><span class="c1">// 文件路径</span>
+<span class="w">  </span><span class="nx">isDynamic</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w">        </span><span class="c1">// 是否为动态路由</span>
+<span class="w">  </span><span class="nx">params</span><span class="o">:</span><span class="w"> </span><span class="p">[]</span><span class="w">               </span><span class="c1">// 动态路由参数名列表</span>
+<span class="p">}</span>
+
+<span class="c1">// App Router</span>
+<span class="p">{</span>
+<span class="w">  </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;/about&#39;</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">pagePath</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;/path/to/app/about/page.js&#39;</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">layoutPath</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;/path/to/app/layout.js&#39;</span><span class="p">,</span><span class="w">  </span><span class="c1">// 当前路由段的布局</span>
+<span class="w">  </span><span class="nx">isDynamic</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">params</span><span class="o">:</span><span class="w"> </span><span class="p">[]</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3>模块缓存</h3>
+<div class="highlight"><pre><span></span><code><span class="nb">Map</span><span class="o">&lt;</span><span class="nx">filePath</span><span class="p">,</span><span class="w"> </span><span class="nx">Component</span><span class="o">&gt;</span>
+</code></pre></div>
+<h2>技术栈</h2>
+<ul>
+<li><strong>Node.js</strong>：运行环境</li>
+<li><strong>React</strong>：UI 框架</li>
+<li><strong>React DOM Server</strong>：服务端渲染</li>
+<li><strong>chokidar</strong>：文件系统监听</li>
+<li><strong>原生 HTTP 模块</strong>：HTTP 服务器</li>
+</ul>
+<h2>实现策略</h2>
+<p>我们将采用<strong>自顶向下</strong>的实现策略：</p>
+<ol>
+<li><strong>先理解整体架构</strong>（本文）</li>
+<li><strong>实现路由系统</strong>：从 Pages Router 开始</li>
+<li><strong>实现开发服务器</strong>：HTTP 服务器和请求处理</li>
+<li><strong>实现渲染系统</strong>：SSR 渲染</li>
+<li><strong>实现 App Router</strong>：新路由系统</li>
+<li><strong>优化开发体验</strong>：热重载、错误处理等</li>
+</ol>
+<h2>设计原则</h2>
+<h3>1. 简化优先</h3>
+<p>这是一个教学项目，我们优先实现核心功能，简化复杂特性：
+- ✅ 实现核心路由和渲染
+- ❌ 暂不实现代码分割、CSS 处理等</p>
+<h3>2. 代码清晰</h3>
+<ul>
+<li>使用中文注释</li>
+<li>函数职责单一</li>
+<li>代码结构清晰</li>
+</ul>
+<h3>3. 渐进式实现</h3>
+<ul>
+<li>先实现基础功能</li>
+<li>再添加高级特性</li>
+<li>每一步都可以运行和测试</li>
+</ul>
+<h2>下一步</h2>
+<p>在下一篇文章中，我们将深入实现 <strong>Pages Router</strong>，这是 Next.js 最基础也是最重要的功能之一。</p>
+<p>我们将：
+1. 分析文件系统路由的原理
+2. 实现路由扫描逻辑
+3. 实现路由匹配算法
+4. 处理动态路由</p>
+<hr />
+<p><strong>相关文件</strong>：
+- <code>src/router/file-system-router.js</code> - Pages Router 实现
+- <code>src/router/app-router.js</code> - App Router 实现
+- <code>src/server/dev-server.js</code> - 开发服务器实现</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>
