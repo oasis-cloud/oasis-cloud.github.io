@@ -39,6 +39,8 @@ subTitle: 目录
 * [React 基础渲染流程——基于 v19.2.0 版本](@root/articles/frontend/react/1.html)
 * [React 状态更新流程——基于 v19.2.0 版本](@root/articles/frontend/react/2.html)
 * [React scheduler——基于 v19.2.0 版本](@root/articles/frontend/react/3.html)
+* [React useSyncExternalStore：基于发布订阅模式的状态订阅机制](@root/articles/frontend/react-hooks/1.html)
+* [zustand 源码分析——基于 v5.0.0 版本](@root/articles/frontend/zustand/1.html)
 <br />
 
 * [Taro 运行时机制解析](@root/articles/frontend/18.html)
@@ -60,6 +62,7 @@ subTitle: 目录
 * [Sass @use vs @import](@root/articles/frontend/1.html)
 * [微前端学习笔记](@root/articles/frontend/5.html)
 * [自己动手实现——marquee](@root/articles/frontend/4.html)
+* [JavaScript 设计模式](@root/articles/learn-js-design-pattern/1.html)
 <br />
 
 * [通过 jscodeshift 重构代码](@root/articles/frontend/14.html)

@@ -39,7 +39,7 @@
                 
                 <hr>
             </header>
-            <p>使用 next-intl是需要向 next.config.js 中加入如下配置：</p>
+            <p>使用 next-intl 需要在 <code>next.config.js</code> 中加入如下配置：</p>
 <div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nx">createNextIntlPlugin</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;next-intl/plugin&#39;</span>
 <span class="kd">const</span><span class="w"> </span><span class="nx">nextConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span>
 
@@ -49,32 +49,32 @@
 
 <span class="k">export</span><span class="w"> </span><span class="k">default</span><span class="w"> </span><span class="nx">withNextIntl</span><span class="p">(</span><span class="nx">nextConfig</span><span class="p">)</span>
 </code></pre></div>
-<p>createNextIntlPlugin 会创建 <code>next-intl/config</code> 的别名：</p>
-<p><a href="https://github.com/amannn/next-intl/blob/v4.6.1/packages/next-intl/src/plugin/getNextConfig.tsx#L141">https://github.com/amannn/next-intl/blob/v4.6.1/packages/next-intl/src/plugin/getNextConfig.tsx#L141</a>
+<p><code>createNextIntlPlugin</code> 会创建 <code>next-intl/config</code> 的别名，具体实现如下：</p>
+<p>参考：<a href="https://github.com/amannn/next-intl/blob/v4.6.1/packages/next-intl/src/plugin/getNextConfig.tsx#L141">源码链接</a></p>
 <div class="highlight"><pre><span></span><code><span class="c1">// Assign alias for `next-intl/config`</span>
 <span class="kd">const</span><span class="w"> </span><span class="nx">resolveAlias</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="c1">// Turbo aliases don&#39;t work with absolute</span>
 <span class="w">    </span><span class="c1">// paths (see error handling above)</span>
 <span class="w">    </span><span class="s1">&#39;next-intl/config&#39;</span><span class="o">:</span><span class="w"> </span><span class="nx">resolveI18nPath</span><span class="p">(</span><span class="nx">pluginConfig</span><span class="p">.</span><span class="nx">requestConfig</span><span class="p">)</span>
 <span class="p">};</span>
-</code></pre></div></p>
-<p>当 Server Component 调用 next-intl 的服务器端函数时触发，例如：</p>
+</code></pre></div>
+<p>当 Server Component 调用 next-intl 的服务器端函数时，会触发 <code>getRequestConfig</code> 的执行，例如：</p>
 <ul>
-<li>getMessages()</li>
-<li>getTranslations()</li>
-<li>getFormatter()</li>
+<li><code>getMessages()</code></li>
+<li><code>getTranslations()</code></li>
+<li><code>getFormatter()</code></li>
 </ul>
 <h2>执行顺序</h2>
-<p>请求到达 → Middleware 处理 → Server Component 渲染 → 调用 getMessages/getTranslations → getRequestConfig 执行</p>
+<p>请求到达 → Middleware 处理 → Server Component 渲染 → 调用 <code>getMessages</code>/<code>getTranslations</code> → <code>getRequestConfig</code> 执行</p>
 <h2>执行特点</h2>
 <ul>
 <li>每个请求都会执行一次</li>
 <li>在 React Server Component 渲染过程中执行</li>
-<li>可以访问 cookies()、headers() 等 Next.js 服务器端 API</li>
+<li>可以访问 <code>cookies()</code>、<code>headers()</code> 等 Next.js 服务器端 API</li>
 <li>返回的配置会被缓存，供该请求的后续 Server Component 使用</li>
 </ul>
 <h2>总结</h2>
-<p>getRequestConfig 通过别名机制隐藏调用过程，这样更容易解耦配置和引用的两个步骤。</p>
+<p><code>getRequestConfig</code> 通过别名机制隐藏调用过程，这样更容易解耦配置和引用两个步骤。</p>
         </article>
         
         <script src="https://giscus.app/client.js"
