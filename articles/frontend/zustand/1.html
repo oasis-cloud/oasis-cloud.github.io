@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>zustand 源码分析</title>
+        <link rel="stylesheet" href="../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../assets/pygments.css">
+        <script src="../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-frontend-zustand-1 node-articles-frontend-zustand node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>zustand 源码分析</h1>
+                
+                
+                    <p class="author">作者：oasis</p>
+                
+                <hr>
+            </header>
+            <h2>前置阅读：</h2>
+<ul>
+<li><a href="../../../articles/frontend/react-hooks/1.html">React useSyncExternalStore：基于发布订阅模式的状态订阅机制</a></li>
+</ul>
+<h2>zustand 简介</h2>
+<p>zustand（德语&rdquo;状态&rdquo;的意思）是一个轻量级、快速且可扩展的状态管理库。它基于简化的 Flux 原则，提供了基于 Hook 的简洁 API，代码量极小（压缩后不到 1KB），同时避免了传统状态管理方案的复杂性。</p>
+<p><strong>核心特点：</strong></p>
+<ul>
+<li><strong>无需 Provider</strong>：不需要用 Context Provider 包裹应用，避免了 Context 带来的性能问题和渲染优化难题</li>
+<li><strong>基于 React.useSyncExternalStore</strong>：使用 React 18+ 官方 API 实现状态订阅，正确处理了并发渲染、zombie child 等常见问题</li>
+<li><strong>简洁的 API</strong>：通过 <code>create</code> 函数创建 store，返回的 hook 可以直接使用，支持 selector 精确订阅状态切片</li>
+<li><strong>灵活的扩展能力</strong>：支持中间件模式，可以轻松集成 devtools、persist、immer 等插件</li>
+<li><strong>TypeScript 友好</strong>：完整的类型推导支持，开发体验优秀</li>
+</ul>
+<p>相比 Redux，zustand 减少了大量模板代码；相比 Context API，它提供了更细粒度的更新控制和更好的性能表现。</p>
+<h2>zustand 基础用法</h2>
+<p>使用 zustand 非常简单：通过 <code>create</code> 函数创建一个 store hook。<code>create</code> 接收一个状态创建函数，该函数接收 <code>set</code>、<code>getState</code> 和 <code>api</code> 三个参数，返回初始状态对象和更新方法。</p>
+<p>创建好的 hook 可以直接在组件中使用，无需任何 Provider 包裹。hook 支持传入一个可选的 selector 函数来选择状态中的特定部分，这样可以实现<strong>精确订阅</strong>：只有当 selector 选中的状态发生变化时，组件才会重新渲染，避免了不必要的性能开销。如果不传 selector，则返回整个状态对象（注意这会导致状态任何变化都会触发重渲染）。</p>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">create</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;zustand&#39;</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">useBear</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">create</span><span class="p">((</span><span class="nx">set</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({</span>
+<span class="w">    </span><span class="nx">bears</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">increase</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">set</span><span class="p">((</span><span class="nx">state</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({</span><span class="nx">bears</span><span class="o">:</span><span class="w"> </span><span class="nx">state</span><span class="p">.</span><span class="nx">bears</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1</span><span class="p">}))</span>
+<span class="p">}))</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">App</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">bears</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useBear</span><span class="p">((</span><span class="nx">state</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">state</span><span class="p">.</span><span class="nx">bears</span><span class="p">)</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span><span class="p">{</span><span class="nx">bears</span><span class="p">}</span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2>zustand 的 create 方法执行过程</h2>
+<p>在前面的例子中，<code>create</code> 接收了一个箭头函数，该函数接收一个名为 <code>set</code> 的参数，调用 <code>set</code> 可以触发状态的变更。</p>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">create</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">createState</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">createState</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="nx">createImpl</span><span class="p">(</span><span class="nx">createState</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">createImpl</span>
+</code></pre></div>
+<p>当调用 <code>create</code> 并传入状态创建函数时，会执行 <code>createImpl(createState)</code>。<code>createImpl</code> 的实现如下：</p>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">createImpl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">createState</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">api</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">createStore</span><span class="p">(</span><span class="nx">createState</span><span class="p">)</span>
+
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">useBoundStore</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">selector</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">useStore</span><span class="p">(</span><span class="nx">api</span><span class="p">,</span><span class="w"> </span><span class="nx">selector</span><span class="p">)</span>
+
+<span class="w">    </span><span class="nb">Object</span><span class="p">.</span><span class="nx">assign</span><span class="p">(</span><span class="nx">useBoundStore</span><span class="p">,</span><span class="w"> </span><span class="nx">api</span><span class="p">)</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">useBoundStore</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><code>createImpl</code> 首先调用 <code>createStore</code> 创建 store API，然后创建一个 <code>useBoundStore</code> 函数，该函数可以接收一个可选的 selector 参数。最后通过 <code>Object.assign</code> 将 store API 的方法（<code>setState</code>、<code>getState</code>、<code>subscribe</code>、<code>getInitialState</code>）都挂载到 <code>useBoundStore</code> 上，这样我们就可以直接通过 hook 访问这些方法了。</p>
+<h2>createStore 的实现</h2>
+<p><code>createImpl</code> 内部会调用 <code>createStore</code> 来创建 store。<code>createStore</code> 的核心实现是 <code>createStoreImpl</code>，它负责创建状态存储的核心逻辑：</p>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">createStoreImpl</span><span class="p">(</span><span class="nx">createState</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nx">state</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">listeners</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Set</span><span class="p">()</span>
+
+<span class="w">    </span><span class="c1">// 用于触发状态更新</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">setState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">partial</span><span class="p">,</span><span class="w"> </span><span class="nx">replace</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">nextState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">typeof</span><span class="w"> </span><span class="nx">partial</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;function&#39;</span><span class="w"> </span>
+<span class="w">            </span><span class="o">?</span><span class="w"> </span><span class="nx">partial</span><span class="p">(</span><span class="nx">state</span><span class="p">)</span><span class="w"> </span>
+<span class="w">            </span><span class="o">:</span><span class="w"> </span><span class="nx">partial</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nb">Object</span><span class="p">.</span><span class="nx">is</span><span class="p">(</span><span class="nx">nextState</span><span class="p">,</span><span class="w"> </span><span class="nx">state</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="kd">const</span><span class="w"> </span><span class="nx">previousState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">state</span>
+<span class="w">            </span><span class="nx">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">replace</span><span class="w"> </span><span class="o">??</span><span class="w"> </span><span class="p">(</span><span class="ow">typeof</span><span class="w"> </span><span class="nx">nextState</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="s1">&#39;object&#39;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">nextState</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span>
+<span class="w">                </span><span class="o">?</span><span class="w"> </span><span class="nx">nextState</span>
+<span class="w">                </span><span class="o">:</span><span class="w"> </span><span class="nb">Object</span><span class="p">.</span><span class="nx">assign</span><span class="p">({},</span><span class="w"> </span><span class="nx">state</span><span class="p">,</span><span class="w"> </span><span class="nx">nextState</span><span class="p">)</span>
+<span class="w">            </span><span class="nx">listeners</span><span class="p">.</span><span class="nx">forEach</span><span class="p">((</span><span class="nx">listener</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">listener</span><span class="p">(</span><span class="nx">state</span><span class="p">,</span><span class="w"> </span><span class="nx">previousState</span><span class="p">))</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">getState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">state</span>
+
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">subscribe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">listener</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">listeners</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">listener</span><span class="p">)</span>
+<span class="w">        </span><span class="c1">// Unsubscribe</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">listeners</span><span class="p">.</span><span class="ow">delete</span><span class="p">(</span><span class="nx">listener</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">api</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="nx">setState</span><span class="p">,</span><span class="w"> </span><span class="nx">getState</span><span class="p">,</span><span class="w"> </span><span class="nx">subscribe</span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">initialState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">createState</span><span class="p">(</span><span class="nx">setState</span><span class="p">,</span><span class="w"> </span><span class="nx">getState</span><span class="p">,</span><span class="w"> </span><span class="nx">api</span><span class="p">))</span>
+
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">getInitialState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">initialState</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">setState</span><span class="p">,</span><span class="w"> </span><span class="nx">getState</span><span class="p">,</span><span class="w"> </span><span class="nx">subscribe</span><span class="p">,</span><span class="w"> </span><span class="nx">getInitialState</span><span class="w"> </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>在 <code>createStoreImpl</code> 执行时，<code>createState</code> 函数会被调用，传入 <code>setState</code>、<code>getState</code> 和 <code>api</code> 作为参数。<code>createState</code> 函数会返回初始状态对象，这个对象会被赋值给 <code>state</code> 变量，同时也被保存为 <code>initialState</code>。代换后，代码如下：</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// createState 被调用，返回初始状态</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">initialState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">createState</span><span class="p">(</span><span class="nx">setState</span><span class="p">,</span><span class="w"> </span><span class="nx">getState</span><span class="p">,</span><span class="w"> </span><span class="nx">api</span><span class="p">))</span>
+<span class="c1">// 等价于：</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">initialState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">bears</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">increase</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">setState</span><span class="p">((</span><span class="nx">state</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({</span><span class="nx">bears</span><span class="o">:</span><span class="w"> </span><span class="nx">state</span><span class="p">.</span><span class="nx">bears</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1</span><span class="p">}))</span>
+<span class="p">})</span>
+<span class="c1">// 此时 state 和 initialState 都指向同一个对象</span>
+</code></pre></div>
+<p>接下来需要将状态和 React 连接起来，zustand 采用了 <code>React.useSyncExternalStore</code> 来实现这一功能。</p>
+<p>在 <code>useStore</code> 函数中，会调用 <code>React.useSyncExternalStore</code>：</p>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">slice</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">React</span><span class="p">.</span><span class="nx">useSyncExternalStore</span><span class="p">(</span>
+<span class="w">    </span><span class="nx">api</span><span class="p">.</span><span class="nx">subscribe</span><span class="p">,</span>
+<span class="w">    </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">selector</span><span class="p">(</span><span class="nx">api</span><span class="p">.</span><span class="nx">getState</span><span class="p">()),</span>
+<span class="w">    </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">selector</span><span class="p">(</span><span class="nx">api</span><span class="p">.</span><span class="nx">getInitialState</span><span class="p">())</span>
+<span class="p">)</span>
+</code></pre></div>
+<p><code>create</code> 创建的 hook 可以接收一个 selector 函数，用来从 state 中选择需要的切片。这个 selector 函数会被应用到 <code>api.getState()</code> 和 <code>api.getInitialState()</code> 的返回值上，从而只订阅状态中相关的部分。</p>
+<p>接下来我们看看更新操作是如何触发的。当我们调用 <code>increase</code> 方法时，会执行 <code>set((state) =&gt; ({bears: state.bears + 1}))</code>。</p>
+<p>这里的 <code>set</code> 函数实际上是 <code>setState</code>。在 <code>setState</code> 中，会计算新的状态，如果状态发生了变化（通过 <code>Object.is</code> 比较），就会遍历所有的 listeners 并调用它们，通知订阅者状态已更新。由于 <code>React.useSyncExternalStore</code> 订阅了 <code>api.subscribe</code>，当 listeners 被触发时，React 就会重新渲染组件，从而更新 UI。</p>
+<h2>总结</h2>
+<p>通过分析 zustand 的源码，我们可以看到它之所以能够成为 React 生态中备受欢迎的状态管理方案，主要得益于以下几个方面的设计：</p>
+<h3>核心架构设计</h3>
+<ol>
+<li>
+<p><strong>发布-订阅模式</strong>：zustand 的核心是基于发布-订阅模式的状态管理。<code>createStoreImpl</code> 维护了一个 <code>listeners</code> Set，当状态更新时，会通知所有订阅者。这种设计简单高效，避免了复杂的中间层。</p>
+</li>
+<li>
+<p><strong>React 官方 API 集成</strong>：使用 <code>React.useSyncExternalStore</code> 作为 React 和外部状态存储之间的桥梁，这是 React 18+ 官方推荐的方式。它不仅解决了并发渲染的问题，还正确处理了 zombie child、context loss 等边界情况。</p>
+</li>
+<li>
+<p><strong>精确的状态订阅</strong>：通过 selector 函数，组件可以只订阅状态中需要的部分。配合 <code>Object.is</code> 进行严格相等比较，确保只有在相关状态真正变化时才触发重渲染，实现了细粒度的性能优化。</p>
+</li>
+</ol>
+<h3>关键实现细节</h3>
+<ul>
+<li>
+<p><strong>状态更新机制</strong>：<code>setState</code> 支持函数式和对象式两种更新方式，自动处理对象合并（浅合并），同时支持 <code>replace</code> 参数进行完全替换。</p>
+</li>
+<li>
+<p><strong>无 Provider 设计</strong>：通过 <code>Object.assign</code> 将 store API 的方法挂载到 hook 上，使得 hook 既是函数又是对象，可以直接访问 <code>setState</code>、<code>getState</code> 等方法，无需通过 Context 传递。</p>
+</li>
+<li>
+<p><strong>初始状态处理</strong>：通过 <code>getInitialState</code> 保存初始状态快照，配合 <code>useSyncExternalStore</code> 的第三个参数，确保 SSR 和 hydration 场景下的状态一致性。</p>
+</li>
+</ul>
+<!-- ### 设计优势
+
+1. **极简的 API**：只需要一个 `create` 函数就能创建 store，学习成本低，上手快。
+
+2. **优秀的性能**：通过 selector 和严格相等比较，避免了不必要的重渲染；无需 Provider 避免了 Context 的性能开销。
+
+3. **灵活的扩展性**：中间件模式使得可以轻松集成 devtools、persist、immer 等功能，同时保持核心代码的简洁。
+
+4. **TypeScript 友好**：完整的类型推导，开发体验优秀。
+
+### 适用场景
+
+zustand 特别适合以下场景：
+- 中小型应用的状态管理
+- 需要细粒度性能优化的场景
+- 希望减少模板代码的项目
+- 需要多个独立 store 的应用
+- SSR 应用（配合 `getInitialState`） -->
+
+<p>zustand 的成功在于它<strong>在简洁性和功能性之间找到了完美的平衡</strong>。它没有过度设计，而是专注于解决状态管理的核心问题，通过巧妙的设计和 React 官方 API 的配合，实现了既简单又强大的状态管理方案。</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>

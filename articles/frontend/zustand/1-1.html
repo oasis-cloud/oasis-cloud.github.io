@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>zustand 源码分析</title>
+        <link rel="stylesheet" href="../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../assets/pygments.css">
+        <script src="../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-frontend-zustand-1-1 node-articles-frontend-zustand node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>zustand 源码分析</h1>
+                
+                
+                    <p class="author">作者：oasis</p>
+                
+                <hr>
+            </header>
+            <h2>zustand 简介</h2>
+<p>Zustand 是一个轻量级、快速且可扩展的状态管理解决方案，基于简化的 Flux 原则设计。它的 API 基于 React Hooks，没有过多的样板代码，也不强制特定的使用模式。</p>
+<h3>核心特点</h3>
+<ul>
+<li><strong>轻量级</strong>：体积小，打包后仅几 KB</li>
+<li><strong>简单易用</strong>：基于 Hooks 的舒适 API，无需 Provider 包裹</li>
+<li><strong>性能优秀</strong>：解决了 React 并发模式下的常见问题，如僵尸子组件问题、上下文丢失等</li>
+<li><strong>类型安全</strong>：完整的 TypeScript 支持</li>
+<li><strong>灵活扩展</strong>：支持中间件机制，可以轻松扩展功能</li>
+</ul>
+<h2>zustand 基础用法</h2>
+<h3>创建 Store</h3>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">create</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;zustand&#39;</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">useBearStore</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">create</span><span class="p">((</span><span class="nx">set</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({</span>
+<span class="w">  </span><span class="nx">bears</span><span class="o">:</span><span class="w"> </span><span class="kt">0</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">increasePopulation</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">set</span><span class="p">((</span><span class="nx">state</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({</span><span class="w"> </span><span class="nx">bears</span><span class="o">:</span><span class="w"> </span><span class="kt">state.bears</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1</span><span class="w"> </span><span class="p">})),</span>
+<span class="w">  </span><span class="nx">removeAllBears</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">set</span><span class="p">({</span><span class="w"> </span><span class="nx">bears</span><span class="o">:</span><span class="w"> </span><span class="kt">0</span><span class="w"> </span><span class="p">}),</span>
+<span class="p">}))</span>
+</code></pre></div>
+<h3>在组件中使用</h3>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">BearCounter</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">bears</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useBearStore</span><span class="p">((</span><span class="nx">state</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">state</span><span class="p">.</span><span class="nx">bears</span><span class="p">)</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="o">&lt;</span><span class="nx">h1</span><span class="o">&gt;</span><span class="p">{</span><span class="nx">bears</span><span class="p">}</span><span class="w"> </span><span class="nx">around</span><span class="w"> </span><span class="nx">here</span><span class="w"> </span><span class="p">...</span><span class="o">&lt;</span><span class="err">/h1&gt;</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">Controls</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">increasePopulation</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useBearStore</span><span class="p">((</span><span class="nx">state</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">state</span><span class="p">.</span><span class="nx">increasePopulation</span><span class="p">)</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="o">&lt;</span><span class="nx">button</span><span class="w"> </span><span class="nx">onClick</span><span class="o">=</span><span class="p">{</span><span class="nx">increasePopulation</span><span class="p">}</span><span class="o">&gt;</span><span class="nx">one</span><span class="w"> </span><span class="nx">up</span><span class="o">&lt;</span><span class="err">/button&gt;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3>核心优势</h3>
+<p>相比 Redux：
+- 更简单，不强制特定模式
+- 以 Hooks 为主要消费方式
+- 不需要用 Context Provider 包裹应用</p>
+<p>相比 Context API：
+- 更少的样板代码
+- 只在变化时渲染组件
+- 集中式、基于 action 的状态管理</p>
+<h2>zustand 的 create 方法执行过程</h2>
+<h3>1. create 函数入口</h3>
+<p>从 <code>src/react.ts</code> 可以看到 <code>create</code> 函数的定义：</p>
+<p>```54:65:src/react.ts
+const createImpl = <T>(createState: StateCreator<T, [], []>) =&gt; {
+  const api = createStore(createState)</p>
+<p>const useBoundStore: any = (selector?: any) =&gt; useStore(api, selector)</p>
+<p>Object.assign(useBoundStore, api)</p>
+<p>return useBoundStore
+}</p>
+<p>export const create = (<T>(createState: StateCreator<T, [], []> | undefined) =&gt;
+  createState ? createImpl(createState) : createImpl) as Create
+<div class="highlight"><pre><span></span><code>`create` 函数支持两种调用方式：
+- 直接传入 `createState`：`create(createState)`
+- 柯里化调用：`create&lt;State&gt;()(createState)`
+
+### 2. createStore 核心实现
+
+`create` 内部调用 `createStore`，这是状态管理的核心实现，位于 `src/vanilla.ts`：
+
+```58:95:src/vanilla.ts
+const createStoreImpl: CreateStoreImpl = (createState) =&gt; {
+  type TState = ReturnType&lt;typeof createState&gt;
+  type Listener = (state: TState, prevState: TState) =&gt; void
+  let state: TState
+  const listeners: Set&lt;Listener&gt; = new Set()
+
+  const setState: StoreApi&lt;TState&gt;[&#39;setState&#39;] = (partial, replace) =&gt; {
+    // TODO: Remove type assertion once https://github.com/microsoft/TypeScript/issues/37663 is resolved
+    // https://github.com/microsoft/TypeScript/issues/37663#issuecomment-759728342
+    const nextState =
+      typeof partial === &#39;function&#39;
+        ? (partial as (state: TState) =&gt; TState)(state)
+        : partial
+    if (!Object.is(nextState, state)) {
+      const previousState = state
+      state =
+        (replace ?? (typeof nextState !== &#39;object&#39; || nextState === null))
+          ? (nextState as TState)
+          : Object.assign({}, state, nextState)
+      listeners.forEach((listener) =&gt; listener(state, previousState))
+    }
+  }
+
+  const getState: StoreApi&lt;TState&gt;[&#39;getState&#39;] = () =&gt; state
+
+  const getInitialState: StoreApi&lt;TState&gt;[&#39;getInitialState&#39;] = () =&gt;
+    initialState
+
+  const subscribe: StoreApi&lt;TState&gt;[&#39;subscribe&#39;] = (listener) =&gt; {
+    listeners.add(listener)
+    // Unsubscribe
+    return () =&gt; listeners.delete(listener)
+  }
+
+  const api = { setState, getState, getInitialState, subscribe }
+  const initialState = (state = createState(setState, getState, api))
+  return api as any
+}
+</code></pre></div></p>
+<h3>3. 执行流程详解</h3>
+<p><strong>步骤 1：初始化状态</strong>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">initialState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">createState</span><span class="p">(</span><span class="nx">setState</span><span class="p">,</span><span class="w"> </span><span class="nx">getState</span><span class="p">,</span><span class="w"> </span><span class="nx">api</span><span class="p">))</span>
+</code></pre></div>
+- 调用 <code>createState</code> 函数，传入 <code>setState</code>、<code>getState</code> 和 <code>api</code>
+- <code>createState</code> 返回初始状态对象
+- 将返回的状态赋值给 <code>state</code> 变量</p>
+<p><strong>步骤 2：实现 setState</strong>
+- 支持函数式更新：<code>set((state) =&gt; ({ count: state.count + 1 }))</code>
+- 支持对象更新：<code>set({ count: 1 })</code>
+- 使用 <code>Object.is</code> 进行浅比较，避免不必要的更新
+- 默认合并策略：使用 <code>Object.assign</code> 进行浅合并
+- 可通过 <code>replace</code> 参数完全替换状态</p>
+<p><strong>步骤 3：实现订阅机制</strong>
+- 使用 <code>Set&lt;Listener&gt;</code> 存储所有监听器
+- <code>subscribe</code> 返回取消订阅的函数
+- 状态更新时，遍历所有监听器并调用</p>
+<p><strong>步骤 4：创建 React Hook</strong>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">useBoundStore</span><span class="o">:</span><span class="w"> </span><span class="kt">any</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">selector?</span><span class="o">:</span><span class="w"> </span><span class="kt">any</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">useStore</span><span class="p">(</span><span class="nx">api</span><span class="p">,</span><span class="w"> </span><span class="nx">selector</span><span class="p">)</span>
+<span class="nb">Object</span><span class="p">.</span><span class="nx">assign</span><span class="p">(</span><span class="nx">useBoundStore</span><span class="p">,</span><span class="w"> </span><span class="nx">api</span><span class="p">)</span>
+</code></pre></div>
+- 创建一个函数，可以作为 Hook 使用
+- 将 <code>api</code> 的方法（<code>setState</code>、<code>getState</code>、<code>subscribe</code> 等）挂载到函数上
+- 这样既可以用作 Hook，也可以直接调用方法</p>
+<h3>4. useStore Hook 实现</h3>
+<p>```27:38:src/react.ts
+export function useStore<TState, StateSlice>(
+  api: ReadonlyStoreApi<TState>,
+  selector: (state: TState) =&gt; StateSlice = identity as any,
+) {
+  const slice = React.useSyncExternalStore(
+    api.subscribe,
+    () =&gt; selector(api.getState()),
+    () =&gt; selector(api.getInitialState()),
+  )
+  React.useDebugValue(slice)
+  return slice
+}
+<div class="highlight"><pre><span></span><code>`useStore` 使用 React 18 的 `useSyncExternalStore` Hook：
+- **第一个参数**：`api.subscribe` - 订阅函数
+- **第二个参数**：`() =&gt; selector(api.getState())` - 获取当前状态的函数
+- **第三个参数**：`() =&gt; selector(api.getInitialState())` - 获取初始状态的函数（用于 SSR）
+
+这确保了在 React 并发模式下也能正确工作，避免了僵尸子组件等问题。
+
+## zustand 的设计理念
+
+### 1. 极简主义
+
+Zustand 追求极简的 API 设计，核心代码非常精简：
+
+- **单一 Store**：推荐使用单一全局 Store，但支持拆分为多个 slice
+- **无 Provider**：不需要用 Context Provider 包裹应用
+- **直接更新**：可以直接调用 `set` 更新状态，无需 action 和 reducer
+
+### 2. 不可变状态管理
+
+虽然 Zustand 不强制使用不可变更新库，但它遵循不可变原则：
+
+```typescript
+// setState 的合并逻辑
+state = (replace ?? (typeof nextState !== &#39;object&#39; || nextState === null))
+  ? (nextState as TState)
+  : Object.assign({}, state, nextState)
+</code></pre></div></p>
+<ul>
+<li>默认浅合并，避免深拷贝带来的性能问题</li>
+<li>支持 <code>replace</code> 标志完全替换状态</li>
+<li>使用 <code>Object.is</code> 进行相等性检查，避免不必要的更新</li>
+</ul>
+<h3>3. 订阅者模式</h3>
+<p>Zustand 使用经典的发布-订阅模式：</p>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">listeners</span><span class="o">:</span><span class="w"> </span><span class="kt">Set</span><span class="o">&lt;</span><span class="nx">Listener</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Set</span><span class="p">()</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">subscribe</span><span class="o">:</span><span class="w"> </span><span class="kt">StoreApi</span><span class="o">&lt;</span><span class="nx">TState</span><span class="o">&gt;</span><span class="p">[</span><span class="s1">&#39;subscribe&#39;</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">listener</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">listeners</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">listener</span><span class="p">)</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">listeners</span><span class="p">.</span><span class="ow">delete</span><span class="p">(</span><span class="nx">listener</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+<ul>
+<li>使用 <code>Set</code> 存储监听器，自动去重</li>
+<li>返回取消订阅函数，方便清理</li>
+<li>状态更新时同步通知所有监听器</li>
+</ul>
+<h3>4. 类型安全</h3>
+<p>Zustand 充分利用 TypeScript 的类型系统：</p>
+<div class="highlight"><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kr">type</span><span class="w"> </span><span class="nx">StateCreator</span><span class="o">&lt;</span>
+<span class="w">  </span><span class="nx">T</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">Mis</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="p">[</span><span class="nx">StoreMutatorIdentifier</span><span class="p">,</span><span class="w"> </span><span class="nx">unknown</span><span class="p">][]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">  </span><span class="nx">Mos</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="p">[</span><span class="nx">StoreMutatorIdentifier</span><span class="p">,</span><span class="w"> </span><span class="nx">unknown</span><span class="p">][]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">  </span><span class="nx">U</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">T</span><span class="p">,</span>
+<span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">((</span>
+<span class="w">  </span><span class="nx">setState</span><span class="o">:</span><span class="w"> </span><span class="kt">Get</span><span class="o">&lt;</span><span class="nx">Mutate</span><span class="o">&lt;</span><span class="nx">StoreApi</span><span class="o">&lt;</span><span class="nx">T</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="nx">Mis</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;setState&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">never</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">getState</span><span class="o">:</span><span class="w"> </span><span class="kt">Get</span><span class="o">&lt;</span><span class="nx">Mutate</span><span class="o">&lt;</span><span class="nx">StoreApi</span><span class="o">&lt;</span><span class="nx">T</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="nx">Mis</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;getState&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">never</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">store</span><span class="o">:</span><span class="w"> </span><span class="kt">Mutate</span><span class="o">&lt;</span><span class="nx">StoreApi</span><span class="o">&lt;</span><span class="nx">T</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="nx">Mis</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">U</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">$$storeMutators?</span><span class="o">:</span><span class="w"> </span><span class="kt">Mos</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+<ul>
+<li>支持中间件的类型推断</li>
+<li>通过泛型确保类型安全</li>
+<li>支持中间件链的类型组合</li>
+</ul>
+<h3>5. 中间件机制</h3>
+<p>Zustand 通过中间件机制实现功能扩展：</p>
+<div class="highlight"><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kr">type</span><span class="w"> </span><span class="nx">Mutate</span><span class="o">&lt;</span><span class="nx">S</span><span class="p">,</span><span class="w"> </span><span class="nx">Ms</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">number</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="nx">Ms</span><span class="p">[</span><span class="s1">&#39;length&#39;</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="nx">keyof</span><span class="w"> </span><span class="nx">Ms</span><span class="p">]</span>
+<span class="w">  </span><span class="o">?</span><span class="w"> </span><span class="nx">S</span>
+<span class="w">  </span><span class="o">:</span><span class="w"> </span><span class="kt">Ms</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="p">[]</span>
+<span class="w">    </span><span class="o">?</span><span class="w"> </span><span class="nx">S</span>
+<span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="kt">Ms</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="p">[[</span><span class="nx">infer</span><span class="w"> </span><span class="nx">Mi</span><span class="p">,</span><span class="w"> </span><span class="nx">infer</span><span class="w"> </span><span class="nx">Ma</span><span class="p">],</span><span class="w"> </span><span class="p">...</span><span class="nx">infer</span><span class="w"> </span><span class="nx">Mrs</span><span class="p">]</span>
+<span class="w">      </span><span class="o">?</span><span class="w"> </span><span class="nx">Mutate</span><span class="o">&lt;</span><span class="nx">StoreMutators</span><span class="o">&lt;</span><span class="nx">S</span><span class="p">,</span><span class="w"> </span><span class="nx">Ma</span><span class="o">&gt;</span><span class="p">[</span><span class="nx">Mi</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="nx">StoreMutatorIdentifier</span><span class="p">],</span><span class="w"> </span><span class="nx">Mrs</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">:</span><span class="w"> </span><span class="nx">never</span>
+</code></pre></div>
+<p>中间件可以：
+- 修改 <code>setState</code> 的行为（如 <code>immer</code> 中间件）
+- 添加新的功能（如 <code>persist</code> 中间件）
+- 组合多个中间件（如 <code>devtools</code> + <code>persist</code>）</p>
+<h2>zustand 的多个 store 合并逻辑</h2>
+<h3>1. Slices Pattern（切片模式）</h3>
+<p>Zustand 推荐使用 Slices Pattern 来组织大型应用的状态：</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// 第一个 slice</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">createFishSlice</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">set</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({</span>
+<span class="w">  </span><span class="nx">fishes</span><span class="o">:</span><span class="w"> </span><span class="kt">0</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">addFish</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">set</span><span class="p">((</span><span class="nx">state</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({</span><span class="w"> </span><span class="nx">fishes</span><span class="o">:</span><span class="w"> </span><span class="kt">state.fishes</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1</span><span class="w"> </span><span class="p">})),</span>
+<span class="p">})</span>
+
+<span class="c1">// 第二个 slice</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">createBearSlice</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">set</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({</span>
+<span class="w">  </span><span class="nx">bears</span><span class="o">:</span><span class="w"> </span><span class="kt">0</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">addBear</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">set</span><span class="p">((</span><span class="nx">state</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({</span><span class="w"> </span><span class="nx">bears</span><span class="o">:</span><span class="w"> </span><span class="kt">state.bears</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1</span><span class="w"> </span><span class="p">})),</span>
+<span class="w">  </span><span class="nx">eatFish</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">set</span><span class="p">((</span><span class="nx">state</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({</span><span class="w"> </span><span class="nx">fishes</span><span class="o">:</span><span class="w"> </span><span class="kt">state.fishes</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">1</span><span class="w"> </span><span class="p">})),</span>
+<span class="p">})</span>
+
+<span class="c1">// 合并多个 slice</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">useBoundStore</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">create</span><span class="p">((...</span><span class="nx">a</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({</span>
+<span class="w">  </span><span class="p">...</span><span class="nx">createBearSlice</span><span class="p">(...</span><span class="nx">a</span><span class="p">),</span>
+<span class="w">  </span><span class="p">...</span><span class="nx">createFishSlice</span><span class="p">(...</span><span class="nx">a</span><span class="p">),</span>
+<span class="p">}))</span>
+</code></pre></div>
+<p><strong>工作原理</strong>：
+- 每个 slice 都是一个函数，接收 <code>set</code>、<code>get</code>、<code>store</code> 参数
+- 使用展开运算符合并多个 slice 的返回值
+- 后定义的 slice 会覆盖先定义的同名属性</p>
+<h3>2. combine 中间件</h3>
+<p><code>combine</code> 中间件提供了另一种合并方式，特别适合需要初始状态的场景：</p>
+<p>```15:18:src/middleware/combine.ts
+export const combine: Combine =
+  (initialState, create) =&gt;
+  (&hellip;a) =&gt;
+    Object.assign({}, initialState, (create as any)(&hellip;a))
+<div class="highlight"><pre><span></span><code>**使用示例**：
+
+```typescript
+import { createStore } from &#39;zustand/vanilla&#39;
+import { combine } from &#39;zustand/middleware/combine&#39;
+
+const positionStore = createStore(
+  combine({ position: { x: 0, y: 0 } }, (set) =&gt; ({
+    setPosition: (position) =&gt; set({ position }),
+  })),
+)
+</code></pre></div></p>
+<p><strong>实现原理</strong>：
+- <code>combine</code> 接收初始状态和状态创建函数
+- 返回一个新的状态创建函数
+- 使用 <code>Object.assign</code> 将初始状态和创建函数返回的状态合并
+- 自动推断类型，无需显式类型定义</p>
+<h3>3. 合并策略对比</h3>
+<table>
+<thead>
+<tr>
+<th>方式</th>
+<th>适用场景</th>
+<th>优点</th>
+<th>缺点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Slices Pattern</td>
+<td>大型应用，需要模块化</td>
+<td>灵活，易于组织</td>
+<td>需要手动管理类型</td>
+</tr>
+<tr>
+<td>combine 中间件</td>
+<td>需要初始状态</td>
+<td>类型自动推断</td>
+<td>功能相对简单</td>
+</tr>
+</tbody>
+</table>
+<h3>4. 实际应用示例</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// 用户 slice</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">createUserSlice</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">set</span><span class="p">,</span><span class="w"> </span><span class="nx">get</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({</span>
+<span class="w">  </span><span class="nx">user</span><span class="o">:</span><span class="w"> </span><span class="kt">null</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">setUser</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">user</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">set</span><span class="p">({</span><span class="w"> </span><span class="nx">user</span><span class="w"> </span><span class="p">}),</span>
+<span class="w">  </span><span class="nx">logout</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">set</span><span class="p">({</span><span class="w"> </span><span class="nx">user</span><span class="o">:</span><span class="w"> </span><span class="kt">null</span><span class="w"> </span><span class="p">}),</span>
+<span class="p">})</span>
+
+<span class="c1">// 购物车 slice</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">createCartSlice</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">set</span><span class="p">,</span><span class="w"> </span><span class="nx">get</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({</span>
+<span class="w">  </span><span class="nx">items</span><span class="o">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">  </span><span class="nx">addItem</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">item</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">set</span><span class="p">((</span><span class="nx">state</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({</span><span class="w"> </span>
+<span class="w">    </span><span class="nx">items</span><span class="o">:</span><span class="w"> </span><span class="p">[...</span><span class="nx">state</span><span class="p">.</span><span class="nx">items</span><span class="p">,</span><span class="w"> </span><span class="nx">item</span><span class="p">]</span><span class="w"> </span>
+<span class="w">  </span><span class="p">})),</span>
+<span class="w">  </span><span class="nx">removeItem</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">id</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">set</span><span class="p">((</span><span class="nx">state</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({</span>
+<span class="w">    </span><span class="nx">items</span><span class="o">:</span><span class="w"> </span><span class="kt">state.items.filter</span><span class="p">(</span><span class="nx">item</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">item</span><span class="p">.</span><span class="nx">id</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="nx">id</span><span class="p">)</span>
+<span class="w">  </span><span class="p">})),</span>
+<span class="w">  </span><span class="nx">getTotal</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">items</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">get</span><span class="p">()</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">items</span><span class="p">.</span><span class="nx">reduce</span><span class="p">((</span><span class="nx">sum</span><span class="p">,</span><span class="w"> </span><span class="nx">item</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">sum</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">item</span><span class="p">.</span><span class="nx">price</span><span class="p">,</span><span class="w"> </span><span class="mf">0</span><span class="p">)</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="p">})</span>
+
+<span class="c1">// 合并所有 slice</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">useStore</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">create</span><span class="p">((...</span><span class="nx">a</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({</span>
+<span class="w">  </span><span class="p">...</span><span class="nx">createUserSlice</span><span class="p">(...</span><span class="nx">a</span><span class="p">),</span>
+<span class="w">  </span><span class="p">...</span><span class="nx">createCartSlice</span><span class="p">(...</span><span class="nx">a</span><span class="p">),</span>
+<span class="p">}))</span>
+
+<span class="c1">// 使用</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">App</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">user</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useStore</span><span class="p">((</span><span class="nx">state</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">state</span><span class="p">.</span><span class="nx">user</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">addItem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useStore</span><span class="p">((</span><span class="nx">state</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">state</span><span class="p">.</span><span class="nx">addItem</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">getTotal</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useStore</span><span class="p">((</span><span class="nx">state</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">state</span><span class="p">.</span><span class="nx">getTotal</span><span class="p">)</span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="p">{</span><span class="nx">user</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span><span class="nx">Welcome</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="nx">user</span><span class="p">.</span><span class="nx">name</span><span class="p">}</span><span class="o">&lt;</span><span class="err">/p&gt;}</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">button</span><span class="w"> </span><span class="nx">onClick</span><span class="o">=</span><span class="p">{()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">addItem</span><span class="p">({</span><span class="w"> </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="kt">1</span><span class="p">,</span><span class="w"> </span><span class="nx">price</span><span class="o">:</span><span class="w"> </span><span class="kt">10</span><span class="w"> </span><span class="p">})}</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="nx">Add</span><span class="w"> </span><span class="nx">Item</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/button&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span><span class="nx">Total</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="nx">getTotal</span><span class="p">()}</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+<span class="w">  </span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3>5. 跨 Slice 通信</h3>
+<p>Slice 之间可以通过 <code>get</code> 函数访问其他 slice 的状态：</p>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">createBearFishSlice</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">set</span><span class="p">,</span><span class="w"> </span><span class="nx">get</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({</span>
+<span class="w">  </span><span class="nx">addBearAndFish</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 调用其他 slice 的方法</span>
+<span class="w">    </span><span class="nx">get</span><span class="p">().</span><span class="nx">addBear</span><span class="p">()</span>
+<span class="w">    </span><span class="nx">get</span><span class="p">().</span><span class="nx">addFish</span><span class="p">()</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="p">})</span>
+</code></pre></div>
+<p>这种方式保持了 slice 之间的解耦，同时允许必要的协作。</p>
+<h2>总结</h2>
+<h3>核心设计原则</h3>
+<ol>
+<li><strong>极简 API</strong>：最少的样板代码，最大的灵活性</li>
+<li><strong>性能优先</strong>：使用 <code>Object.is</code> 进行浅比较，避免不必要的更新</li>
+<li><strong>类型安全</strong>：充分利用 TypeScript 的类型系统</li>
+<li><strong>可扩展性</strong>：通过中间件机制轻松扩展功能</li>
+<li><strong>React 友好</strong>：完美支持 React 18 的并发特性</li>
+</ol>
+<h3>技术亮点</h3>
+<ol>
+<li><strong>useSyncExternalStore</strong>：使用 React 18 的新 Hook，解决了并发模式下的问题</li>
+<li><strong>订阅者模式</strong>：高效的发布-订阅实现，支持精确的更新控制</li>
+<li><strong>浅合并策略</strong>：默认浅合并，平衡了性能和易用性</li>
+<li><strong>中间件系统</strong>：类型安全的中间件组合机制</li>
+<li><strong>Slices Pattern</strong>：模块化的状态组织方式</li>
+</ol>
+<h3>适用场景</h3>
+<ul>
+<li>✅ 中小型应用的全局状态管理</li>
+<li>✅ 需要简单易用的状态管理方案</li>
+<li>✅ 希望避免 Redux 的复杂性</li>
+<li>✅ 需要类型安全的 TypeScript 项目</li>
+<li>✅ 需要高性能的状态更新</li>
+</ul>
+<h3>不适合的场景</h3>
+<ul>
+<li>❌ 需要时间旅行调试的复杂应用（虽然可以通过 devtools 中间件支持）</li>
+<li>❌ 需要严格单向数据流的场景（Zustand 更灵活）</li>
+<li>❌ 需要服务端状态管理的场景（建议配合 React Query 等）</li>
+</ul>
+<p>Zustand 通过极简的设计和精心的实现，在状态管理的复杂性和易用性之间找到了完美的平衡点。它的源码虽然简洁，但解决了很多 React 状态管理的痛点，是一个值得学习和使用的优秀库。</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>

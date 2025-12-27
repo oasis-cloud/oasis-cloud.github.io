@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>React useSyncExternalStore：基于发布订阅模式的状态订阅机制</title>
+        <link rel="stylesheet" href="../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../assets/pygments.css">
+        <script src="../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-frontend-react-hooks-1 node-articles-frontend-react-hooks node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>React useSyncExternalStore：基于发布订阅模式的状态订阅机制</h1>
+                
+                    <p class="subtitle">基于 v19.2.0 版本</p>
+                
+                
+                    <p class="author">作者：oasis</p>
+                
+                <hr>
+            </header>
+            <p>在阅读 zustand 源码时，发现 zustand 使用了 <code>React.useSyncExternalStore</code> 进行实现。所以在深入阅读 zustand 前，
+应先了解 useSyncExternalStore 的使用方法和实现逻辑。</p>
+<p>React 官方文档中说明 useSyncExternalStore 是一个可以订阅外部 store 的 React Hook。它的使用场景包括：
+1. 订阅外部 store
+2. 订阅浏览器 API
+3. 把逻辑提取到自定义 Hook
+4. 添加服务端渲染支持</p>
+<p>本文主要实践和分析订阅外部 store。</p>
+<p>订阅外部状态，说明可以共享状态。两个组件共享状态，除了状态提升外，还可以借助发布订阅模式来实现。通过 useSyncExternalStore 的函数签名可以看出，它也借助了发布订阅模式的理念进行实现。</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// todo store</span>
+<span class="kd">let</span><span class="w"> </span><span class="nx">todoList</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[{</span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Todo 1&#39;</span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="mf">2</span><span class="p">,</span><span class="w"> </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Todo 2&#39;</span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="mf">3</span><span class="p">,</span><span class="w"> </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Todo 3&#39;</span><span class="p">}]</span>
+<span class="kd">let</span><span class="w"> </span><span class="nx">listeners</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">emitChange</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">listeners</span><span class="p">.</span><span class="nx">forEach</span><span class="p">(</span><span class="nx">listener</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">listener</span><span class="p">())</span>
+<span class="p">}</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">todoStore</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">addTodo</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">todo</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">todoList</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[...</span><span class="nx">todoList</span><span class="p">,</span><span class="w"> </span><span class="nx">todo</span><span class="p">]</span>
+<span class="w">        </span><span class="nx">emitChange</span><span class="p">()</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nx">subscribe</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">listener</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">listeners</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[...</span><span class="nx">listeners</span><span class="p">,</span><span class="w"> </span><span class="nx">listener</span><span class="p">]</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">listeners</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">listeners</span><span class="p">.</span><span class="nx">filter</span><span class="p">(</span><span class="nx">l</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">l</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="nx">listener</span><span class="p">)</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nx">getSnapshot</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">todoList</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">App</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">todos</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">React</span><span class="p">.</span><span class="nx">useSyncExternalStore</span><span class="p">(</span><span class="nx">todoStore</span><span class="p">.</span><span class="nx">subscribe</span><span class="p">,</span><span class="w"> </span><span class="nx">todoStore</span><span class="p">.</span><span class="nx">getSnapshot</span><span class="p">)</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">(</span>
+<span class="w">        </span><span class="o">&lt;&gt;</span>
+<span class="w">            </span><span class="p">{</span><span class="nx">todos</span><span class="p">.</span><span class="nx">map</span><span class="p">((</span><span class="nx">todo</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">(</span>
+<span class="w">                </span><span class="o">&lt;</span><span class="nx">div</span><span class="w"> </span><span class="nx">key</span><span class="o">=</span><span class="p">{</span><span class="nx">todo</span><span class="p">.</span><span class="nx">id</span><span class="p">}</span><span class="o">&gt;</span><span class="p">{</span><span class="nx">todo</span><span class="p">.</span><span class="nx">text</span><span class="p">}</span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+<span class="w">            </span><span class="p">))}</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">button</span><span class="w"> </span><span class="nx">onClick</span><span class="o">=</span><span class="p">{()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">todoStore</span><span class="p">.</span><span class="nx">addTodo</span><span class="p">({</span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="mf">4</span><span class="p">,</span><span class="w"> </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Todo 4&#39;</span><span class="p">})}</span><span class="o">&gt;</span>
+<span class="w">                </span><span class="nx">添加</span><span class="w"> </span><span class="nx">Todo</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="err">/button&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/&gt;</span>
+<span class="w">    </span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>当 App 组件执行时，<code>useSyncExternalStore</code> 调用 <code>todoStore.subscribe</code>，将 <a href="https://github.com/facebook/react/blob/v19.2.0/packages/use-sync-external-store/src/useSyncExternalStoreShimClient.js#L116"><code>handleStoreChange</code></a> 函数作为参数传入。点击按钮触发 Store 更新时，会触发 <code>handleStoreChange</code> 的执行，从而实现 React 状态的更新机制。</p>
+<h2>发布订阅模式的另一种应用</h2>
+<p>在不使用 <code>useSyncExternalStore</code> 的情况下，我们可以手动实现发布订阅模式来触发组件更新。当 store 更新时，通过发布订阅模式触发组件内部的 forceUpdate，从而实现组件状态的更新。</p>
+<h3>函数组件中使用 useState 配合自定义 Hook</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// todo store（同上）</span>
+<span class="kd">let</span><span class="w"> </span><span class="nx">todoList</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[{</span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Todo 1&#39;</span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="mf">2</span><span class="p">,</span><span class="w"> </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Todo 2&#39;</span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="mf">3</span><span class="p">,</span><span class="w"> </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Todo 3&#39;</span><span class="p">}]</span>
+<span class="kd">let</span><span class="w"> </span><span class="nx">listeners</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">emitChange</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">listeners</span><span class="p">.</span><span class="nx">forEach</span><span class="p">(</span><span class="nx">listener</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">listener</span><span class="p">())</span>
+<span class="p">}</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">todoStore</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">addTodo</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">todo</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">todoList</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[...</span><span class="nx">todoList</span><span class="p">,</span><span class="w"> </span><span class="nx">todo</span><span class="p">]</span>
+<span class="w">        </span><span class="nx">emitChange</span><span class="p">()</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nx">subscribe</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">listener</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">listeners</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[...</span><span class="nx">listeners</span><span class="p">,</span><span class="w"> </span><span class="nx">listener</span><span class="p">]</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">listeners</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">listeners</span><span class="p">.</span><span class="nx">filter</span><span class="p">(</span><span class="nx">l</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">l</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="nx">listener</span><span class="p">)</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nx">getSnapshot</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">todoList</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// 自定义 Hook 封装订阅逻辑</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">useStore</span><span class="p">(</span><span class="nx">store</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 使用 useState 的 setter 函数来触发组件重新渲染</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="p">[,</span><span class="w"> </span><span class="nx">forceUpdate</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">React</span><span class="p">.</span><span class="nx">useState</span><span class="p">({})</span>
+
+<span class="w">    </span><span class="nx">React</span><span class="p">.</span><span class="nx">useEffect</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 订阅 store 的变化</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">unsubscribe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">store</span><span class="p">.</span><span class="nx">subscribe</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="c1">// 通过更新 state 触发组件重新渲染</span>
+<span class="w">            </span><span class="nx">forceUpdate</span><span class="p">({})</span>
+<span class="w">        </span><span class="p">})</span>
+
+<span class="w">        </span><span class="c1">// 组件卸载时取消订阅</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">unsubscribe</span>
+<span class="w">    </span><span class="p">},</span><span class="w"> </span><span class="p">[</span><span class="nx">store</span><span class="p">])</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">store</span><span class="p">.</span><span class="nx">getSnapshot</span><span class="p">()</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">App</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">todos</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useStore</span><span class="p">(</span><span class="nx">todoStore</span><span class="p">)</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">(</span>
+<span class="w">        </span><span class="o">&lt;&gt;</span>
+<span class="w">            </span><span class="p">{</span><span class="nx">todos</span><span class="p">.</span><span class="nx">map</span><span class="p">((</span><span class="nx">todo</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">(</span>
+<span class="w">                </span><span class="o">&lt;</span><span class="nx">div</span><span class="w"> </span><span class="nx">key</span><span class="o">=</span><span class="p">{</span><span class="nx">todo</span><span class="p">.</span><span class="nx">id</span><span class="p">}</span><span class="o">&gt;</span><span class="p">{</span><span class="nx">todo</span><span class="p">.</span><span class="nx">text</span><span class="p">}</span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+<span class="w">            </span><span class="p">))}</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">button</span><span class="w"> </span><span class="nx">onClick</span><span class="o">=</span><span class="p">{()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">todoStore</span><span class="p">.</span><span class="nx">addTodo</span><span class="p">({</span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="mf">4</span><span class="p">,</span><span class="w"> </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Todo 4&#39;</span><span class="p">})}</span><span class="o">&gt;</span>
+<span class="w">                </span><span class="nx">添加</span><span class="w"> </span><span class="nx">Todo</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="err">/button&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/&gt;</span>
+<span class="w">    </span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>这种方式的核心思想是：</p>
+<ol>
+<li>在组件挂载时订阅 store 的变化</li>
+<li>当 store 更新时，通过 <code>emitChange</code> 通知所有订阅者</li>
+<li>订阅者（组件）收到通知后，通过更新 state 来触发重新渲染</li>
+<li>组件卸载时取消订阅，避免内存泄漏</li>
+</ol>
+<p><code>useSyncExternalStore</code> 本质上就是对这种模式的封装和优化，提供了更好的并发渲染支持和错误处理机制。</p>
+<h2>关联阅读</h2>
+<ul>
+<li><a href="../../../articles/frontend/zustand/1.html">zustand 源码分析——基于 v5.0.0 版本</a></li>
+</ul>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>
