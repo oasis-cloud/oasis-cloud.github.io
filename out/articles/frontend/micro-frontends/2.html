@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>微前端实践：基于 Module Federation 的实现</title>
+        <link rel="stylesheet" href="../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../assets/pygments.css">
+        <script src="../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-frontend-micro-frontends-2 node-articles-frontend-micro-frontends node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>微前端实践：基于 Module Federation 的实现</h1>
+                
+                
+                    <p class="author">作者：oasis</p>
+                
+                <hr>
+            </header>
+            <h2>微前端通信模型</h2>
+<p>在理想情况下，所有的微前端都是自给自足的，因此微前端不需要相互通信。但现实情况下，有时候需要把用户的交互信息通知给其他微前端，尤其是同一个页面使用多个微前端时。</p>
+<p>在同一个页面使用多个微前端的场景中，我们可以通过<code>EventBus</code>事件总线的模型进行多个微前端之间的通信。一个微前端发送的事件会通知到每个微前端，如果某个微前端对接收到的事件感兴趣，那么它只要进行相关处理即可。</p>
+<p>另外一个方案可以使用自定义事件，例如通过 <code>postMessage</code> 实现。除此之外，还可以采用 cookie、storage 等方式。</p>
+<p>除了上面的通信机制，还可以采用 URL 参数的方式进行通信，这也是最原始的通信方式。</p>
+<h2>微前端路由</h2>
+<p>在客户端进行微前端的组合，需要处理路由相关信息。路由有两种类型：</p>
+<ol>
+<li>微前端容器（App shell）处理的全局路由，负责微前端之间切换的路由。</li>
+<li>微前端内部的本地路由，负责内部逻辑处理。</li>
+</ol>
+<h2>Module Federation 实现微前端</h2>
+<p>Module Federation 允许 JS 应用程序动态运行来自另一个捆绑包的代码，或是在客户端和服务器上构建代码。Module Federation 有两个重要的概念：</p>
+<ol>
+<li>host：在运行时加载共享库、微前端或组件的容器</li>
+<li>remote：要在本地加载的 JS 代码包</li>
+</ol>
+<p>其中 host 对应微前端的 App Shell（容器），remote 对应各个微前端。</p>
+<p>在 Module Federation 实现中，webpack 提供了两个插件：ContainerPlugin 和 ContainerReferencePlugin。
+第一个负责创建容器，以异步加载和同步运行模块，第二个负责将特定引用添加到容器中，并注入初始包中的代码。</p>
+<h2>App shell 的功能实现</h2>
+<p>App shell 的核心职责包括：
+1. 避免 App shell 中的域泄露
+2. 实现微前端之间的全局路由
+3. 确保正确加载和卸载微前端
+4. 在一个或多个 JS 代码块中生成跨子域的依赖项</p>
+<p>首先初始化 App shell 项目：</p>
+<div class="highlight"><pre><span></span><code>pnpm<span class="w"> </span>init
+</code></pre></div>
+<p>复制如下代码到 <code>package.json</code>：</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;appshell&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1.0.0&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Micro Frontends App Shell&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;main&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;index.js&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;scripts&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;start&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;webpack serve&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;build&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;webpack --mode production&quot;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;keywords&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">  </span><span class="nt">&quot;author&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;license&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ISC&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;packageManager&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;pnpm@10.20.0&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;dependencies&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;react&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;^18.3.1&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;react-dom&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;^18.3.1&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;react-router-dom&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;^6.26.0&quot;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;devDependencies&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;@babel/core&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;^7.24.0&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;@babel/preset-react&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;^7.24.0&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;babel-loader&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;^9.1.3&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;html-webpack-plugin&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;^5.6.0&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;webpack&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;^5.91.0&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;webpack-cli&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;^5.1.4&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;webpack-dev-server&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;^4.15.1&quot;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>创建以下文件：<code>src/index.js</code>、<code>src/bootstrap.js</code>、<code>src/app.js</code>、<code>webpack.config.js</code>（具体代码可参考 <a href="https://github.com/oasis-cloud/micro-frontends">GitHub 仓库</a>）</p>
+<p>其中 app shell 的 webpack 配置如下（需要从 <code>webpack</code> 导入 <code>ModuleFederationPlugin</code>）：</p>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">ModuleFederationPlugin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">&#39;webpack/lib/container/ModuleFederationPlugin&#39;</span><span class="p">);</span>
+
+<span class="c1">// ... 其他 webpack 配置 ...</span>
+
+<span class="ow">new</span><span class="w"> </span><span class="nx">ModuleFederationPlugin</span><span class="p">({</span>
+<span class="w">      </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;AppShell&#39;</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">remotes</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">ProductsApp</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Products@http://localhost:8080/remoteEntry.js&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">DashboardApp</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Dashboard@http://localhost:8082/remoteEntry.js&#39;</span><span class="p">,</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="nx">shared</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">react</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="nx">singleton</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">requiredVersion</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;^18.3.1&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="s1">&#39;react-dom&#39;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="nx">singleton</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">requiredVersion</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;^18.3.1&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="s1">&#39;react-router-dom&#39;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="nx">singleton</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">requiredVersion</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;^6.0.0&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">    </span><span class="p">})</span>
+</code></pre></div>
+<p><code>remotes</code> 配置微前端的入口，格式为：<code>remoteAlias: ModuleFederationInfo</code>。</p>
+<p>各个微前端的 webpack 配置如下：</p>
+<div class="highlight"><pre><span></span><code><span class="kr">type</span><span class="w"> </span><span class="nx">ModuleFederationInfo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="kd">interface</span><span class="w"> </span><span class="nx">PluginRemoteOptions</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="p">[</span><span class="nx">remoteAlias</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">]</span><span class="o">:</span><span class="w"> </span><span class="nx">ModuleFederationInfo</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><code>remoteAlias</code> 是用户实际引用的名称，可自行配置。例如设置为 <code>ProductsApp</code>，在代码中应该通过如下语句引入：<code>import ProductsApp from 'Products/App'</code>。</p>
+<p><code>ModuleFederationInfo</code> 由 <code>ModuleFederation name + @ + ModuleFederation entry</code> 组成，<code>ModuleFederation name</code> 是生产者设置的名称。这里的生产者是 remote 设置的名称。例如下面 products 中的配置，决定了名称为 <code>Products</code>。</p>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">ModuleFederationPlugin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">&#39;webpack/lib/container/ModuleFederationPlugin&#39;</span><span class="p">);</span>
+
+<span class="c1">// ... 其他 webpack 配置 ...</span>
+
+<span class="ow">new</span><span class="w"> </span><span class="nx">ModuleFederationPlugin</span><span class="p">({</span>
+<span class="w">      </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Products&#39;</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">filename</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;remoteEntry.js&#39;</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">exposes</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="s1">&#39;./App&#39;</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;./src/App&#39;</span><span class="p">,</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="nx">shared</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">react</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="nx">singleton</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">requiredVersion</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;^18.3.1&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="s1">&#39;react-dom&#39;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="nx">singleton</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">requiredVersion</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;^18.3.1&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">    </span><span class="p">})</span>
+</code></pre></div>
+<h2>启动各个服务</h2>
+<p>先启动各个微前端服务，之后启动 app shell，访问 app shell 可以看到如下界面：</p>
+<p><img alt="demo" src="/images/frontend/img_3.png" /></p>
+<h2>生产环境构建</h2>
+<p>直接进行 build，访问 app shell 的页面，会出现资源加载失败的情况。</p>
+<p><img alt="network error" src="/images/frontend/img_4.png" /></p>
+<p>为了解决这个问题，在 app shell 的 webpack 配置中增加如下配置：</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// 从环境变量获取远程模块的 URL，如果没有设置则使用默认值</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">PRODUCTS_URL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">PRODUCTS_URL</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">&#39;http://localhost:8080&#39;</span><span class="p">;</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">DASHBOARD_URL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">DASHBOARD_URL</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">&#39;http://localhost:8082&#39;</span><span class="p">;</span>
+
+<span class="ow">new</span><span class="w"> </span><span class="nx">ModuleFederationPlugin</span><span class="p">({</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;AppShell&#39;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">remotes</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">ProductsApp</span><span class="o">:</span><span class="w"> </span><span class="sb">`Products@</span><span class="si">${</span><span class="nx">PRODUCTS_URL</span><span class="si">}</span><span class="sb">/remoteEntry.js`</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">DashboardApp</span><span class="o">:</span><span class="w"> </span><span class="sb">`Dashboard@</span><span class="si">${</span><span class="nx">DASHBOARD_URL</span><span class="si">}</span><span class="sb">/remoteEntry.js`</span><span class="p">,</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nx">shared</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">react</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">singleton</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">requiredVersion</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;^18.3.1&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="s1">&#39;react-dom&#39;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">singleton</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">requiredVersion</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;^18.3.1&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="s1">&#39;react-router-dom&#39;</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">singleton</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">requiredVersion</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;^6.0.0&#39;</span><span class="p">,</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="p">})</span>
+</code></pre></div>
+<h2>参考</h2>
+<ul>
+<li><a href="https://module-federation.io/">Module Federation 官方文档</a></li>
+</ul>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>
