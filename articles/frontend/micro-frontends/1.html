@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>微前端架构与实践概述</title>
+        <link rel="stylesheet" href="../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../assets/pygments.css">
+        <script src="../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-frontend-micro-frontends-1 node-articles-frontend-micro-frontends node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>微前端架构与实践概述</h1>
+                
+                
+                    <p class="author">作者：oasis</p>
+                
+                <hr>
+            </header>
+            <h2>什么是微前端</h2>
+<p>一种将可独立交付的前端应用程序组合成一个更大的整体的架构风格。这里强调是一种架构风格。</p>
+<h2>微前端解决什么问题</h2>
+<ol>
+<li>更小、更内聚且可维护的代码库</li>
+<li>从组织角度来看，可实现团队自治</li>
+<li>更增量的升级、更新甚至重写前端部分的能力</li>
+<li>可以避免大型单体仓库，减少更多的冲突</li>
+</ol>
+<h2>如何拆分微前端</h2>
+<p>通过应用程序的限界上下文进行拆分</p>
+<h2>实践方案</h2>
+<h3>1. 后端组合</h3>
+<p>主要通过后端模板配合服务器配置进行拼合</p>
+<h3>2. 前端组合</h3>
+<ol>
+<li>通过 iframe 进行运行时集成</li>
+<li>通过 JavaScript 进行运行时集成</li>
+<li>通过 Web Components 进行运行时集成</li>
+</ol>
+<p>iframe 具有天然的隔离性，保证 JS 和 CSS 不会产生冲突。其他前端运行时方案需要考虑 JS 和 CSS 的冲突处理，shadow DOM 提供了良好的样式隔离。</p>
+<h2>实现方案概述</h2>
+<ol>
+<li>构建基座应用，用来管理微前端的加载</li>
+<li>通过路由匹配，处理微前端的资源进行加载执行</li>
+</ol>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>
