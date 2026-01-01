@@ -1,0 +1,25 @@
+{
+  "name": "绿洲鱼宠",
+  "short_name": "绿洲鱼宠",
+  "description": "观赏鱼宠物管理应用",
+  "start_url": "/pets/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/pets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/pets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
+
