@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>类型安全</title>
+        <link rel="stylesheet" href="../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../assets/pygments.css">
+        <script src="../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-frontend-programming-with-types-4 node-articles-frontend-programming-with-types node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>类型安全</h1>
+                
+                
+                    <p class="author">作者：oasis</p>
+                
+                <hr>
+            </header>
+            <p>反模式指的是当存在更好的替代方案时，却采用了常见的、低效的设计。基本类型偏执是一种反模式，它指的是用基础类型表示很多概念。例如用 <code>number</code> 类型表示邮编，用 <code>string</code> 表示电话号码等。</p>
+<p>基本类型偏执的处理方法主要体现在对类型进行抽象。针对邮编来说：</p>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">generateCode</span><span class="p">(</span><span class="nx">code</span><span class="o">:</span><span class="w"> </span><span class="kt">Code</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">generateCode</span><span class="p">(</span><span class="nx">code</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+</code></pre></div>
+<p>显然第一种函数签名更好，在代码提示和编译时，更容易校验错误。</p>
+<p><code>Code</code> 类型可以采用如下方式定义：</p>
+<div class="highlight"><pre><span></span><code><span class="kr">declare</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">CodeType</span><span class="o">:</span><span class="w"> </span><span class="kt">unique</span><span class="w"> </span><span class="nx">symbol</span>
+<span class="kd">class</span><span class="w"> </span><span class="nx">Code</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">readonly</span><span class="w"> </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="w">    </span><span class="p">[</span><span class="nx">CodeType</span><span class="p">]</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span>
+<span class="w">    </span><span class="kr">constructor</span><span class="p">(</span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">value</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>上述代码的关键点是 <code>declare const CodeType: unique symbol</code> 和 <code>[CodeType]: void</code>，这样可以避免 TypeScript 将具有相同形状的类型解释为 <code>Code</code> 类型。</p>
+<p>通过定义更具意义的 <code>Code</code> 类型，我们可以避免基本类型偏执的陷阱，但并没有对类型起到更严格的约束，因为 <code>Code</code> 类型关注的是类型与意义的关系。</p>
+<p>类型除了具有意义，还需要进行范围的约束。例如邮编应该是不超过6位的数字。</p>
+<p>解决约束问题可以通过构造函数进行处理：</p>
+<div class="highlight"><pre><span></span><code><span class="kr">declare</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">CodeType</span><span class="o">:</span><span class="w"> </span><span class="kt">unique</span><span class="w"> </span><span class="nx">symbol</span>
+<span class="kd">class</span><span class="w"> </span><span class="nx">Code</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">readonly</span><span class="w"> </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="w">    </span><span class="p">[</span><span class="nx">CodeType</span><span class="p">]</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span>
+<span class="w">    </span><span class="kr">constructor</span><span class="p">(</span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="nx">value</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mf">100000</span><span class="p">)</span><span class="w"> </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">()</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">value</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>除了通过构造函数外，我们也可以通过 getter 方法进行约束。</p>
+<p>一般来说构造函数不应该做很复杂的事情，在处理复杂的范围计算问题时，可以通过工厂函数来进行约束</p>
+<div class="highlight"><pre><span></span><code><span class="kr">declare</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">CodeType</span><span class="o">:</span><span class="w"> </span><span class="kt">unique</span><span class="w"> </span><span class="nx">symbol</span>
+<span class="kd">class</span><span class="w"> </span><span class="nx">Code</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">readonly</span><span class="w"> </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="w">    </span><span class="p">[</span><span class="nx">CodeType</span><span class="p">]</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span>
+<span class="w">    </span><span class="kr">constructor</span><span class="p">(</span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">value</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">static</span><span class="w"> </span><span class="nx">makeCode</span><span class="p">(</span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">Code</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="nx">value</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mf">100000</span><span class="p">)</span><span class="w"> </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">()</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">Code</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2>何时使用类型转换</h2>
+<p>在联合类型中，可能会使用到类型转换，因为在这种情况下，我们知道的比编译器更多。</p>
+<div class="highlight"><pre><span></span><code><span class="kr">type</span><span class="w"> </span><span class="nx">Left</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;left&#39;</span>
+<span class="kr">type</span><span class="w"> </span><span class="nx">Right</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;right&#39;</span>
+
+<span class="c1">// 函数返回联合类型</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">getDirection</span><span class="p">(</span><span class="nx">angle</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">Left</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="nx">Right</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">undefined</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">angle</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="mf">180</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="s1">&#39;left&#39;</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">angle</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="mf">0</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="s1">&#39;right&#39;</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kc">undefined</span>
+<span class="p">}</span>
+
+<span class="c1">// 使用类型转换</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">getDirection</span><span class="p">(</span><span class="mf">180</span><span class="p">)</span><span class="w">  </span><span class="c1">// 类型是 Left | Right | undefined</span>
+
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">result</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;left&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 通过运行时检查后，使用类型断言进行类型转换</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">leftValue</span><span class="o">:</span><span class="w"> </span><span class="kt">Left</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">Left</span><span class="w">  </span><span class="c1">// 类型转换：Left | Right | undefined → Left</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">leftValue</span><span class="p">)</span><span class="w">  </span><span class="c1">// &#39;left&#39;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2>使用 <code>unknown</code> 强制类型转换</h2>
+<p>当两个类型形状完全不同，无法直接转换时，需要借助 <code>unknown</code> 作为中间类型。</p>
+<p><code>unknown</code> 是 TypeScript 的顶层类型，可以安全地转换为任何类型。通过 <code>as unknown as TargetType</code> 的方式，我们可以绕过 TypeScript 的类型检查，进行强制类型转换。</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// API 返回的原始数据（字符串）</span>
+<span class="kr">type</span><span class="w"> </span><span class="nx">ApiResponse</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">string</span>
+
+<span class="c1">// 我们期望的数据结构（对象）</span>
+<span class="kr">type</span><span class="w"> </span><span class="nx">UserData</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">    </span><span class="nx">age</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">fetchUserData</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="nx">ApiResponse</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="s1">&#39;{&quot;name&quot;: &quot;Alice&quot;, &quot;age&quot;: 30}&#39;</span><span class="w">  </span><span class="c1">// 实际返回 JSON 字符串</span>
+<span class="p">}</span>
+
+<span class="c1">// 更实际的用法：解析 JSON 字符串</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">parseUserData</span><span class="p">(</span><span class="nx">response</span><span class="o">:</span><span class="w"> </span><span class="kt">ApiResponse</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">UserData</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">parsed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">response</span><span class="p">)</span><span class="w">  </span><span class="c1">// parsed 的类型是 any</span>
+<span class="w">    </span><span class="c1">// 使用 unknown 进行类型转换，确保类型安全</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">parsed</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">unknown</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">UserData</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2>向上和向下类型转换</h2>
+<p>将子类型转为父类型是一种常见的转换操作，TypeScript 中可以隐式实现。</p>
+<p>但父类型向子类型转换并不一定安全。</p>
+<h2>关联</h2>
+<blockquote>
+<p><a href="../../../articles/frontend/programming-with-types/4-1.html">any 和 unknown 和 never 和 void 的差异</a></p>
+</blockquote>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>

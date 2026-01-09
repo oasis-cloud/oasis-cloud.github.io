@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>基本类型</title>
+        <link rel="stylesheet" href="../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../assets/pygments.css">
+        <script src="../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-frontend-programming-with-types-2 node-articles-frontend-programming-with-types node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>基本类型</h1>
+                
+                
+                    <p class="author">作者：oasis</p>
+                
+                <hr>
+            </header>
+            <h2>空集的表示</h2>
+<p>在前文中我们说类型是一种集合，对于集合来说，会存在空集的概念。例如在函数返回值中，我们可能需要对空集合进行表达。那么怎么定义空集合这一概念呢？</p>
+<p>在 TypeScript 中空集合的概念可以借助关键字 <code>never</code> 表示。<code>never</code> 告诉我们一个函数不应该有返回值：</p>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">raise</span><span class="p">(</span><span class="nx">message</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">never</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="sb">`Error &quot;</span><span class="si">${</span><span class="nx">message</span><span class="si">}</span><span class="sb">&quot; raised at </span><span class="si">${</span><span class="ow">new</span><span class="w"> </span><span class="nb">Date</span><span class="p">()</span><span class="si">}</span><span class="sb">`</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>大多数编程语言使用 <code>void</code> 表示不存在有意义的值，如果将上面例子中的 <code>never</code> 改为 <code>void</code>，存在误导性。<code>never</code> 表示根本不返回，而 <code>void</code> 表示正常返回，但没有返回值。</p>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">raise</span><span class="p">(</span><span class="nx">message</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">never</span><span class="p">;</span><span class="w">   </span><span class="c1">// 永远不会正常返回</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">raise</span><span class="p">(</span><span class="nx">message</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="p">;</span><span class="w">    </span><span class="c1">// 正常返回，但没有返回值</span>
+</code></pre></div>
+<p><code>void</code> 在 TypeScript 中叫做单元类型，单元类型是只有一个可能值的类型，对于这种类型来说，校验其值是没有意义的。所以当函数的结果没有意义，我们使用 <code>void</code> 单元类型。</p>
+<h2>自定义 Unit 类型</h2>
+<p>虽然 TypeScript 内置了 <code>void</code> 作为单元类型，但有时我们需要自定义一个更明确的 Unit 类型。实现 Unit 类型有多种方式：</p>
+<h3>方式一：使用 unique symbol + 私有构造函数</h3>
+<p>这种方式通过 <code>unique symbol</code> 确保类型唯一性，并通过私有构造函数保证只能创建一个实例：</p>
+<div class="highlight"><pre><span></span><code><span class="kr">declare</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">UnitType</span><span class="o">:</span><span class="w"> </span><span class="kt">unique</span><span class="w"> </span><span class="nx">symbol</span><span class="p">;</span>
+
+<span class="kd">class</span><span class="w"> </span><span class="nx">Unit</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="p">[</span><span class="nx">UnitType</span><span class="p">]</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="p">;</span>
+<span class="w">    </span><span class="k">static</span><span class="w"> </span><span class="k">readonly</span><span class="w"> </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="kt">Unit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">Unit</span><span class="p">();</span>
+<span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="kr">constructor</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">};</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">greet</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="nx">Unit</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Hello world!&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">Unit</span><span class="p">.</span><span class="nx">value</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><code>unique symbol</code> 属性确保相似形状的类型不会被解释为 <code>Unit</code>，私有构造函数确保其他代码不能实例化这个类型，静态只读属性是唯一能够创建的 <code>Unit</code> 实例。</p>
+<h3>方式二：直接使用 symbol 值</h3>
+<p>更简单的方式是直接使用一个 symbol 值作为 Unit 类型的唯一值：</p>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">Unit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Symbol</span><span class="p">(</span><span class="s1">&#39;Unit&#39;</span><span class="p">);</span>
+<span class="kr">type</span><span class="w"> </span><span class="nx">Unit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">typeof</span><span class="w"> </span><span class="nx">Unit</span><span class="p">;</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">greet</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="nx">Unit</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Hello world!&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">Unit</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>这种方式更简洁，通过 <code>typeof</code> 操作符从值推导出类型。函数总是返回同一个 symbol 值，等效于返回 <code>void</code>。注意这里 <code>Unit</code> 既是值（symbol 常量）又是类型（通过 <code>typeof</code> 推导）。</p>
+<h3>方式三：使用字面量类型</h3>
+<p>也可以使用一个字面量类型来实现 Unit：</p>
+<div class="highlight"><pre><span></span><code><span class="kr">type</span><span class="w"> </span><span class="nx">Unit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">typeof</span><span class="w"> </span><span class="kc">undefined</span><span class="p">;</span><span class="w">  </span><span class="c1">// 或者 typeof null</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">greet</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="nx">Unit</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Hello world!&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kc">undefined</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>不过这种方式语义上不如前两种清晰，因为 <code>undefined</code> 和 <code>null</code> 在 TypeScript 中有特定的含义。</p>
+<h2>逻辑和短路</h2>
+<h3>declare 关键字</h3>
+<p><code>declare</code> 关键字用于告知编译器&rdquo;实体已经存在，不用在编译输出中生成它的代码&rdquo;。<code>declare</code> 用于类型声明而非实现声明。</p>
+<p>declare 主要在如下场景中使用：声明全局变量、声明第三方库、扩展已有类型定义、声明环境模块。</p>
+<p>在进行前后端衔接的时候，服务端可能会在 html 中加入一些全局变量，在 ts 文件直接使用会报错。</p>
+<div class="highlight"><pre><span></span><code><span class="kr">declare</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">myGlobalVariable</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+</code></pre></div>
+<p>在开发过程中，可能需要给 <code>window</code> 对象增加一些属性或方法，这时需要通过 <code>declare</code> 对 <code>window</code> 对象类型进行扩展：</p>
+<div class="highlight"><pre><span></span><code><span class="kr">declare</span><span class="w"> </span><span class="nb">global</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">interface</span><span class="w"> </span><span class="nx">Window</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">customProperty</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>当项目中通过 CDN 或引入无类型的第三方库，可以通过 <code>declare</code> 对第三方库进行类型定义：</p>
+<div class="highlight"><pre><span></span><code><span class="kr">declare</span><span class="w"> </span><span class="nx">module</span><span class="w"> </span><span class="s2">&quot;untyped-library&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">export</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">doSomething</span><span class="p">(</span><span class="nx">input</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="w">    </span><span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">version</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="p">}</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="nx">doSomething</span><span class="p">,</span><span class="w"> </span><span class="nx">version</span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;untyped-library&#39;</span>
+</code></pre></div>
+<p>在 webpack 等构建工具中，支持引入图片、样式等非 JS 文件。这时候直接引入会出现错误：</p>
+<div class="highlight"><pre><span></span><code><span class="kr">declare</span><span class="w"> </span><span class="nx">module</span><span class="w"> </span><span class="s2">&quot;*.png&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">content</span><span class="o">:</span><span class="w"> </span><span class="kt">any</span>
+<span class="w">    </span><span class="k">export</span><span class="w"> </span><span class="k">default</span><span class="w"> </span><span class="nx">content</span>
+<span class="p">}</span>
+<span class="kr">declare</span><span class="w"> </span><span class="nx">module</span><span class="w"> </span><span class="s2">&quot;*.css&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">styles</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">[</span><span class="nx">className</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">]</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">};</span>
+<span class="w">    </span><span class="k">export</span><span class="w"> </span><span class="k">default</span><span class="w"> </span><span class="nx">styles</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><code>declare</code> 声明的类型，通常情况下放到 <code>global.d.ts</code> 文件中，然后在 <code>tsconfig.json</code> 中进行配置：</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;compilerOptions&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;typeRoots&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;./global.d.ts&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;./node_modules&quot;</span><span class="p">]</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><code>typeRoots</code> 用于指定类型查找的目录，<code>types</code> 选项指定加载哪些类型，粒度控制更细。</p>
+<p>当两个配置项都不包含时，加载如下：</p>
+<div class="highlight"><pre><span></span><code>node_modules/
+├── @types/
+│   ├── node/      # 自动包含 ✓
+│   ├── react/     # 自动包含 ✓
+│   └── jest/      # 自动包含 ✓
+├── lodash/        # 如果有自己的类型，也会包含
+└── my-package/
+    └── index.d.ts # 自动包含 ✓
+</code></pre></div>
+<p>设置 typeRoots 后：</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;compilerOptions&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;typeRoots&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;./custom-types&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;./node_modules/@types&quot;</span><span class="p">]</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>查找顺序变为：</p>
+<ol>
+<li>./custom-types/ 目录下的所有包</li>
+<li>./node_modules/@types/ 目录下的所有包</li>
+<li>不再自动查找其他位置</li>
+</ol>
+<p>设置 types 后：</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;compilerOptions&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;types&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;node&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;jest&quot;</span><span class="p">]</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<ul>
+<li>只加载 <code>@types/node</code> 和 <code>@types/jest</code></li>
+<li>忽略 <code>@types/react</code>、<code>@types/lodash</code> 等其他所有类型包</li>
+</ul>
+<p>同时设置 typeRoots 和 types 后：</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;compilerOptions&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;typeRoots&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;./custom-types&quot;</span><span class="p">],</span>
+<span class="w">    </span><span class="nt">&quot;types&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;my-custom-types&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;node&quot;</span><span class="p">]</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<ol>
+<li>只在 <code>./custom-types</code> 中查找类型</li>
+<li>只加载 <code>my-custom-types</code> 和 <code>node</code> 这两个包的类型</li>
+<li>完全忽略 <code>./node_modules/@types</code></li>
+</ol>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>

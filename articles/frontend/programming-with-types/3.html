@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>复合类型</title>
+        <link rel="stylesheet" href="../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../assets/pygments.css">
+        <script src="../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-frontend-programming-with-types-3 node-articles-frontend-programming-with-types node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>复合类型</h1>
+                
+                
+                    <p class="author">作者：oasis</p>
+                
+                <hr>
+            </header>
+            <h2>类型的组合</h2>
+<p>元组类型的形式如同数组：</p>
+<p><div class="highlight"><pre><span></span><code><span class="kr">type</span><span class="w"> </span><span class="nx">Point</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="kt">number</span><span class="p">,</span><span class="w"> </span><span class="kt">number</span><span class="p">]</span>
+</code></pre></div>
+元组类型提供了一种特殊的分组数据的方式，允许我们将不同类型的多个值作为一个值传递。在 Point 的例子中，将两个 <code>number</code> 值作为一个元组传递。上述的 Point 类型表示二维坐标系中的 x 和 y，我们也可通过元组表示三维空间中的点：</p>
+<div class="highlight"><pre><span></span><code><span class="kr">type</span><span class="w"> </span><span class="nx">Point</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="kt">number</span><span class="p">,</span><span class="w"> </span><span class="kt">number</span><span class="p">,</span><span class="w"> </span><span class="kt">number</span><span class="p">]</span>
+</code></pre></div>
+<p>除了表示三维空间中的点，也可以用来表示矩阵或张量等：</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// 2x2 矩阵（二阶张量）</span>
+<span class="kr">type</span><span class="w"> </span><span class="nx">Matrix2x2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[[</span><span class="kt">number</span><span class="p">,</span><span class="w"> </span><span class="kt">number</span><span class="p">],</span><span class="w"> </span><span class="p">[</span><span class="kt">number</span><span class="p">,</span><span class="w"> </span><span class="kt">number</span><span class="p">]]</span>
+
+<span class="c1">// 或者更通用的矩阵类型</span>
+<span class="kr">type</span><span class="w"> </span><span class="nx">Matrix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">number</span><span class="p">[][]</span>
+</code></pre></div>
+<p>通过类和泛型可以实现特定的元组：</p>
+<div class="highlight"><pre><span></span><code><span class="kd">class</span><span class="w"> </span><span class="nx">Pair</span><span class="o">&lt;</span><span class="nx">T1</span><span class="p">,</span><span class="w"> </span><span class="nx">T2</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">x</span><span class="o">:</span><span class="w"> </span><span class="kt">T1</span>
+<span class="w">    </span><span class="nx">y</span><span class="o">:</span><span class="w"> </span><span class="kt">T2</span>
+<span class="w">    </span><span class="kr">constructor</span><span class="p">(</span><span class="nx">x</span><span class="o">:</span><span class="w"> </span><span class="kt">T1</span><span class="p">,</span><span class="w"> </span><span class="nx">y</span><span class="o">:</span><span class="w"> </span><span class="kt">T2</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">x</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">y</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+<span class="kr">type</span><span class="w"> </span><span class="nx">Point</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">Pair</span><span class="o">&lt;</span><span class="kt">number</span><span class="p">,</span><span class="w"> </span><span class="kt">number</span><span class="o">&gt;</span>
+
+<span class="c1">// 或</span>
+<span class="kd">class</span><span class="w"> </span><span class="nx">Pair</span><span class="o">&lt;</span><span class="nx">T1</span><span class="p">,</span><span class="w"> </span><span class="nx">T2</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kr">constructor</span><span class="p">(</span><span class="k">public</span><span class="w"> </span><span class="nx">x</span><span class="o">:</span><span class="w"> </span><span class="kt">T1</span><span class="p">,</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="nx">y</span><span class="o">:</span><span class="w"> </span><span class="kt">T2</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+<span class="p">}</span>
+
+<span class="kd">class</span><span class="w"> </span><span class="nx">Point</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="nx">Pair</span><span class="o">&lt;</span><span class="kt">number</span><span class="p">,</span><span class="w"> </span><span class="kt">number</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kr">constructor</span><span class="p">(</span><span class="nx">x</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">,</span><span class="w"> </span><span class="nx">y</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">super</span><span class="p">(</span><span class="nx">x</span><span class="p">,</span><span class="w"> </span><span class="nx">y</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// 或</span>
+<span class="kd">interface</span><span class="w"> </span><span class="nx">Pair</span><span class="o">&lt;</span><span class="nx">T1</span><span class="p">,</span><span class="w"> </span><span class="nx">T2</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">x</span><span class="o">:</span><span class="w"> </span><span class="kt">T1</span>
+<span class="w">    </span><span class="nx">y</span><span class="o">:</span><span class="w"> </span><span class="kt">T2</span>
+<span class="p">}</span>
+<span class="kr">type</span><span class="w"> </span><span class="nx">Point</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">Pair</span><span class="o">&lt;</span><span class="kt">number</span><span class="p">,</span><span class="w"> </span><span class="kt">number</span><span class="o">&gt;</span>
+</code></pre></div>
+<p>使用 <code>interface</code> 的实现更轻量，适合仅定义类型的场景。</p>
+<p><strong>注意</strong></p>
+<p><div class="highlight"><pre><span></span><code><span class="kd">class</span><span class="w"> </span><span class="nx">Pair</span><span class="o">&lt;</span><span class="nx">T1</span><span class="p">,</span><span class="w"> </span><span class="nx">T2</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kr">constructor</span><span class="p">(</span><span class="k">public</span><span class="w"> </span><span class="nx">x</span><span class="o">:</span><span class="w"> </span><span class="kt">T1</span><span class="p">,</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="nx">y</span><span class="o">:</span><span class="w"> </span><span class="kt">T2</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+<span class="p">}</span>
+</code></pre></div>
+等价于
+<div class="highlight"><pre><span></span><code><span class="kd">class</span><span class="w"> </span><span class="nx">Pair</span><span class="o">&lt;</span><span class="nx">T1</span><span class="p">,</span><span class="w"> </span><span class="nx">T2</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">x</span><span class="o">:</span><span class="w"> </span><span class="kt">T1</span>
+<span class="w">    </span><span class="nx">y</span><span class="o">:</span><span class="w"> </span><span class="kt">T2</span>
+<span class="w">    </span><span class="kr">constructor</span><span class="p">(</span><span class="nx">x</span><span class="o">:</span><span class="w"> </span><span class="kt">T1</span><span class="p">,</span><span class="w"> </span><span class="nx">y</span><span class="o">:</span><span class="w"> </span><span class="kt">T2</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">x</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">y</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<p><img alt="编译后的对照" src="/images/frontend/image.png" /></p>
+<p>执行顺序：
+1. new Point(1, 2) 被调用
+2. 进入 Point 的构造函数
+3. 调用 super(1, 2)，执行父类 Pair 的构造函数
+4. 父类构造函数中，public x: T1 和 public y: T2 会自动执行 this.x = 1 和 this.y = 2
+5. 返回后，Point 实例的 x 和 y 已被设置</p>
+<h2>类型组合成多选一类型</h2>
+<p>通过类型表达多选一，可以通过枚举实现：</p>
+<div class="highlight"><pre><span></span><code><span class="kd">enum</span><span class="w"> </span><span class="nx">DayOfWeek</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">Sunday</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">Monday</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">Tuesday</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">Wednesday</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">Thursday</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">Friday</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">Saturday</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>上述枚举作为参数时很好用，当函数处理过后，返回值可能是枚举或 <code>undefined</code>，这时可以通过 <code>|</code> 实现这种行为：</p>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">getDayOfWeek</span><span class="p">(</span><span class="nx">input</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">DayOfWeek</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">undefined</span><span class="w"> </span><span class="p">{}</span>
+</code></pre></div>
+<h2>代数数据类型</h2>
+<p>代数数据类型（ADT）是类型系统中组合类型的方式。它包括两种组合方式：乘积类型与和类型。</p>
+<h3>乘积类型（Product Type）</h3>
+<p>乘积类型表示&rdquo;同时拥有&rdquo;多个类型的值，例如元组类型 <code>[Two, Three]</code> 表示同时拥有 <code>Two</code> 类型和 <code>Three</code> 类型的值。</p>
+<p>例如给定 <code>enum Two {A, B}</code> 和 <code>enum Three {C, D, E}</code>，元组类型 <code>[Two, Three]</code> 这一类型就是乘积类型。</p>
+<p>计算方式：乘积类型的可能值数量 = 第一个类型的可能值数量 × 第二个类型的可能值数量</p>
+<ul>
+<li><code>Two</code> 有 2 个可能值：A, B</li>
+<li><code>Three</code> 有 3 个可能值：C, D, E</li>
+<li><code>[Two, Three]</code> 的所有可能组合：</li>
+<li>[A, C], [A, D], [A, E]</li>
+<li>[B, C], [B, D], [B, E]</li>
+<li>总共：2 × 3 = <strong>6 种</strong>可能值</li>
+</ul>
+<h3>和类型（Sum Type）</h3>
+<p>和类型表示&rdquo;或者&rdquo;的关系，例如联合类型 <code>Two | Three</code> 表示值可以是 <code>Two</code> 类型或者 <code>Three</code> 类型。</p>
+<p>给定 <code>enum Two {A, B}</code> 和 <code>enum Three {C, D, E}</code>，类型 <code>Two | Three</code> 这一类型是和类型。</p>
+<p>计算方式：和类型的可能值数量 = 第一个类型的可能值数量 + 第二个类型的可能值数量</p>
+<ul>
+<li><code>Two</code> 的值：A, B</li>
+<li><code>Three</code> 的值：C, D, E</li>
+<li><code>Two | Three</code> 的所有可能值：A, B, C, D, E</li>
+<li>总共：2 + 3 = <strong>5 种</strong>可能值</li>
+</ul>
+<h3>总结</h3>
+<ul>
+<li><strong>乘积类型</strong>：表示&rdquo;同时拥有&rdquo;，使用乘法计算（2 × 3 = 6）</li>
+<li><strong>和类型</strong>：表示&rdquo;或者&rdquo;，使用加法计算（2 + 3 = 5）</li>
+</ul>
+<p><strong>注意⚠️</strong>：代数数据类型所要传达的含义是每种类型可能的值有多少种情况，也就是可能的集合是什么样的。</p>
+<p><code>|</code> 表示联合类型，等价于代数类型中的和类型。<code>&amp;</code> 是交集类型，不是代数类型中的乘积类型，元组是代数类型中的乘积类型。</p>
+<p>TypeScript 使用的是结构类型系统（Structural Typing），而不是名义类型系统（Nominal Typing）。这使得 &amp; 的行为与数学中的集合交集不完全相同。</p>
+<p>数学视角：A ∩ B 要求元素&rdquo;同时属于A和B&rdquo;，TypeScript视角：A &amp; B 要求元素&rdquo;同时满足A和B的结构约束&rdquo;。</p>
+<p><strong><code>&amp;</code> 更像是约束合并而非交集</strong></p>
+<p>函数类型的特殊行为：
+<div class="highlight"><pre><span></span><code><span class="kr">type</span><span class="w"> </span><span class="nx">F1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">x</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
+<span class="kr">type</span><span class="w"> </span><span class="nx">F2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">x</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+
+<span class="c1">// TypeScript：F1 &amp; F2 = 函数重载</span>
+<span class="kr">type</span><span class="w"> </span><span class="nx">F</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">F1</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="nx">F2</span><span class="p">;</span>
+
+<span class="c1">// 实际上这是可能的：</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">f</span><span class="o">:</span><span class="w"> </span><span class="kt">F</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&lt;</span><span class="nx">T</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="nx">unknown</span><span class="o">&gt;</span><span class="p">(</span><span class="nx">x</span><span class="o">:</span><span class="w"> </span><span class="kt">T</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">T</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="ow">typeof</span><span class="w"> </span><span class="nx">x</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s2">&quot;number&quot;</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="nx">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">2</span><span class="p">)</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">T</span><span class="p">;</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="ow">typeof</span><span class="w"> </span><span class="nx">x</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="nx">x</span><span class="p">.</span><span class="nx">toUpperCase</span><span class="p">()</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">T</span><span class="p">;</span>
+<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="s2">&quot;Unsupported type&quot;</span><span class="p">);</span>
+<span class="p">}</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">F</span><span class="p">;</span>
+</code></pre></div></p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>

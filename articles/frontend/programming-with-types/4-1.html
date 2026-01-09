@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>any 和 unknown 和 never 和 void 的差异</title>
+        <link rel="stylesheet" href="../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../assets/pygments.css">
+        <script src="../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-frontend-programming-with-types-4-1 node-articles-frontend-programming-with-types node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>any 和 unknown 和 never 和 void 的差异</h1>
+                
+                
+                    <p class="author">作者：oasis</p>
+                
+                <hr>
+            </header>
+            <table>
+<thead>
+<tr>
+<th>特性</th>
+<th>any</th>
+<th>unknown</th>
+<th>never</th>
+<th>void</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>含义</td>
+<td>任意类型</td>
+<td>未知类型</td>
+<td>不可能的值</td>
+<td>无返回值</td>
+</tr>
+<tr>
+<td>类型安全</td>
+<td>❌ 不安全</td>
+<td>✅ 安全</td>
+<td>✅ 安全</td>
+<td>✅ 安全</td>
+</tr>
+<tr>
+<td>可赋值给</td>
+<td>任何类型</td>
+<td>需要断言</td>
+<td>任何类型</td>
+<td>void/any</td>
+</tr>
+<tr>
+<td>可接受值</td>
+<td>任何值</td>
+<td>任何值</td>
+<td>无值</td>
+<td>undefined（严格模式下无）</td>
+</tr>
+<tr>
+<td>主要用途</td>
+<td>迁移旧代码</td>
+<td>安全接收未知值</td>
+<td>不可能的情况</td>
+<td>函数无返回值</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><span class="c1">// 放弃所有类型安全</span>
+<span class="kd">let</span><span class="w"> </span><span class="nx">anything</span><span class="o">:</span><span class="w"> </span><span class="kt">any</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;hello&quot;</span><span class="p">;</span>
+<span class="nx">anything</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">42</span><span class="p">;</span><span class="w">                    </span><span class="c1">// ✅</span>
+<span class="nx">anything</span><span class="p">.</span><span class="nx">foo</span><span class="p">.</span><span class="nx">bar</span><span class="p">();</span><span class="w">               </span><span class="c1">// ❌ 运行时错误，编译时不报错</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">num</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">anything</span><span class="p">;</span><span class="w">     </span><span class="c1">// ✅ 可以赋值给任何类型</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1">// 必须先进行类型检查</span>
+<span class="kd">let</span><span class="w"> </span><span class="nx">uncertain</span><span class="o">:</span><span class="w"> </span><span class="kt">unknown</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;hello&quot;</span><span class="p">;</span>
+<span class="c1">// uncertain.toUpperCase();       // ❌ 错误：必须先检查类型</span>
+
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="ow">typeof</span><span class="w"> </span><span class="nx">uncertain</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">uncertain</span><span class="p">.</span><span class="nx">toUpperCase</span><span class="p">();</span><span class="w">      </span><span class="c1">// ✅ 类型收窄后安全</span>
+<span class="p">}</span>
+
+<span class="c1">// const str: string = uncertain; // ❌ 不能直接赋值</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">str</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">uncertain</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">  </span><span class="c1">// ✅ 需要类型断言</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1">// 表示永远不会发生的值</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">throwError</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="nx">never</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="s2">&quot;失败&quot;</span><span class="p">);</span><span class="w">      </span><span class="c1">// 永不返回</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">infiniteLoop</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="nx">never</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="kc">true</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span><span class="w">               </span><span class="c1">// 永不退出</span>
+<span class="p">}</span>
+
+<span class="c1">// let x: never = 42;            // ❌ 不能赋值任何值</span>
+<span class="kd">let</span><span class="w"> </span><span class="nx">num</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">throwError</span><span class="p">();</span><span class="w">   </span><span class="c1">// ✅ never可赋给任何类型</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1">// 函数没有返回值（或返回undefined）</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">logMessage</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Hello&quot;</span><span class="p">);</span><span class="w">         </span><span class="c1">// 隐式返回undefined</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">explicitVoid</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Hello&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kc">undefined</span><span class="p">;</span><span class="w">             </span><span class="c1">// 显式返回undefined</span>
+<span class="p">}</span>
+
+<span class="c1">// let x: void = 10;             // ❌ 严格模式下不能赋值number</span>
+<span class="kd">let</span><span class="w"> </span><span class="nx">x</span><span class="o">:</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">undefined</span><span class="p">;</span><span class="w">          </span><span class="c1">// ✅ 可以赋值为undefined</span>
+</code></pre></div>
+<p>类型安全层级（从左到右越来越安全）：any → unknown → 具体类型/void → never</p>
+<p>赋值关系：
+1. any    → 可以赋给 → 所有类型
+2. unknown → 需要检查 → 可以赋给
+3. void    → 可以赋给 → void/any
+4. never   → 可以赋给 → 所有类型</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>
