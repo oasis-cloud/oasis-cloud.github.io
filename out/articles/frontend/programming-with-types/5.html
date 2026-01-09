@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>子类型</title>
+        <link rel="stylesheet" href="../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../assets/pygments.css">
+        <script src="../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-frontend-programming-with-types-5 node-articles-frontend-programming-with-types node-articles-frontend node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>子类型</h1>
+                
+                
+                    <p class="author">作者：oasis</p>
+                
+                <hr>
+            </header>
+            <p>子类型定义：如果在期望类型 T 的实例的任何地方，都可以安全地使用类型 S 的实例，那么称类型 S 是类型 T 的子类型。</p>
+<p>TypeScript 中是结构子类型，即只要某个类型包含另一个类型声明的所有成员，那么前者的实例就可以代替后者的实例使用。换句话说，如果一个类型的结构与另一个类型相似（具有相同成员，可能还有额外的成员）则它将自动被视为后者的子类型。</p>
+<h2>子类型的基本概念</h2>
+<p>子类型关系是类型系统中一个重要的概念。如果类型 S 是类型 T 的子类型（记作 S &lt;: T），那么在任何需要 T 类型值的地方，都可以安全地使用 S 类型的值。</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// 基本例子</span>
+<span class="kr">type</span><span class="w"> </span><span class="nx">Animal</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">    </span><span class="nx">age</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="p">}</span>
+
+<span class="kr">type</span><span class="w"> </span><span class="nx">Dog</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">    </span><span class="nx">age</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="w">    </span><span class="nx">breed</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w">  </span><span class="c1">// Dog 有额外的属性</span>
+<span class="p">}</span>
+
+<span class="c1">// Dog 是 Animal 的子类型</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">greet</span><span class="p">(</span><span class="nx">animal</span><span class="o">:</span><span class="w"> </span><span class="kt">Animal</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`Hello, </span><span class="si">${</span><span class="nx">animal</span><span class="p">.</span><span class="nx">name</span><span class="si">}</span><span class="sb">`</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">dog</span><span class="o">:</span><span class="w"> </span><span class="kt">Dog</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Buddy&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">age</span><span class="o">:</span><span class="w"> </span><span class="kt">3</span><span class="p">,</span><span class="w"> </span><span class="nx">breed</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Golden Retriever&#39;</span><span class="w"> </span><span class="p">}</span>
+<span class="nx">greet</span><span class="p">(</span><span class="nx">dog</span><span class="p">)</span><span class="w">  </span><span class="c1">// ✅ Dog 可以安全地用作 Animal</span>
+</code></pre></div>
+<h2>结构子类型 vs 名义子类型</h2>
+<h3>结构子类型（Structural Typing）</h3>
+<p>TypeScript 使用结构子类型系统，它关注的是类型的&rdquo;形状&rdquo;（结构），而不是类型的名称。只要两个类型具有兼容的结构，它们就被认为是兼容的。</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// 结构子类型：只要结构匹配即可</span>
+<span class="kd">interface</span><span class="w"> </span><span class="nx">Point</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">x</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="w">    </span><span class="nx">y</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="p">}</span>
+
+<span class="kd">interface</span><span class="w"> </span><span class="nx">NamedPoint</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">x</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="w">    </span><span class="nx">y</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">printPoint</span><span class="p">(</span><span class="nx">point</span><span class="o">:</span><span class="w"> </span><span class="kt">Point</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`(</span><span class="si">${</span><span class="nx">point</span><span class="p">.</span><span class="nx">x</span><span class="si">}</span><span class="sb">, </span><span class="si">${</span><span class="nx">point</span><span class="p">.</span><span class="nx">y</span><span class="si">}</span><span class="sb">)`</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">namedPoint</span><span class="o">:</span><span class="w"> </span><span class="kt">NamedPoint</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">x</span><span class="o">:</span><span class="w"> </span><span class="kt">1</span><span class="p">,</span><span class="w"> </span><span class="nx">y</span><span class="o">:</span><span class="w"> </span><span class="kt">2</span><span class="p">,</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Origin&#39;</span><span class="w"> </span><span class="p">}</span>
+<span class="nx">printPoint</span><span class="p">(</span><span class="nx">namedPoint</span><span class="p">)</span><span class="w">  </span><span class="c1">// ✅ 结构匹配，可以安全使用</span>
+
+<span class="c1">// 即使类型名称不同，只要结构兼容就可以使用</span>
+<span class="kd">class</span><span class="w"> </span><span class="nx">MyPoint</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">x</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="w">    </span><span class="nx">y</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="w">    </span><span class="kr">constructor</span><span class="p">(</span><span class="nx">x</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">,</span><span class="w"> </span><span class="nx">y</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">x</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">y</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">myPoint</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">MyPoint</span><span class="p">(</span><span class="mf">3</span><span class="p">,</span><span class="w"> </span><span class="mf">4</span><span class="p">)</span>
+<span class="nx">printPoint</span><span class="p">(</span><span class="nx">myPoint</span><span class="p">)</span><span class="w">  </span><span class="c1">// ✅ 类实例也可以，因为结构匹配</span>
+</code></pre></div>
+<h3>名义子类型（Nominal Typing）</h3>
+<p>在名义类型系统中（如 Java、C#），类型兼容性基于类型的名称和显式声明。TypeScript 默认不使用名义类型，但可以通过一些技巧实现：</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// 使用 unique symbol 实现名义类型</span>
+<span class="kr">declare</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">PointType</span><span class="o">:</span><span class="w"> </span><span class="kt">unique</span><span class="w"> </span><span class="nx">symbol</span>
+<span class="kd">class</span><span class="w"> </span><span class="nx">Point</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="p">[</span><span class="nx">PointType</span><span class="p">]</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span>
+<span class="w">    </span><span class="nx">x</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="w">    </span><span class="nx">y</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="w">    </span><span class="kr">constructor</span><span class="p">(</span><span class="nx">x</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">,</span><span class="w"> </span><span class="nx">y</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">x</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">y</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kr">declare</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">NamedPointType</span><span class="o">:</span><span class="w"> </span><span class="kt">unique</span><span class="w"> </span><span class="nx">symbol</span>
+<span class="kd">class</span><span class="w"> </span><span class="nx">NamedPoint</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="p">[</span><span class="nx">NamedPointType</span><span class="p">]</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span>
+<span class="w">    </span><span class="nx">x</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="w">    </span><span class="nx">y</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">    </span><span class="kr">constructor</span><span class="p">(</span><span class="nx">x</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">,</span><span class="w"> </span><span class="nx">y</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">,</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">x</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">y</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">name</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">printPoint</span><span class="p">(</span><span class="nx">point</span><span class="o">:</span><span class="w"> </span><span class="kt">Point</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`(</span><span class="si">${</span><span class="nx">point</span><span class="p">.</span><span class="nx">x</span><span class="si">}</span><span class="sb">, </span><span class="si">${</span><span class="nx">point</span><span class="p">.</span><span class="nx">y</span><span class="si">}</span><span class="sb">)`</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">namedPoint</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">NamedPoint</span><span class="p">(</span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="mf">2</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Origin&#39;</span><span class="p">)</span>
+<span class="c1">// printPoint(namedPoint)  // ❌ 错误：即使结构相同，unique symbol 使其不兼容</span>
+</code></pre></div>
+<h2>子类型的规则</h2>
+<h3>1. 属性包含规则</h3>
+<p>如果类型 S 包含类型 T 的所有属性（可能还有额外属性），那么 S 是 T 的子类型：</p>
+<div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nx">Base</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">a</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="w">    </span><span class="nx">b</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="p">}</span>
+
+<span class="kd">interface</span><span class="w"> </span><span class="nx">Extended</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="nx">Base</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">c</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="w">  </span><span class="c1">// 额外属性</span>
+<span class="p">}</span>
+
+<span class="c1">// Extended 是 Base 的子类型</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">useBase</span><span class="p">(</span><span class="nx">base</span><span class="o">:</span><span class="w"> </span><span class="kt">Base</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">base</span><span class="p">.</span><span class="nx">a</span><span class="p">,</span><span class="w"> </span><span class="nx">base</span><span class="p">.</span><span class="nx">b</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">extended</span><span class="o">:</span><span class="w"> </span><span class="kt">Extended</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">a</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;hello&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">b</span><span class="o">:</span><span class="w"> </span><span class="kt">42</span><span class="p">,</span><span class="w"> </span><span class="nx">c</span><span class="o">:</span><span class="w"> </span><span class="kt">true</span><span class="w"> </span><span class="p">}</span>
+<span class="nx">useBase</span><span class="p">(</span><span class="nx">extended</span><span class="p">)</span><span class="w">  </span><span class="c1">// ✅ Extended 可以安全地用作 Base</span>
+</code></pre></div>
+<h3>2. 函数参数类型：逆变（Contravariance）</h3>
+<p>函数参数类型是逆变的：如果函数 <code>(x: T) =&gt; void</code> 可以接受类型 S 的参数，那么 S 必须是 T 的超类型（T 是 S 的子类型）。</p>
+<div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nx">Animal</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="p">}</span>
+
+<span class="kd">interface</span><span class="w"> </span><span class="nx">Dog</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="nx">Animal</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">breed</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="p">}</span>
+
+<span class="c1">// 函数参数类型是逆变的</span>
+<span class="kr">type</span><span class="w"> </span><span class="nx">AnimalHandler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">animal</span><span class="o">:</span><span class="w"> </span><span class="kt">Animal</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="ow">void</span>
+<span class="kr">type</span><span class="w"> </span><span class="nx">DogHandler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">dog</span><span class="o">:</span><span class="w"> </span><span class="kt">Dog</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="ow">void</span>
+
+<span class="c1">// AnimalHandler 是 DogHandler 的子类型</span>
+<span class="c1">// 因为可以处理 Animal 的函数，一定可以处理 Dog</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">animalHandler</span><span class="o">:</span><span class="w"> </span><span class="kt">AnimalHandler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">animal</span><span class="o">:</span><span class="w"> </span><span class="kt">Animal</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">animal</span><span class="p">.</span><span class="nx">name</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">dogHandler</span><span class="o">:</span><span class="w"> </span><span class="kt">DogHandler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">animalHandler</span><span class="w">  </span><span class="c1">// ✅ 安全</span>
+
+<span class="c1">// 但反过来不行</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">dogOnlyHandler</span><span class="o">:</span><span class="w"> </span><span class="kt">DogHandler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">dog</span><span class="o">:</span><span class="w"> </span><span class="kt">Dog</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">dog</span><span class="p">.</span><span class="nx">breed</span><span class="p">)</span><span class="w">  </span><span class="c1">// 需要访问 Dog 特有属性</span>
+<span class="p">}</span>
+
+<span class="c1">// const animalHandler2: AnimalHandler = dogOnlyHandler  // ❌ 错误</span>
+</code></pre></div>
+<h3>3. 函数返回类型：协变（Covariance）</h3>
+<p>函数返回类型是协变的：如果函数返回类型 S，而 S 是 T 的子类型，那么该函数可以替代返回 T 的函数。</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// 函数返回类型是协变的</span>
+<span class="kr">type</span><span class="w"> </span><span class="nx">AnimalFactory</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">Animal</span>
+<span class="kr">type</span><span class="w"> </span><span class="nx">DogFactory</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">Dog</span>
+
+<span class="c1">// DogFactory 是 AnimalFactory 的子类型</span>
+<span class="c1">// 因为返回 Dog 的函数，返回的一定是 Animal</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">dogFactory</span><span class="o">:</span><span class="w"> </span><span class="kt">DogFactory</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Buddy&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">breed</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Golden&#39;</span><span class="w"> </span><span class="p">})</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">animalFactory</span><span class="o">:</span><span class="w"> </span><span class="kt">AnimalFactory</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">dogFactory</span><span class="w">  </span><span class="c1">// ✅ 安全</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">animalFactory2</span><span class="o">:</span><span class="w"> </span><span class="kt">AnimalFactory</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Generic&#39;</span><span class="w"> </span><span class="p">})</span>
+<span class="c1">// const dogFactory2: DogFactory = animalFactory2  // ❌ 错误</span>
+</code></pre></div>
+<h3>4. 数组类型：协变</h3>
+<p>数组类型是协变的，但这可能导致类型安全问题：</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// 数组是协变的</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">dogs</span><span class="o">:</span><span class="w"> </span><span class="kt">Dog</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Buddy&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">breed</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Golden&#39;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Max&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">breed</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Labrador&#39;</span><span class="w"> </span><span class="p">}</span>
+<span class="p">]</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">animals</span><span class="o">:</span><span class="w"> </span><span class="kt">Animal</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">dogs</span><span class="w">  </span><span class="c1">// ✅ TypeScript 允许</span>
+
+<span class="c1">// 但这可能导致问题</span>
+<span class="nx">animals</span><span class="p">.</span><span class="nx">push</span><span class="p">({</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Cat&#39;</span><span class="w"> </span><span class="p">})</span><span class="w">  </span><span class="c1">// ✅ 编译通过</span>
+<span class="c1">// 但 dogs 数组现在包含了不是 Dog 的对象！</span>
+<span class="c1">// console.log(dogs[2].breed)  // ❌ 运行时错误</span>
+</code></pre></div>
+<h2>子类型的应用场景</h2>
+<h3>1. 函数参数多态</h3>
+<p>子类型使得函数可以接受更具体的类型：</p>
+<div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nx">Shape</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">area</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="p">}</span>
+
+<span class="kd">interface</span><span class="w"> </span><span class="nx">Circle</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="nx">Shape</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">radius</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="w">    </span><span class="nx">area</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="p">}</span>
+
+<span class="kd">interface</span><span class="w"> </span><span class="nx">Rectangle</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="nx">Shape</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">width</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="w">    </span><span class="nx">height</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="w">    </span><span class="nx">area</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">printArea</span><span class="p">(</span><span class="nx">shape</span><span class="o">:</span><span class="w"> </span><span class="kt">Shape</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">shape</span><span class="p">.</span><span class="nx">area</span><span class="p">())</span>
+<span class="p">}</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">circle</span><span class="o">:</span><span class="w"> </span><span class="kt">Circle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">radius</span><span class="o">:</span><span class="w"> </span><span class="kt">5</span><span class="p">,</span><span class="w"> </span><span class="nx">area</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nb">Math</span><span class="p">.</span><span class="nx">PI</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">5</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">5</span><span class="w"> </span><span class="p">}</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">rectangle</span><span class="o">:</span><span class="w"> </span><span class="kt">Rectangle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">width</span><span class="o">:</span><span class="w"> </span><span class="kt">4</span><span class="p">,</span><span class="w"> </span><span class="nx">height</span><span class="o">:</span><span class="w"> </span><span class="kt">6</span><span class="p">,</span><span class="w"> </span><span class="nx">area</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="mf">4</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">6</span><span class="w"> </span><span class="p">}</span>
+
+<span class="nx">printArea</span><span class="p">(</span><span class="nx">circle</span><span class="p">)</span><span class="w">     </span><span class="c1">// ✅ Circle 是 Shape 的子类型</span>
+<span class="nx">printArea</span><span class="p">(</span><span class="nx">rectangle</span><span class="p">)</span><span class="w">  </span><span class="c1">// ✅ Rectangle 是 Shape 的子类型</span>
+</code></pre></div>
+<h3>2. 接口扩展</h3>
+<p>通过接口扩展实现子类型关系：</p>
+<div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nx">Readable</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">read</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span>
+<span class="p">}</span>
+
+<span class="kd">interface</span><span class="w"> </span><span class="nx">Writable</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">write</span><span class="p">(</span><span class="nx">content</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span>
+<span class="p">}</span>
+
+<span class="kd">interface</span><span class="w"> </span><span class="nx">ReadWrite</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="nx">Readable</span><span class="p">,</span><span class="w"> </span><span class="nx">Writable</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ReadWrite 同时是 Readable 和 Writable 的子类型</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">processReadable</span><span class="p">(</span><span class="nx">readable</span><span class="o">:</span><span class="w"> </span><span class="kt">Readable</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">readable</span><span class="p">.</span><span class="nx">read</span><span class="p">())</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">processWritable</span><span class="p">(</span><span class="nx">writable</span><span class="o">:</span><span class="w"> </span><span class="kt">Writable</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">writable</span><span class="p">.</span><span class="nx">write</span><span class="p">(</span><span class="s1">&#39;Hello&#39;</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">rw</span><span class="o">:</span><span class="w"> </span><span class="kt">ReadWrite</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">read</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="s1">&#39;content&#39;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">write</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">content</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">content</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="nx">processReadable</span><span class="p">(</span><span class="nx">rw</span><span class="p">)</span><span class="w">  </span><span class="c1">// ✅ ReadWrite 是 Readable 的子类型</span>
+<span class="nx">processWritable</span><span class="p">(</span><span class="nx">rw</span><span class="p">)</span><span class="w">  </span><span class="c1">// ✅ ReadWrite 是 Writable 的子类型</span>
+</code></pre></div>
+<h3>3. 泛型约束</h3>
+<p>子类型关系在泛型约束中非常有用：</p>
+<div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nx">Comparable</span><span class="o">&lt;</span><span class="nx">T</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">compareTo</span><span class="p">(</span><span class="nx">other</span><span class="o">:</span><span class="w"> </span><span class="kt">T</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span>
+<span class="p">}</span>
+
+<span class="c1">// 约束 T 必须是 Comparable&lt;T&gt; 的子类型</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">findMax</span><span class="o">&lt;</span><span class="nx">T</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="nx">Comparable</span><span class="o">&lt;</span><span class="nx">T</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="nx">items</span><span class="o">:</span><span class="w"> </span><span class="kt">T</span><span class="p">[])</span><span class="o">:</span><span class="w"> </span><span class="nx">T</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">undefined</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">items</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="mf">0</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="kc">undefined</span>
+
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nx">max</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">items</span><span class="p">[</span><span class="mf">0</span><span class="p">]</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">let</span><span class="w"> </span><span class="nx">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1</span><span class="p">;</span><span class="w"> </span><span class="nx">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="nx">items</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span><span class="w"> </span><span class="nx">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">items</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">compareTo</span><span class="p">(</span><span class="nx">max</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">max</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">items</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">max</span>
+<span class="p">}</span>
+
+<span class="kd">class</span><span class="w"> </span><span class="nx">Person</span><span class="w"> </span><span class="k">implements</span><span class="w"> </span><span class="nx">Comparable</span><span class="o">&lt;</span><span class="nx">Person</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kr">constructor</span><span class="p">(</span><span class="k">public</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="nx">age</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+
+<span class="w">    </span><span class="nx">compareTo</span><span class="p">(</span><span class="nx">other</span><span class="o">:</span><span class="w"> </span><span class="kt">Person</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">age</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nx">other</span><span class="p">.</span><span class="nx">age</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">people</span><span class="o">:</span><span class="w"> </span><span class="kt">Person</span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="ow">new</span><span class="w"> </span><span class="nx">Person</span><span class="p">(</span><span class="s1">&#39;Alice&#39;</span><span class="p">,</span><span class="w"> </span><span class="mf">30</span><span class="p">),</span>
+<span class="w">    </span><span class="ow">new</span><span class="w"> </span><span class="nx">Person</span><span class="p">(</span><span class="s1">&#39;Bob&#39;</span><span class="p">,</span><span class="w"> </span><span class="mf">25</span><span class="p">),</span>
+<span class="w">    </span><span class="ow">new</span><span class="w"> </span><span class="nx">Person</span><span class="p">(</span><span class="s1">&#39;Charlie&#39;</span><span class="p">,</span><span class="w"> </span><span class="mf">35</span><span class="p">)</span>
+<span class="p">]</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">oldest</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">findMax</span><span class="p">(</span><span class="nx">people</span><span class="p">)</span><span class="w">  </span><span class="c1">// ✅ Person 满足 Comparable&lt;Person&gt; 约束</span>
+</code></pre></div>
+<h2>总结</h2>
+<p>子类型是 TypeScript 类型系统的核心概念之一：</p>
+<ul>
+<li><strong>结构子类型</strong>：TypeScript 使用结构子类型，关注类型的结构而非名称</li>
+<li><strong>子类型关系</strong>：如果 S 是 T 的子类型，S 的实例可以在任何需要 T 的地方使用</li>
+<li><strong>协变和逆变</strong>：函数参数是逆变的，返回类型是协变的</li>
+<li><strong>实际应用</strong>：子类型使得代码更加灵活和可复用，支持多态编程</li>
+</ul>
+<p>理解子类型关系有助于编写更加类型安全和灵活的 TypeScript 代码。</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>
