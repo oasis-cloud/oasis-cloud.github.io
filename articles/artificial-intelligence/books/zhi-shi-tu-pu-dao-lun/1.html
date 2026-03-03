@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>知识图谱导论（一）</title>
+        <link rel="stylesheet" href="../../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../../assets/pygments.css">
+        <script src="../../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-artificial-intelligence-books-zhi-shi-tu-pu-dao-lun-1 node-articles-artificial-intelligence-books-zhi-shi-tu-pu-dao-lun node-articles-artificial-intelligence-books node-articles-artificial-intelligence node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>知识图谱导论（一）</h1>
+                
+                    <p class="subtitle">知识图谱的起源</p>
+                
+                
+                    <p class="author">作者：oasis</p>
+                
+                <hr>
+            </header>
+            <h2>知识图谱的起源</h2>
+<p>人类通过认识世界来积累关于世界的知识，而语言是知识最直接的载体，正确理解语言又需要知识的帮助。所以认知需要处理两个方面：语言理解和知识表示。这也是认知智能最重要的两个方面。</p>
+<p>语言理解以来情景，一个人在不同的情境中被指代的称呼可能不一样，如果不具备关联的知识，便不能将同一个人放置在不同的场景中。所以需要一种表示的方式来处理这个问题。</p>
+<!-- 语言理解依赖情景，知识表示用于处理情景。在语言的理解中，知识依赖于情景。 -->
+
+<p>处理上述问题的主流方式有两种：抽取技术和语言预训练。抽取技术是从文本中识别实体、关系和逻辑结构等。语言预训练是通过大量的文本语料训练神经网络大模型，文本中的知识被隐含在参数化的向量模型中，但这里会存在一些问题：黑箱：模型的决策过程难以解释；推理能力弱：难以进行复杂的和多跳的逻辑推理，缺乏常识：模型知道苹果和水果经常一起出现，但未必真正理解苹果是一种水果，也可能是苹果公司。</p>
+<p>知识图谱的出现，正是为了解决这些问题，它将零散的、非结构化的数据转化为互相关联的、有明确语义的知识。让 AI 具有 “学识”。</p>
+<p>知识图谱为人工智能提供了结构化的先验知识，使其从单纯的模式识别迈向更高级的认知智能；而人工智能，尤其是大模型和自然语言处理技术，则为知识图谱的大规模构建和动态更新提供了强大的自动化工具。</p>
+<!-- 机器理解文本中的知识有两个方案：1.抽取技术，2.语言预训练。 -->
+<h2>知识图谱的使用场景</h2>
+<p>知识图谱的使用场景：语义搜索、智能问答、语言理解、媒体理解、推理引擎和决策引擎等众多领域。</p>
+<h2>知识图谱的技术栈</h2>
+<p>知识图谱的技术要素可以分为：表示、存储、抽取、融合、推理、问答和分析。</p>
+<ol>
+<li>知识图谱的表示基于有向标记图（Direccted Labeled Graph），最常用的两种表示方法有：属性图和 RDF图两种。知识图谱的最基本组成单元是三元组（Subject， Predicate， Object）主语、谓语、宾语。</li>
+<li>图数据的存储与查询。图数据的存储充分利用图的结构建立微索引。微索引比关系数据库的全局索引在处理查询时更加廉价。</li>
+<li>知识抽取。涉及 D2R 映射、表格及列表数据抽取，从文本中识别实体、关系、事件等。目前主要实现路径为“机器抽取+人工众包”。</li>
+<li>知识融合。将多个数据源中的实体或概念映射到统一的命名空间中。主要涉及两个层面的融合：概念的融合和实体的融合。</li>
+<li>知识推理。它是知识图谱的核心技术和任务。知识图谱推理的目标是利用图谱中已经存在的关联关系或事实来推断未知的关系或事实。</li>
+<li>知识问答。</li>
+<li>图算法的应用和探索。</li>
+</ol>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>
