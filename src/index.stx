@@ -9,9 +9,9 @@ subTitle: 目录
 * [MCP 入门：JSON RPC 的实现](@root/articles/artificial-intelligence/mcp/3.html)
 * [MCP 实践：鱼缸盐度计算](@root/articles/artificial-intelligence/mcp/4.html)
 * [Vibe Coding 实践：使用 Cursor 为博客添加图片放大功能](@root/articles/artificial-intelligence/vibe-coding/1.html)
-* [人工智能概念](@root/articles/artificial-intelligence/books/AI-modern-approach/1.html)
-* [人工智能中的表达形式和问题求解方法](@root/articles/artificial-intelligence/books/AI-modern-approach/2.html)
-* [人工智能中的问题求解方法](@root/articles/artificial-intelligence/books/AI-modern-approach/3.html)
+* [人工智能现代方法（一）](@root/articles/artificial-intelligence/books/AI-modern-approach/1.html)
+* [人工智能现代方法（二）](@root/articles/artificial-intelligence/books/AI-modern-approach/2.html)
+* [人工智能现代方法（三）](@root/articles/artificial-intelligence/books/AI-modern-approach/3.html)
 * [从零构建大语言模型（一）](@root/articles/artificial-intelligence/books/build-a-llm/1.html)
 * [从零构建大语言模型（二）](@root/articles/artificial-intelligence/books/build-a-llm/2.html)
 * [从零构建大语言模型（三）](@root/articles/artificial-intelligence/books/build-a-llm/3.html)
@@ -20,6 +20,10 @@ subTitle: 目录
 * [从零构建大语言模型（六）](@root/articles/artificial-intelligence/books/build-a-llm/6.html)
 * [从零构建大语言模型（七）](@root/articles/artificial-intelligence/books/build-a-llm/7.html)
 * [知识图谱导论（一）](@root/articles/artificial-intelligence/books/zhi-shi-tu-pu-dao-lun/1.html)
+* [知识图谱导论（二）](@root/articles/artificial-intelligence/books/zhi-shi-tu-pu-dao-lun/2.html)
+* [知识图谱导论（三）](@root/articles/artificial-intelligence/books/zhi-shi-tu-pu-dao-lun/3.html)
+* [知识图谱导论（四）](@root/articles/artificial-intelligence/books/zhi-shi-tu-pu-dao-lun/4.html)
+* [知识图谱导论（五）](@root/articles/artificial-intelligence/books/zhi-shi-tu-pu-dao-lun/5.html)
 <br />
 
 * [源码分析——Redux](@root/articles/frontend/21.html)

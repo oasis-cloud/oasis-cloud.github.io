@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>知识图谱导论（三）</title>
+        <link rel="stylesheet" href="../../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../../assets/pygments.css">
+        <script src="../../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-artificial-intelligence-books-zhi-shi-tu-pu-dao-lun-3 node-articles-artificial-intelligence-books-zhi-shi-tu-pu-dao-lun node-articles-artificial-intelligence-books node-articles-artificial-intelligence node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>知识图谱导论（三）</h1>
+                
+                    <p class="subtitle">知识图谱的存储与查询</p>
+                
+                
+                    <p class="author">作者：oasis</p>
+                
+                <hr>
+            </header>
+            <h2>基于关系数据库的知识图谱存储</h2>
+<p>基于三元组标的图谱存储是一张表<em>直接存储三元组</em>，但是通过关系数据库查询的时候效率非常低，往往包含非常多的 Self-Join 查询。</p>
+<p>关系数据库中<em>属性表</em>实现存储的核心思想是以实体类型为中心，把实体的属性表示为一张表。以实体为中心，说明高度依赖于实体的合理聚合，但这类聚合并不容易。</p>
+<p>为什么不容易？因为关系模型先有结构，后有数据。现实世界是先有实体，实体属性是事后归纳的。</p>
+<p>例子：电商系统的“商品”</p>
+<ul>
+<li>阶段1（图书电商）：商品很简单，有 ISBN、书名、作者、出版社、定价。设计成一张 商品表 非常完美。</li>
+<li>阶段2（拓展到服装）：服装需要 尺码、颜色、材质 等属性，这些属性是图书没有的。如果还在原 商品表 上继续加列，表会变得非常稀疏（很多行的某些列为空），难以维护。</li>
+<li>阶段3（拓展到3C数码）：手机需要 CPU型号、内存大小、屏幕尺寸，这些属性又与服装完全不同。</li>
+</ul>
+<p>困难：这就是著名的 “实体-属性-值”问题。一个固定的、以实体为中心的表结构，很难优雅地容纳不同类型实体的差异化属性。常见的解决方案是引入更加灵活的设计，如“单表继承”、“类表继承”或“序列化属性（JSON）”，但这些方案要么复杂，要么牺牲了关系数据库的部分优势（如查询能力）。</p>
+<p><em>二元表</em>是按照属性进行分表，例如 hasName 是一个表，bornOnDate 是一个表。这在插入一个实体的多个属性时，需要多表操作，性能损耗高。</p>
+<p><em>全索引结构的存储</em>仅维护一张包含（实体，谓词，对象）的三列表，通过增加 Mapping Table 压缩存储空间，建立六重索引机制。Clustered B+（聚簇索引），它决定了表的物理存储方式。</p>
+<p>新华字典（类似 Clustered B+树）</p>
+<p>结构：字典的正文本身就是按拼音从 a 到 z 排好序的。</p>
+<p>过程：你根据拼音“zhang”直接翻到字典中间偏后的位置，一下子就找到了“张”字所在的页，看到了它的发音和解释。</p>
+<p>特点：数据本身就是目录。找到了位置，也就找到了数据。</p>
+<h2>基于图数据库的知识图谱存储</h2>
+<p>关系数据库表示图的时候存在很多局限性，例如多跳查询，查询 A 的朋友的朋友的朋友的朋友，就会导致大量的 Join 计算，且计算的复杂度随着跳数的增加呈指数级增长。关系模型将语义关联关系隐藏在外键结构中，无法显示表达。关系型数据库不具备丰富的关系语义的表达能力，例如：自反关系（Reflexive）和多跳关系，还包括传递关系（Transitive）​、对称关系（Symmetric）、反关系（Inverse）和函数关系（Functional）等</p>
+<p>图数据库中一个重要原则：关系是一等公民。</p>
+<h3>免索引邻接</h3>
+<p>免索引邻接（Index-free adjacency）是图数据库的核心概念。每个节点维护了一组指向其相邻节点的引用。这组引用可以看作是相邻节点的微索引。查询时，数据库不需要通过一个全局的“索引”来查找两个节点是否相关，而是直接沿着指针从一个节点“跳”到下一个节点。</p>
+<p>为了支撑“免索引邻接”，Neo4j在磁盘上的存储方式非常巧妙。它使用固定长度的记录来存储节点和关系。</p>
+<p>节点存储文件：每个节点记录中，最重要的不是它的属性，而是两个指针——一个指向它的第一个关系，另一个指向它的第一个属性。</p>
+<p>关系存储文件：每个关系记录不仅存储了关系的类型（如任职于）和属性指针，还存储了它的起始节点ID和结束节点ID。最关键的是，它还存储了指向该节点上一个和下一个关系的指针。</p>
+<p>双向链表：对于同一个节点的所有关系，通过关系记录中的“上一个/下一个关系指针”连接成一个双向链表。这就是“免索引邻接”的物理实现。</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>

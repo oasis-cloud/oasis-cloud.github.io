@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>知识图谱导论（二）</title>
+        <link rel="stylesheet" href="../../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../../assets/pygments.css">
+        <script src="../../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-artificial-intelligence-books-zhi-shi-tu-pu-dao-lun-2 node-articles-artificial-intelligence-books-zhi-shi-tu-pu-dao-lun node-articles-artificial-intelligence-books node-articles-artificial-intelligence node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>知识图谱导论（二）</h1>
+                
+                    <p class="subtitle">知识图谱的表示</p>
+                
+                
+                    <p class="author">作者：oasis</p>
+                
+                <hr>
+            </header>
+            <p>符号表示方法的主要缺点是不易于刻画隐式的知识，向量表示易于捕获隐藏的知识。</p>
+<p>符号表示和神经网络方法互相结合是知识表示的重要发展方向。</p>
+<h2>符号表示</h2>
+<h3>属性图（Property Graph）</h3>
+<p>属性图是图数据库Neo4J中的表示模型。主要术语包括：
+- 顶点（Vertex）又称节点（Node）
+- 边（Edge）又称关系（Relationship）
+- 标签（Label）
+- 关系类型
+- 属性（Property）</p>
+<p>节点上包含属性，属性可以以任何键值形式存在</p>
+<p>边用来连接节点，每条边都拥有一个方向、一个标签、一个开始节点和一个结束节点。边上也可以有属性，可以通过属性增加边的权重和特性等其他额外语义</p>
+<h3>RDF图模型</h3>
+<p>RDF首先是数据交换标准，而非存储模型。RDF的基本组成单元是三元组（s，p，o）。多个三元组头尾相互连接，形成 RDF 图。</p>
+<h3>OWL本体语言</h3>
+<p>OWL本体语言可以解决 RDF+RDFS 表达能力有限的痛点。OWL 可以看作 RDF Schema 的扩展，增加了更多的语义表达构件。</p>
+<h2>向量表示</h2>
+<p>传统的 One-Hot Encoding 的核心思想是用一个“唯一的位置“来代表一个词。为了给词典中的每个词定下唯一的标识，就需要向量空间和词典一样大。
+这样会导致空间资源的浪费。</p>
+<p>假设我们有一个微型词典，里面只有 4 个词：
+[ &ldquo;猫&rdquo;, &ldquo;狗&rdquo;, &ldquo;鱼&rdquo;, &ldquo;鸟&rdquo; ] (N = 4)</p>
+<p>那么，每个词的 One-Hot 向量就是：</p>
+<p>猫：[1, 0, 0, 0] (在第1个位置点亮“1”)</p>
+<p>狗：[0, 1, 0, 0] (在第2个位置点亮“1”)</p>
+<p>鱼：[0, 0, 1, 0] (在第3个位置点亮“1”)</p>
+<p>鸟：[0, 0, 0, 1] (在第4个位置点亮“1”)</p>
+<p>这样做是为了实现离散对象的唯一标识。当数词典很大时，向量维度就会提升，存储成本增加。除此之外，最重要的缺点是它会产生词语鸿沟。
+它无法表示词与词之间的关系。</p>
+<h3>词向量表示</h3>
+<p>为了处理词语鸿沟，可以采用低维稠密度的向量表示，它被称为词向量表示。得到词向量的过程，本质上是让机器通过阅读大量文本，自己总结出每个词语的语义。
+词向量生成有两大范式：静态词向量和动态词向量。</p>
+<p>词向量到实体向量是基于几何平移动思想得出的。书中例子 为什么“罗马 - 意大利 ≈ 巴黎 - 法国”，是词向量时代的一个著名实验。
+- 在词向量空间：由于“罗马”和“巴黎”都是首都，“意大利”和“法国”都是国家，且它们在语料中出现的上下文高度相似，导致词向量在空间中的分布呈现出了这种几何平移关系。
+- 在知识图谱视角：这个几何平移关系对应的正是 (罗马, 首都, 意大利) 和 (巴黎, 首都, 法国) 这两个三元组。</p>
+<p>这里的关键启示是：一个好的向量表示，应该能够把“关系”编码为向量空间中的“几何平移”。</p>
+<p>Bordes 受到这个启发，提出了一个极具影响力的模型——TransE。其核心思想：如果三元组（头实体，关系，尾实体）成立。比如 (Rome, is-capital-of, Italy)，那么头实体的向量加上关系的向量，应该约等于尾实体的向量。</p>
+<p>数学表示：<code>h + r ≈ t</code>。</p>
+<p>书中通过 TransE 模型的讲述，可以发现，在这些模型设计后，要优先考虑模型的验证，设置验证函数。这样才能评价出向量表示学习的效果。</p>
+<p>TransE 模型的核心缺陷是无法处理一对多的关系。例如：</p>
+<p>三元组1: (Apple, Founder, Steve_Jobs)</p>
+<p>三元组2: (Apple, Founder, Steve_Wozniak)</p>
+<p>Apple+Founder≈Steve_Jobs 和 Apple+Founder≈Steve_Wozniak。因为左边都是Apple+Founder，这要求 Steve_Jobs 和 Steve_Wozniak 必须非常接近，否则无法同时满足这两个等式。但是这两个是不同的实体，应该有各自独特的向量表示。</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>
