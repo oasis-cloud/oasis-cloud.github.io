@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>十堂极简人工智能课</title>
+        <link rel="stylesheet" href="../../../../assets/fonts.css">
+        <link rel="stylesheet" href="../../../../assets/graphite.css">
+        <link rel="stylesheet" href="../../../../assets/pygments.css">
+        <script src="../../../../assets/image-zoom.js" defer></script>
+        
+        
+    </head>
+    <body class="node-articles-artificial-intelligence-books-shitangjijianrengongzhinengke-1 node-articles-artificial-intelligence-books-shitangjijianrengongzhinengke node-articles-artificial-intelligence-books node-articles-artificial-intelligence node-articles node">
+        <header class="masthead">
+            <h1><a href="../../../../index.html">Oasis's Cloud</a></h1>
+            
+                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
+            
+            
+            <nav class="menu">
+                <input id="menu-check" type="checkbox"/>
+                <label id="menu-label" for="menu-check" class="unselectable">
+                    <span class="icon close-icon">✕</span>
+                    <span class="icon open-icon">☰</span>
+                    <span class="text">Menu</span>
+                </label>
+                <ul>
+<li><a href="../../../../index.html">首页</a></li>
+</ul>
+            </nav>
+        </header>
+        <article class="main">
+            <header class="title">
+                <h1>十堂极简人工智能课</h1>
+                
+                
+                    <p class="author">作者：oasis</p>
+                
+                <hr>
+            </header>
+            <h2>人工智能哲学思想的变迁</h2>
+<h3>符号主义</h3>
+<p>早期思路是 <strong>符号 + 搜索</strong>：用符号表示知识，再在空间中搜索解。</p>
+<p><strong>局限</strong>：现实问题的搜索空间往往大到「难解」的程度，符号 + 搜索更适合书中那种 <strong>积木世界</strong> 一类的迷你问题，难以直接推广到复杂现实。</p>
+<h3>知识的表示</h3>
+<p>符号人工智能里逐渐发展出 <strong>知识如何表示</strong> 的问题；进入大数据时代后，又涉及 <strong>从数据中提取知识并予以表示</strong>。</p>
+<p><strong>行为树是什么？</strong>（书中若另有专章，可在此补定义与用途。）</p>
+<h3>感知：视觉</h3>
+<p>视觉是感知的重要一环；后面谈到的卷积神经网络（CNN）就是面向视觉任务的典型深度学习结构。</p>
+<hr />
+<h3>连接主义</h3>
+<h2>人工神经网络</h2>
+<p>人工神经网络是一类成熟且非常成功的人工智能方法：把大脑工作机制 <strong>简化</strong> 成可在计算机上运行的数学模型。</p>
+<h3>怎样算「训练完成」？</h3>
+<p>训练的目标是 <strong>优化各层连接的权重和偏置</strong>，使网络在给定训练样本上输出接近期望的答案。</p>
+<p><strong>是否必须为所有训练数据都提供「标准答案」？</strong></p>
+<ul>
+<li>不必追求在训练集上 <strong>百分之百</strong> 拟合；过度追求往往导致 <strong>过拟合</strong>，在新数据上反而变差。</li>
+<li>常用做法：把数据划成 <strong>训练集 / 验证集 / 测试集</strong>（文中「实验集」多指 <strong>测试集</strong>），用验证集监控泛化表现。</li>
+</ul>
+<p><strong>前馈网络与反向传播</strong></p>
+<ul>
+<li>常见训练方式是 <strong>反向传播</strong>：从输出层开始，逐层向前（相对数据流向为「反向」）更新权重与偏置，使误差下降。</li>
+<li><strong>误差是否已「小到不能再小」？</strong> 理论上很难保证找到 <strong>全局最小</strong>；实践中用 <strong>验证集损失 + 早停（early stopping）</strong>：若连续若干轮（耐心值）验证集损失不再下降，就停止训练，避免过拟合。</li>
+</ul>
+<h3>卷积神经网络（CNN）</h3>
+<ul>
+<li><strong>卷积神经网络</strong> 是视觉任务里常用的深度学习结构；「深度」常指 <strong>卷积层堆叠的层数</strong>。</li>
+<li>历史背景：<strong>2012 年 AlexNet</strong> 在 ImageNet 上夺冠，展示了用 GPU 训练深度 CNN 的效果，推动深度学习成为主流，也大幅推高了对高性能 GPU 的需求——可以说 CNN 是让 <strong>GPU 成为 AI 基础设施</strong> 的关键推手之一。</li>
+</ul>
+<hr />
+<h2>三类学习方式（简述）</h2>
+<h3>监督学习</h3>
+<p>使用带 <strong>标签（正确答案）</strong> 的数据，学习输入到输出的映射，用于对新样本做预测或分类。训练过程就是不断比较预测与标签的误差，并调整参数（如神经网络权重），直到预测足够好。</p>
+<h3>无监督学习</h3>
+<p>数据 <strong>没有标签</strong>，目标是让模型自动发现数据内部的结构（如聚类、表示学习、生成建模等）。</p>
+<h3>强化学习</h3>
+<p><strong>智能体</strong> 在环境中 <strong>采取行动</strong>，环境返回 <strong>奖励信号</strong>（可正、可负、可为零）。这里的奖励 <strong>不是</strong> 监督学习里那种逐样本的 ground truth 标签，而是对 <strong>当前行为好坏</strong> 的标量反馈。智能体的目标是学到一种 <strong>策略</strong>，使 <strong>长期累积奖励</strong> 尽可能大。</p>
+<p><strong>与上面两类的区别</strong>：监督学习靠「输入–正确答案」对；无监督学习完全没有这种标签；强化学习则靠 <strong>序贯决策 + 奖励</strong>，解决的是「动作 / 策略该如何被评价与改进」的问题——这与无监督学习里「发现数据结构」的目标并不相同。</p>
+        </article>
+        
+        <script src="https://giscus.app/client.js"
+                data-repo="oasis-cloud/blog-comments"
+                data-repo-id="R_kgDOKEliHA"
+                data-category="General"
+                data-category-id="DIC_kwDOKEliHM4CYb6e"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="preferred_color_scheme"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+    </body>
+</html>
