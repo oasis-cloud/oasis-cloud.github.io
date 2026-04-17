@@ -1,11 +1,11 @@
 {
-  "name": "绿洲鱼宠",
-  "short_name": "绿洲鱼宠",
-  "description": "观赏鱼宠物管理应用",
+  "name": "容器大师",
+  "short_name": "容器大师",
+  "description": "容器、宠物、饲料与药品管理",
   "start_url": "/fish/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#2563eb",
+  "theme_color": "#0284c7",
   "orientation": "portrait",
   "icons": [
     {
@@ -22,4 +22,3 @@
     }
   ]
 }
-
