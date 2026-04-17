@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>图片标注工具 - 修复绘制问题</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 20px;
+            text-align: center;
+        }
+        .toolbar {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        button, input[type="file"] {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+        button:hover, input[type="file"]:hover {
+            background: #0056b3;
+        }
+        button.secondary {
+            background: #6c757d;
+        }
+        button.secondary:hover {
+            background: #5a6268;
+        }
+        .canvas-wrapper {
+            width: 500px;
+            height: 500px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #f8f9fa;
+            position: relative;
+            margin: 0 auto;
+        }
+        canvas {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .info {
+            margin-top: 15px;
+            font-size: 13px;
+            color: #6c757d;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <div class="toolbar">
+        <input type="file" id="uploadInput" accept="image/*">
+        <button id="saveBtn">💾 保存标注图片</button>
+        <button id="clearRectsBtn" class="secondary">🗑️ 清除所有矩形</button>
+    </div>
+    <div class="canvas-wrapper" id="canvasWrapper">
+        <canvas id="imageCanvas"></canvas>
+    </div>
+    <div class="info">
+        ✅ 图片自动缩放显示（无空白）<br>
+        🔴 直接在图上按住鼠标拖拽即可绘制红色矩形（每次绘制会替换之前的矩形）<br>
+        ✨ 绘制完成后，可以点击矩形进行移动、缩放<br>
+        💾 保存时会按原图比例生成带标注的完整图片
+    </div>
+</div>
+
+<script>
+    // ---------- 全局变量 ----------
+    let canvas = null;              // Fabric.js canvas 实例
+    let originalImage = null;      // 原始图片的 Image 对象
+    let originalWidth = 0, originalHeight = 0;
+    let displayScale = 1;          // 显示比例 = 显示尺寸 / 原始尺寸
+
+    // 绘制矩形相关变量
+    let isDrawing = false;          // 是否正在绘制中
+    let startPoint = null;          // 绘制起点
+    let tempRect = null;            // 临时矩形（拖拽时预览）
+
+    // DOM 元素
+    const uploadInput = document.getElementById('uploadInput');
+    const saveBtn = document.getElementById('saveBtn');
+    const clearRectsBtn = document.getElementById('clearRectsBtn');
+
+    // ---------- 辅助函数 ----------
+    // 计算图片在 500x500 内的最佳显示尺寸（等比缩放，无拉伸）
+    function calcDisplaySize(imgWidth, imgHeight, maxSize = 500) {
+        const scale = Math.min(maxSize / imgWidth, maxSize / imgHeight);
+        const displayWidth = imgWidth * scale;
+        const displayHeight = imgHeight * scale;
+        return { width: displayWidth, height: displayHeight, scale };
+    }
+
+    // 清除所有用户添加的矩形
+    function clearAllRectangles() {
+        if (!canvas) return;
+        const objects = canvas.getObjects();
+        const rectsToRemove = objects.filter(obj => obj.type === 'rect' && obj.data?.isUserRect);
+        rectsToRemove.forEach(rect => canvas.remove(rect));
+        canvas.renderAll();
+    }
+
+    // 添加一个矩形（并使其可编辑）
+    function addRectangle(left, top, width, height) {
+        if (!canvas) return;
+        const rect = new fabric.Rect({
+            left: left,
+            top: top,
+            width: width,
+            height: height,
+            fill: 'transparent',
+            stroke: 'red',
+            strokeWidth: 2,
+            selectable: true,
+            hasControls: true,
+            hasBorders: true,
+            cornerColor: 'red',
+            cornerSize: 6,
+            transparentCorners: false,
+            data: { isUserRect: true }
+        });
+        canvas.add(rect);
+        canvas.renderAll();
+        return rect;
+    }
+
+    // ---------- 直接绘制矩形的鼠标事件 ----------
+    function onMouseDown(e) {
+        if (!canvas) return;
+
+        const pointer = canvas.getPointer(e.e);
+        const target = canvas.findTarget(e.e);
+
+        // 如果点击的是已有矩形，则不启动新绘制，让矩形处理事件
+        if (target && target.type === 'rect' && target.data?.isUserRect) {
+            return;
+        }
+
+        // 开始绘制
+        isDrawing = true;
+        startPoint = { x: pointer.x, y: pointer.y };
+
+        // 创建临时矩形预览
+        tempRect = new fabric.Rect({
+            left: startPoint.x,
+            top: startPoint.y,
+            width: 0,
+            height: 0,
+            fill: 'transparent',
+            stroke: 'red',
+            strokeWidth: 2,
+            selectable: false,
+            evented: false
+        });
+        canvas.add(tempRect);
+        canvas.renderAll();
+
+        // 绘制期间禁用框选
+        canvas.selection = false;
+    }
+
+    function onMouseMove(e) {
+        if (!isDrawing || !startPoint || !tempRect) return;
+
+        const pointer = canvas.getPointer(e.e);
+        let width = pointer.x - startPoint.x;
+        let height = pointer.y - startPoint.y;
+
+        if (width < 0) {
+            tempRect.set({ left: pointer.x, width: -width });
+        } else {
+            tempRect.set({ left: startPoint.x, width: width });
+        }
+        if (height < 0) {
+            tempRect.set({ top: pointer.y, height: -height });
+        } else {
+            tempRect.set({ top: startPoint.y, height: height });
+        }
+        canvas.renderAll();
+    }
+
+    function onMouseUp(e) {
+        if (!isDrawing) {
+            // 清理残留临时矩形（安全处理）
+            if (tempRect) {
+                canvas.remove(tempRect);
+                tempRect = null;
+                canvas.renderAll();
+            }
+            return;
+        }
+
+        isDrawing = false;
+        canvas.selection = true;   // 恢复框选
+
+        if (tempRect && tempRect.width > 5 && tempRect.height > 5) {
+            // 清除旧矩形，保留最新
+            clearAllRectangles();
+            addRectangle(tempRect.left, tempRect.top, tempRect.width, tempRect.height);
+        }
+
+        // 移除临时矩形
+        if (tempRect) {
+            canvas.remove(tempRect);
+            tempRect = null;
+        }
+        startPoint = null;
+        canvas.renderAll();
+    }
+
+    // 绑定画布鼠标事件（每次重新创建画布后都需要调用）
+    function bindCanvasEvents(canvasInstance) {
+        canvasInstance.on('mouse:down', onMouseDown);
+        canvasInstance.on('mouse:move', onMouseMove);
+        canvasInstance.on('mouse:up', onMouseUp);
+    }
+
+    // 上传并显示图片
+    function loadImage(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                // 保存原始图片信息
+                originalWidth = img.width;
+                originalHeight = img.height;
+                originalImage = img;
+
+                // 计算显示尺寸（缩放比例）
+                const { width: displayW, height: displayH, scale } = calcDisplaySize(originalWidth, originalHeight);
+                displayScale = scale;
+
+                // 重新初始化 canvas（尺寸设为显示尺寸）
+                if (canvas) {
+                    canvas.dispose();  // 销毁旧实例，事件会自动解绑
+                }
+                canvas = new fabric.Canvas('imageCanvas', {
+                    width: displayW,
+                    height: displayH,
+                    selection: true,
+                    preserveObjectStacking: true
+                });
+
+                // 关键修复：为新画布绑定鼠标事件
+                bindCanvasEvents(canvas);
+
+                // 将图片添加到 canvas 作为背景（不可编辑）
+                fabric.Image.fromURL(e.target.result, (fabricImg) => {
+                    fabricImg.set({
+                        scaleX: displayScale,
+                        scaleY: displayScale,
+                        left: 0,
+                        top: 0,
+                        selectable: false,
+                        evented: false,
+                        hasControls: false,
+                        hasBorders: false,
+                        lockMovementX: true,
+                        lockMovementY: true
+                    });
+                    canvas.add(fabricImg);
+                    canvas.sendToBack(fabricImg);
+                    canvas.renderAll();
+
+                    // 清空已有矩形
+                    clearAllRectangles();
+                });
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // ---------- 保存图片：映射到原始尺寸并绘制 ----------
+    async function saveAnnotatedImage() {
+        if (!canvas || !originalImage) {
+            alert('请先上传图片！');
+            return;
+        }
+
+        const rects = canvas.getObjects().filter(obj => obj.type === 'rect' && obj.data?.isUserRect);
+        if (rects.length === 0) {
+            alert('没有绘制任何矩形，无法保存带标注的图片。');
+            return;
+        }
+
+        const offCanvas = document.createElement('canvas');
+        offCanvas.width = originalWidth;
+        offCanvas.height = originalHeight;
+        const ctx = offCanvas.getContext('2d');
+
+        ctx.drawImage(originalImage, 0, 0, originalWidth, originalHeight);
+
+        rects.forEach(rect => {
+            // 获取矩形的实际显示尺寸（考虑用户缩放）
+        const actualLeft = rect.left;
+        const actualTop = rect.top;
+        const actualWidth = rect.width * rect.scaleX;
+        const actualHeight = rect.height * rect.scaleY;
+
+        // 映射到原图坐标
+        const originalLeft = actualLeft / displayScale;
+        const originalTop = actualTop / displayScale;
+        const originalWidth = actualWidth / displayScale;
+        const originalHeight = actualHeight / displayScale;
+
+        ctx.save();
+        ctx.strokeStyle = 'red';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(originalLeft, originalTop, originalWidth, originalHeight);
+        ctx.restore();
+        });
+
+        const dataURL = offCanvas.toDataURL('image/jpeg', 0.9);
+        downloadImage(dataURL, 'annotated_image.jpg');
+    }
+
+    function downloadImage(dataURL, filename) {
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = dataURL;
+        link.click();
+    }
+
+    // ---------- 初始化 ----------
+    function initEmptyCanvas() {
+        if (canvas) canvas.dispose();
+        canvas = new fabric.Canvas('imageCanvas', {
+            width: 500,
+            height: 500,
+            selection: true
+        });
+        bindCanvasEvents(canvas);  // 绑定事件
+
+        const text = new fabric.Text('⬆️ 点击上传图片', {
+            left: 250,
+            top: 250,
+            originX: 'center',
+            originY: 'center',
+            fontSize: 18,
+            fill: '#aaa',
+            selectable: false
+        });
+        canvas.add(text);
+        canvas.renderAll();
+    }
+
+    // 事件绑定
+    uploadInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            loadImage(file);
+        }
+    });
+
+    saveBtn.addEventListener('click', saveAnnotatedImage);
+
+    clearRectsBtn.addEventListener('click', () => {
+        if (canvas) {
+            clearAllRectangles();
+        }
+    });
+
+    // 启动空画布
+    initEmptyCanvas();
+</script>
+</body>
+</html>

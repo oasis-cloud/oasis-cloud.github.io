@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+<script>
+    let a = 111
+    async function * handleClick() {
+        console.log('oasis')
+        yield await new Promise((reslove, reject) => {
+            reslove('reslove' + a)
+        })
+        console.log(a)
+        yield {a: 1}
+        console.log('oasis 1')
+        yield {b: 2}
+        console.log('oasis 2')
+    }
+
+    function report(fn) {
+        return async function () {
+            const gen = fn()
+            let next = await gen.next()
+
+            while(!next.done) {
+                console.log('oasis next -- ', next)
+                console.log(next.value)
+                next = await gen.next()
+            }
+        }
+
+    }
+
+    const testCase = report(handleClick)
+
+    // console.log(testCase)
+    a = 222
+    testCase()
+
+</script>
+
+</body>
+</html>

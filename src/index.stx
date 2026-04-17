@@ -68,6 +68,7 @@ subTitle: 目录
 * [NutUI React 在 Taro 中实现函数调用的方法](@root/articles/frontend/15.html)
 <br />
 
+* [yield 与生成器：把多步埋点收进同一个函数结构里](@root/articles/frontend/25.html)
 * [TypeScript config 文件中的 extends](@root/articles/frontend/3.html)
 * [TypeScript 中的 type 和 interface 比较](@root/articles/frontend/2.html)
 * [JavaScript 中的枚举实现](@root/articles/frontend/7.html)
