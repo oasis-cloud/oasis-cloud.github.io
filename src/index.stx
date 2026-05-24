@@ -3,16 +3,43 @@ title: ☁️☁️☁️<br/>🌵🌵🌵🌵🌵
 subTitle: 目录
 ---
 
-以下文章列表中，存在部分文章由 AI 撰写，部分文章经过 AI 整理。
 
+* [人工智能现代方法（1）](@root/articles/artificial-intelligence/books/AI-modern-approach/1.html)
+* [人工智能现代方法（2）](@root/articles/artificial-intelligence/books/AI-modern-approach/2.html)
+* [人工智能现代方法（3）](@root/articles/artificial-intelligence/books/AI-modern-approach/3.html)
+* [人工智能现代方法（4）](@root/articles/artificial-intelligence/books/AI-modern-approach/4.html)
+* [人工智能现代方法（5）](@root/articles/artificial-intelligence/books/AI-modern-approach/5.html)
+* [人工智能现代方法（6）](@root/articles/artificial-intelligence/books/AI-modern-approach/6.html)
+* [人工智能现代方法（7）](@root/articles/artificial-intelligence/books/AI-modern-approach/7.html)
+* [人工智能现代方法（8）](@root/articles/artificial-intelligence/books/AI-modern-approach/8.html)
+* [人工智能现代方法（9）](@root/articles/artificial-intelligence/books/AI-modern-approach/9.html)
+* [人工智能现代方法（10）](@root/articles/artificial-intelligence/books/AI-modern-approach/10.html)
+* [人工智能现代方法（11）](@root/articles/artificial-intelligence/books/AI-modern-approach/11.html)
+* [人工智能现代方法（12）](@root/articles/artificial-intelligence/books/AI-modern-approach/12.html)
+* [人工智能现代方法（13）](@root/articles/artificial-intelligence/books/AI-modern-approach/13.html)
+* [人工智能现代方法（14）](@root/articles/artificial-intelligence/books/AI-modern-approach/14.html)
+* [人工智能现代方法（15）](@root/articles/artificial-intelligence/books/AI-modern-approach/15.html)
+* [人工智能现代方法（16）](@root/articles/artificial-intelligence/books/AI-modern-approach/16.html)
+* [人工智能现代方法（17）](@root/articles/artificial-intelligence/books/AI-modern-approach/17.html)
+* [人工智能现代方法（18）](@root/articles/artificial-intelligence/books/AI-modern-approach/18.html)
+* [人工智能现代方法（19）](@root/articles/artificial-intelligence/books/AI-modern-approach/19.html)
+* [人工智能现代方法（20）](@root/articles/artificial-intelligence/books/AI-modern-approach/20.html)
+* [人工智能现代方法（21）](@root/articles/artificial-intelligence/books/AI-modern-approach/21.html)
+* [人工智能现代方法（22）](@root/articles/artificial-intelligence/books/AI-modern-approach/22.html)
+* [人工智能现代方法（23）](@root/articles/artificial-intelligence/books/AI-modern-approach/23.html)
+* [人工智能现代方法（24）](@root/articles/artificial-intelligence/books/AI-modern-approach/24.html)
+* [人工智能现代方法（25）](@root/articles/artificial-intelligence/books/AI-modern-approach/25.html)
+* [人工智能现代方法（26）](@root/articles/artificial-intelligence/books/AI-modern-approach/26.html)
+<br />
+
+* [MCP 入门：基础概念](@root/articles/artificial-intelligence/mcp/1.html)
 * [MCP 入门：基础概念](@root/articles/artificial-intelligence/mcp/1.html)
 * [MCP 入门：MCP 服务器的发现和调用](@root/articles/artificial-intelligence/mcp/2.html)
 * [MCP 入门：JSON RPC 的实现](@root/articles/artificial-intelligence/mcp/3.html)
 * [MCP 实践：鱼缸盐度计算](@root/articles/artificial-intelligence/mcp/4.html)
 * [Vibe Coding 实践：使用 Cursor 为博客添加图片放大功能](@root/articles/artificial-intelligence/vibe-coding/1.html)
-* [人工智能现代方法（一）](@root/articles/artificial-intelligence/books/AI-modern-approach/1.html)
-* [人工智能现代方法（二）](@root/articles/artificial-intelligence/books/AI-modern-approach/2.html)
-* [人工智能现代方法（三）](@root/articles/artificial-intelligence/books/AI-modern-approach/3.html)
+<br />
+
 * [从零构建大语言模型（一）](@root/articles/artificial-intelligence/books/build-a-llm/1.html)
 * [从零构建大语言模型（二）](@root/articles/artificial-intelligence/books/build-a-llm/2.html)
 * [从零构建大语言模型（三）](@root/articles/artificial-intelligence/books/build-a-llm/3.html)
@@ -20,6 +47,8 @@ subTitle: 目录
 * [从零构建大语言模型（五）](@root/articles/artificial-intelligence/books/build-a-llm/5.html)
 * [从零构建大语言模型（六）](@root/articles/artificial-intelligence/books/build-a-llm/6.html)
 * [从零构建大语言模型（七）](@root/articles/artificial-intelligence/books/build-a-llm/7.html)
+<br />
+
 * [知识图谱导论（一）](@root/articles/artificial-intelligence/books/zhi-shi-tu-pu-dao-lun/1.html)
 * [知识图谱导论（二）](@root/articles/artificial-intelligence/books/zhi-shi-tu-pu-dao-lun/2.html)
 * [知识图谱导论（三）](@root/articles/artificial-intelligence/books/zhi-shi-tu-pu-dao-lun/3.html)
@@ -145,8 +174,8 @@ subTitle: 目录
 * [弱者的武器](@root/articles/books/ruozhedewuqi/1.html)
 * [适时退出](@root/articles/books/shishituichu/1.html)
 * [行为传染效应](@root/articles/books/xingweichuanranxiaoying/1.html)
-
 <br />
+
 * [学科的范式奠基与路径依赖](@root/articles/self/1.html)
 * [女性主义图书增加意味着什么](@root/articles/self/2.html)
 * [人生何处无波澜](@root/articles/self/3.html)
@@ -154,4 +183,3 @@ subTitle: 目录
 * [杨絮持续时间变久了](@root/articles/self/5.html)
 * [AI 重构生态：跨端概念已成过往](@root/articles/self/6.html)
 * [AI 时代：智能终端，终将化身新电视](@root/articles/self/7.html)
-* [](@root/articles/self/8.html)
