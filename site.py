@@ -20,6 +20,12 @@ markdown_settings = {
     "extensions": [
         "markdown.extensions.extra",
         "markdown.extensions.smarty",
-        "pymdownx.superfences"
-    ]
+        "pymdownx.superfences",
+        "pymdownx.arithmatex",
+    ],
+    "extension_configs": {
+        "pymdownx.arithmatex": {
+            "generic": True,
+        }
+    }
 }

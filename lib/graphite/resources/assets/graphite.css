@@ -794,3 +794,24 @@ body.extra-deflist-vspace dt {
         max-height: 95vh;
     }
 }
+
+/**
+ * -------------------------------------------------------------------------
+ *  Math (KaTeX)
+ * -------------------------------------------------------------------------
+ */
+
+.arithmatex {
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+article.main .katex-display {
+    margin: 1.5em 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+article.main .katex {
+    font-size: 1.05em;
+}
