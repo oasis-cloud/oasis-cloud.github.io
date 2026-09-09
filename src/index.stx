@@ -33,7 +33,6 @@ subTitle: 目录
 <br />
 
 * [MCP 入门：基础概念](@root/articles/artificial-intelligence/mcp/1.html)
-* [MCP 入门：基础概念](@root/articles/artificial-intelligence/mcp/1.html)
 * [MCP 入门：MCP 服务器的发现和调用](@root/articles/artificial-intelligence/mcp/2.html)
 * [MCP 入门：JSON RPC 的实现](@root/articles/artificial-intelligence/mcp/3.html)
 * [MCP 实践：鱼缸盐度计算](@root/articles/artificial-intelligence/mcp/4.html)
@@ -54,10 +53,16 @@ subTitle: 目录
 * [知识图谱导论（三）](@root/articles/artificial-intelligence/books/zhi-shi-tu-pu-dao-lun/3.html)
 * [知识图谱导论（四）](@root/articles/artificial-intelligence/books/zhi-shi-tu-pu-dao-lun/4.html)
 * [知识图谱导论（五）](@root/articles/artificial-intelligence/books/zhi-shi-tu-pu-dao-lun/5.html)
+* [知识图谱导论（六）](@root/articles/artificial-intelligence/books/zhi-shi-tu-pu-dao-lun/6.html)
+* [知识图谱导论（七）](@root/articles/artificial-intelligence/books/zhi-shi-tu-pu-dao-lun/7.html)
 * [十堂极简人工智能课](@root/articles/artificial-intelligence/books/shitangjijianrengongzhinengke/1.html)
+* [AI 必备数学（一）](@root/articles/artificial-intelligence/books/essential-math-for-ai/1.html)
+* [AI 必备数学（二）](@root/articles/artificial-intelligence/books/essential-math-for-ai/2.html)
+* [白话机器学习的数学](@root/articles/artificial-intelligence/books/mathematics-for-ml-in-plain-words/11.html)
 <br />
 
 * [源码分析——Redux](@root/articles/frontend/21.html)
+* [Immer 源码分析——State 和 Scope 的设计原因](@root/articles/frontend/immerjs/1.html)
 * [源码分析——Immerjs](@root/articles/frontend/immerjs/2.html)
 * [源码分析——async-validator](@root/articles/frontend/12.html)
 * [源码分析——nrm](@root/articles/frontend/6.html)
@@ -76,6 +81,7 @@ subTitle: 目录
 * [React 状态更新流程——基于 v19.2.0 版本](@root/articles/frontend/react/2.html)
 * [React scheduler——基于 v19.2.0 版本](@root/articles/frontend/react/3.html)
 * [React useSyncExternalStore：基于发布订阅模式的状态订阅机制](@root/articles/frontend/react-hooks/1.html)
+* [React Hooks —— useCallback](@root/articles/frontend/10.html)
 * [zustand 源码分析——基于 v5.0.0 版本](@root/articles/frontend/zustand/1.html)
 <br />
 
@@ -109,6 +115,10 @@ subTitle: 目录
 * [微前端实践：基于 Module Federation 的实现](@root/articles/frontend/micro-frontends/2.html)
 * [自己动手实现——marquee](@root/articles/frontend/4.html)
 * [JavaScript 设计模式](@root/articles/learn-js-design-pattern/1.html)
+* [JavaScript 基础](@root/articles/javascript/1.html)
+* [JavaScript 对象与继承](@root/articles/javascript/2.html)
+* [现代浏览器工作原理](@root/articles/morden-browser/1.html)
+* [V8 引擎工作原理](@root/articles/morden-browser/2.html)
 <br />
 
 * [通过 jscodeshift 重构代码](@root/articles/frontend/14.html)
@@ -154,9 +164,12 @@ subTitle: 目录
 * [编程格调](@root/articles/1.html)
 <br />
 
+* [程序是怎么跑起来的（一）](@root/articles/books/how-program-works/1.html)
+* [程序是怎么跑起来的（二）](@root/articles/books/how-program-works/2.html)
 * [深度工作](@root/articles/books/shendugongzuo/1.html)
 * [可变思考](@root/articles/books/kebiansikao/1.html)
 * [点石成金](@root/articles/books/dontmakemethink/1.html)
+* [红皇后效应](@root/articles/books/honghuanghouxiaoying/1.html)
 * [高效能人士的七个习惯](@root/articles/books/gaoxiaonengrenshideqigexiguan/1.html)
 * [这个哲学家救了我](@root/articles/books/zhegezhexuejiajiulewo/1.html)
 * [烧掉你的船](@root/articles/books/burn-the-boats/1.html)
@@ -174,6 +187,7 @@ subTitle: 目录
 * [弱者的武器](@root/articles/books/ruozhedewuqi/1.html)
 * [适时退出](@root/articles/books/shishituichu/1.html)
 * [行为传染效应](@root/articles/books/xingweichuanranxiaoying/1.html)
+* [如何撰写开发人员喜欢阅读的文章](@root/articles/read/1.html)
 <br />
 
 * [学科的范式奠基与路径依赖](@root/articles/self/1.html)
