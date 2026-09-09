@@ -1,12 +1,12 @@
 ---
 description: 博客文章 Markdown 排版规范（frontmatter、标题、数学公式、列表、图片与链接）
-globs: src/articles/**/*.md
+globs: docs/articles/**/*.md
 alwaysApply: false
 ---
 
 # 文章排版规范
 
-编写或修改 `src/articles/**/*.md` 时遵循本规范。站点使用 Graphite + pymdownx.arithmatex（KaTeX）。
+编写或修改 `docs/articles/**/*.md` 时遵循本规范。站点使用 VitePress + KaTeX/MathJax（`markdown.math`）。
 
 ## Frontmatter
 
@@ -30,7 +30,7 @@ tags: [读书笔记]           # 或 [AI]、[llm]、[MCP]、[AI, Math] 等
 - 一篇一文，按主题分节；每节一个核心点。
 - 中文叙述为主；专有名词首次出现可写「中文（English）」。
 
-## 数学公式（arithmatex / KaTeX）
+## 数学公式
 
 - 行内：`$n$`、`$2^{-1}$`、`$\mathrm{bias}$`
 - 独立公式独占一行，上下空行：
@@ -54,10 +54,10 @@ $$
 
 - 代码块必须标明语言：` ```js `、` ```ts `、` ```python `
 - 图片：`![简短说明](/images/<系列或主题>/xxx.png)`，路径相对站点根。
-- 文内互链优先：`[标题](@root/articles/.../1.html)`
+- 文内互链优先：`[标题](/articles/.../1.html)`
 
 ## 文风
 
 - 短段、直说；先结论或定义，再展开例子。
-- 不堆砌 emoji；不滥用零宽字符/异常加粗装饰。
+- 不堆砌 emoji；不滥用零宽字符/异常标粗装饰。
 - 修改旧文时向本规范靠拢，不借机大段重写无关内容。

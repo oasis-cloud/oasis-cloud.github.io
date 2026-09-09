@@ -1,15 +1,14 @@
 {
   "name": "blog",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "directories": {
-    "lib": "lib"
-  },
+  "description": "Oasis's Cloud — VitePress static blog",
+  "type": "module",
   "scripts": {
-    "start": "ark watch",
-    "build": "ark build && node scripts/post_build.js",
-    "deploy": "node scripts/deploy.js"
+    "dev": "vitepress dev docs",
+    "start": "vitepress dev docs",
+    "build": "vitepress build docs && node scripts/post_build.cjs",
+    "preview": "vitepress preview docs",
+    "deploy": "node scripts/deploy.cjs"
   },
   "repository": {
     "type": "git",
@@ -24,5 +23,10 @@
   "dependencies": {
     "gh-pages": "^4.0.0",
     "sharp": "^0.33.0"
+  },
+  "devDependencies": {
+    "markdown-it-mathjax3": "^4.3.2",
+    "vitepress": "^1.6.3",
+    "vue": "^3.5.13"
   }
 }

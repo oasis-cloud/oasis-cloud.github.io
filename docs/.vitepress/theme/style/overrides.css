@@ -1,0 +1,131 @@
+/* Neutralize residual VitePress chrome; keep Graphite as the visual system. */
+:root {
+  --vp-c-bg: #fff;
+  --vp-c-text-1: #000;
+  --vp-font-family-base: 'Crimson Text', Georgia, serif;
+  --vp-font-family-mono: Consolas, monospace;
+}
+
+html,
+body {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  background: #fff !important;
+  color: #000;
+  font-size: 17px;
+  font-family: 'Crimson Text', Georgia, serif;
+  line-height: 1.75;
+}
+
+/* VitePress often makes #app a flex column — that breaks Graphite floats. */
+#app {
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 0 !important;
+  background: transparent !important;
+  font: inherit;
+  color: inherit;
+}
+
+.vp-doc,
+.vp-doc > div {
+  padding: 0 !important;
+  max-width: none !important;
+}
+
+.Layout,
+.VPContent,
+.VPDoc {
+  display: contents;
+}
+
+/*
+ * markdown-it wraps list item text in <p>; Graphite's p { margin: 25px 0 }
+ * would inflate spacing vs the old Ark output (<li><a>…</a></li>).
+ */
+article.main li > p {
+  margin: 0;
+  padding: 0;
+}
+
+article.main li > p + p {
+  margin-top: 25px;
+}
+
+/*
+ * Homepage TOC group separators: bare <br /> between <ul>s.
+ * Without a blank line before <br />, markdown-it folds it into the last <li>.
+ */
+article.main > div > br {
+  display: block;
+  margin: 1.25em 0;
+  content: '';
+  height: 0;
+  line-height: 2.5em;
+  clear: both;
+}
+
+/* Shiki / VitePress code blocks → Graphite pre look */
+article.main div[class*='language-'] {
+  margin: 40px 0;
+  border-top: 1px dotted #bbb;
+  border-bottom: 1px dotted #bbb;
+  background-color: #f8f8f8;
+  overflow: auto;
+}
+
+article.main div[class*='language-'] pre {
+  margin: 0;
+  padding: 16px 20px;
+  border: none;
+  background: transparent !important;
+}
+
+article.main div[class*='language-'] code {
+  border: none;
+  background: transparent !important;
+  white-space: pre;
+  padding: 0;
+  margin: 0;
+  font-size: 13px;
+  font-family: Consolas, monospace;
+  line-height: 1.4;
+}
+
+article.main .lang,
+article.main button.copy {
+  display: none;
+}
+
+article.main .header-anchor {
+  display: none !important;
+}
+
+article.main mjx-container {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+/* Giscus sits below the floated columns */
+#giscus-host {
+  clear: both;
+  width: 600px;
+  margin-left: 360px;
+  padding: 0 50px 40px;
+  box-sizing: border-box;
+}
+
+@media screen and (max-width: 960px) {
+  #giscus-host {
+    width: auto;
+    margin-left: 0;
+    padding: 0 40px 40px;
+  }
+}
