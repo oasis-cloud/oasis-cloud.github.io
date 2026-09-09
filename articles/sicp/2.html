@@ -1,101 +1,27 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>构造数据抽象</title>
-        <link rel="stylesheet" href="../../assets/fonts.css">
-        <link rel="stylesheet" href="../../assets/graphite.css">
-        <link rel="stylesheet" href="../../assets/pygments.css">
-        <script src="../../assets/image-zoom.js" defer></script>
-        
-        
-    </head>
-    <body class="node-articles-sicp-2 node-articles-sicp node-articles node">
-        <header class="masthead">
-            <h1><a href="../../index.html">Oasis's Cloud</a></h1>
-            
-                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
-            
-            
-            <nav class="menu">
-                <input id="menu-check" type="checkbox"/>
-                <label id="menu-label" for="menu-check" class="unselectable">
-                    <span class="icon close-icon">✕</span>
-                    <span class="icon open-icon">☰</span>
-                    <span class="text">Menu</span>
-                </label>
-                <ul>
-<li><a href="../../index.html">首页</a></li>
-</ul>
-            </nav>
-        </header>
-        <article class="main">
-            <header class="title">
-                <h1>构造数据抽象</h1>
-                
-                    <p class="subtitle">《计算机程序的构造和解释》</p>
-                
-                
-                    <p class="author">作者：oasis</p>
-                
-                <hr>
-            </header>
-            <p>数据抽象可以提升我们在设计程序时所位于的概念层次，提高设计的模块性，增强语言的表达能力。数据抽象相关的方法学是指：在程序中处理数据对象的表示的部分，与处理数据对象的使用的部分互相隔离。这也体现了解耦的思想。解耦思想在程序设计方面具有一般性和普适性。</p>
-<p>在构造数据抽象这章中，表达了数据抽象的基本思想：设法构造出一些使用复合数据对象的程序，使它们就像在“抽象数据”上操作一样。基于这样的思想，作者提出了选择函数和构造函数的概念。构造函数用来将简单数据复合成抽象数据，选择函数用来对复合数据进行拆解。</p>
-<p>在进行构造函数和选择函数实现的阶段，作者提出了一种按愿望思维的编程方法。按愿望思维顾名思义就是按照我们的想法来实现程序。例如我们要实现一个程序：将文件中的“demo”字符串替换为“Demo”。从按愿望思维的方法来说，我们可以这样实现程序：</p>
-<ul>
-<li>读取文件</li>
-<li>逐行扫描</li>
-<li>匹配并替换 demo</li>
-</ul>
-<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">readFile</span><span class="p">()</span><span class="w"> </span><span class="p">{}</span>
-<span class="kd">function</span><span class="w"> </span><span class="nx">scanLine</span><span class="p">()</span><span class="w"> </span><span class="p">{}</span>
-<span class="kd">function</span><span class="w"> </span><span class="nx">replace</span><span class="p">()</span><span class="w"> </span><span class="p">{}</span>
-</code></pre></div>
-<p>通过按愿望思维，可以很自然的将程序进行模块化。</p>
-<p>在对数据进行抽象后，很自然的产生了抽象屏障。因为不同的数据抽象伴随着一组相对应地操作。</p>
-<p>理解了数据抽象的基本思想后，还需要思考数据意味着什么。这是一个深刻的问题。说数据是“由给定的构造函数和选择函数所实现的东西”显然不够。因为并不是任意的构造函数和选择函数都适合作为某一抽象数据的实现的基础。构造函数和选择函数要满足一组特定的条件，才能作为某一抽象数据的实现的基础。</p>
-<p>由构造函数、选择函数表示的数据带来了一种设计风格：消息传递（流）。</p>
-<p>除了可以表达简单的数据外，我们还需要构建具有层次结构的数据。具有层次结构的数据一般带有闭包的性质。闭包性质是指：通过某一个过程组合起数据对象的到的结果本身还可以通过同样的过程再进行组合。</p>
-<p>在这章中主要介绍的数据处理的技巧：使用约定的界面、抽象数据的多重表示、数据导向的程序设计、设计通用型操作的系统。</p>
-<p>列表作为通用的界面:
-要在处理数据上抓住一些程序模式，则对我们操控数据结构的方式有着深刻的依赖性。这里要举出一个简单的例子。</p>
-<p>界面指的是接口，可以理解为 interface，不同程序之间通过都定义了对列表的支持，在列表之上可以构建一个通用的计算框架，例如说：map、filter、reduce 等等。</p>
-<p>抽象数据的多重表示:</p>
-<p>抽象数据是指一个数据类型的抽象概念，多重表示则指同一个抽象数据可以用不同的数据结构来表示。AI 举例则是给出了时间的例子，时间分为 12小时表示和 24小时表示的，12小时表示的可以通过三元组表示 <code>(上午，3，20)</code>，而 24 小时表示的可以用二元祖 <code>(3, 20)</code></p>
-<p>数据导向的程序设计:
-为什么需要数据导向的程序设计？在我们可以识别出抽象数据的类型后，可以根据类型去调用某个适当的过程。但这种方式有一些缺陷，通用类型必须知道新增加的类型，不同人员设计的类型可能存在重名。数据导向的程序设计主要解决维护和扩展问题。
-数据导向的程序设计是一种使程序直接利用 抽象数据类型-过程 对照表工作的程序设计技术。我们可以发现，这样对于大型程序，就有了集中维护的一张表，谁都可以查看表中的内容，有没有重名的过程或函数一目了然。</p>
-<p>抽象数据类型-过程 对照表的实现依赖于抽象数据的多重表示和带标示的抽象数据类型。</p>
-<p>设计通用型操作的系统:</p>
-<p>通用型操作的系统是在 数据类型-过程 对照表基础上的进一步抽象。这层抽象，对于开发者来说，提供了统一的操作界面，而无需关注所使用的数据的类型。</p>
-<p>对于编程语言本身来说，比如 JavaScript 提供了基础数据类型，boolean、number、string 等，这些数据类型可以混合起来参与四则运算。</p>
-<div class="highlight"><pre><span></span><code><span class="kc">true</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1</span>
-<span class="kc">false</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s1">&#39;1&#39;</span>
-<span class="mf">1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s1">&#39;1&#39;</span>
-</code></pre></div>
-<p>对于上面的代码来说，通用型操作则是 <code>+</code> ，程序员则不需要关心数据的类型也能处理。当然实际中，为了准确知道运算结果，还需要关心类型是如何转换的。类型的转换，则正式通用型操作的系统所需要处理的。针对不同的类型制定不同的转换规则。
-<img alt="运算系统" src="https://github.com/oasis-cloud/oss/blob/main/WX20230601-134614.png?raw=true" /></p>
-<p>通用型操作的系统还会涉及到强类型语言的泛型处理。例如图中的 add、sub、mul、div 操作则需要支持下面的有理数、复数。在实现的时候，对于强类型语言的实现需要依赖泛型。</p>
-<p>// todo
-关于泛型可以结合 《程序设计原本》来阐述一下。</p>
-        </article>
-        
-        <script src="https://giscus.app/client.js"
-                data-repo="oasis-cloud/blog-comments"
-                data-repo-id="R_kgDOKEliHA"
-                data-category="General"
-                data-category-id="DIC_kwDOKEliHM4CYb6e"
-                data-mapping="pathname"
-                data-strict="0"
-                data-reactions-enabled="1"
-                data-emit-metadata="0"
-                data-input-position="bottom"
-                data-theme="preferred_color_scheme"
-                data-lang="zh-CN"
-                crossorigin="anonymous"
-                async>
-        </script>
-    </body>
+<html lang="en-US" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>构造数据抽象 | Oasis's Cloud</title>
+    <meta name="description" content="一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。—— 《一个数学家的辩白》">
+    <meta name="generator" content="VitePress v1.6.4">
+    <link rel="preload stylesheet" href="/assets/style.BubUdk9b.css" as="style">
+    <link rel="preload stylesheet" href="/vp-icons.css" as="style">
+    
+    <script type="module" src="/assets/app.BuMT4ivz.js"></script>
+    <link rel="modulepreload" href="/assets/chunks/theme.HZhl2uCL.js">
+    <link rel="modulepreload" href="/assets/chunks/framework.86O3EbG5.js">
+    <link rel="modulepreload" href="/assets/articles_sicp_2.md.DG_VPyb9.lean.js">
+    <script id="check-mac-os">document.documentElement.classList.toggle("mac",/Mac|iPhone|iPod|iPad/i.test(navigator.platform));</script>
+  </head>
+  <body>
+    <div id="app"><div class="graphite-page"><header class="masthead"><h1><a href="/">Oasis&#39;s Cloud</a></h1><p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p><nav class="menu"><input id="menu-check" type="checkbox"><label id="menu-label" for="menu-check" class="unselectable"><span class="icon close-icon">✕</span><span class="icon open-icon">☰</span><span class="text">Menu</span></label><ul><li><a href="/">首页</a></li></ul></nav></header><article class="main"><header class="title"><h1>构造数据抽象</h1><p class="subtitle">《计算机程序的构造和解释》</p><p class="author">作者：oasis</p><hr></header><div style="position:relative;"><div><p>数据抽象可以提升我们在设计程序时所位于的概念层次，提高设计的模块性，增强语言的表达能力。数据抽象相关的方法学是指：在程序中处理数据对象的表示的部分，与处理数据对象的使用的部分互相隔离。这也体现了解耦的思想。解耦思想在程序设计方面具有一般性和普适性。</p><p>在构造数据抽象这章中，表达了数据抽象的基本思想：设法构造出一些使用复合数据对象的程序，使它们就像在“抽象数据”上操作一样。基于这样的思想，作者提出了选择函数和构造函数的概念。构造函数用来将简单数据复合成抽象数据，选择函数用来对复合数据进行拆解。</p><p>在进行构造函数和选择函数实现的阶段，作者提出了一种按愿望思维的编程方法。按愿望思维顾名思义就是按照我们的想法来实现程序。例如我们要实现一个程序：将文件中的“demo”字符串替换为“Demo”。从按愿望思维的方法来说，我们可以这样实现程序：</p><ul><li>读取文件</li><li>逐行扫描</li><li>匹配并替换 demo</li></ul><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">function</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> readFile</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">() {}</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">function</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> scanLine</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">() {}</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">function</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> replace</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">() {}</span></span></code></pre></div><p>通过按愿望思维，可以很自然的将程序进行模块化。</p><p>在对数据进行抽象后，很自然的产生了抽象屏障。因为不同的数据抽象伴随着一组相对应地操作。</p><p>理解了数据抽象的基本思想后，还需要思考数据意味着什么。这是一个深刻的问题。说数据是“由给定的构造函数和选择函数所实现的东西”显然不够。因为并不是任意的构造函数和选择函数都适合作为某一抽象数据的实现的基础。构造函数和选择函数要满足一组特定的条件，才能作为某一抽象数据的实现的基础。</p><p>由构造函数、选择函数表示的数据带来了一种设计风格：消息传递（流）。</p><p>除了可以表达简单的数据外，我们还需要构建具有层次结构的数据。具有层次结构的数据一般带有闭包的性质。闭包性质是指：通过某一个过程组合起数据对象的到的结果本身还可以通过同样的过程再进行组合。</p><p>在这章中主要介绍的数据处理的技巧：使用约定的界面、抽象数据的多重表示、数据导向的程序设计、设计通用型操作的系统。</p><p>列表作为通用的界面: 要在处理数据上抓住一些程序模式，则对我们操控数据结构的方式有着深刻的依赖性。这里要举出一个简单的例子。</p><p>界面指的是接口，可以理解为 interface，不同程序之间通过都定义了对列表的支持，在列表之上可以构建一个通用的计算框架，例如说：map、filter、reduce 等等。</p><p>抽象数据的多重表示:</p><p>抽象数据是指一个数据类型的抽象概念，多重表示则指同一个抽象数据可以用不同的数据结构来表示。AI 举例则是给出了时间的例子，时间分为 12小时表示和 24小时表示的，12小时表示的可以通过三元组表示 <code>(上午，3，20)</code>，而 24 小时表示的可以用二元祖 <code>(3, 20)</code></p><p>数据导向的程序设计: 为什么需要数据导向的程序设计？在我们可以识别出抽象数据的类型后，可以根据类型去调用某个适当的过程。但这种方式有一些缺陷，通用类型必须知道新增加的类型，不同人员设计的类型可能存在重名。数据导向的程序设计主要解决维护和扩展问题。 数据导向的程序设计是一种使程序直接利用 抽象数据类型-过程 对照表工作的程序设计技术。我们可以发现，这样对于大型程序，就有了集中维护的一张表，谁都可以查看表中的内容，有没有重名的过程或函数一目了然。</p><p>抽象数据类型-过程 对照表的实现依赖于抽象数据的多重表示和带标示的抽象数据类型。</p><p>设计通用型操作的系统:</p><p>通用型操作的系统是在 数据类型-过程 对照表基础上的进一步抽象。这层抽象，对于开发者来说，提供了统一的操作界面，而无需关注所使用的数据的类型。</p><p>对于编程语言本身来说，比如 JavaScript 提供了基础数据类型，boolean、number、string 等，这些数据类型可以混合起来参与四则运算。</p><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">true</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> +</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 1</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">false</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> +</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &#39;1&#39;</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">1</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> +</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &#39;1&#39;</span></span></code></pre></div><p>对于上面的代码来说，通用型操作则是 <code>+</code> ，程序员则不需要关心数据的类型也能处理。当然实际中，为了准确知道运算结果，还需要关心类型是如何转换的。类型的转换，则正式通用型操作的系统所需要处理的。针对不同的类型制定不同的转换规则。 <img src="https://github.com/oasis-cloud/oss/blob/main/WX20230601-134614.png?raw=true" alt="运算系统"></p><p>通用型操作的系统还会涉及到强类型语言的泛型处理。例如图中的 add、sub、mul、div 操作则需要支持下面的有理数、复数。在实现的时候，对于强类型语言的实现需要依赖泛型。</p><p>// todo 关于泛型可以结合 《程序设计原本》来阐述一下。</p></div></div></article><div id="giscus-host"></div></div></div>
+    <script>window.__VP_HASH_MAP__=JSON.parse("{\"articles_1.md\":\"BcbiCNen\",\"articles_2.md\":\"BOs6JrAg\",\"articles_3.md\":\"CyolPGRT\",\"articles_4.md\":\"CQKiIuaw\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_0.md\":\"Doxdb5Ij\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_1.md\":\"wjOL1phh\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_10.md\":\"LyZJnSxs\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_11.md\":\"C2FmrDp9\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_12.md\":\"BEHmrOu0\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_13.md\":\"DiD-bHGf\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_14.md\":\"BBmdeYZf\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_15.md\":\"f2O62Iuk\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_16.md\":\"BKGADZ4j\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_17.md\":\"C5m88eYa\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_18.md\":\"DFfKG_xT\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_19.md\":\"C58qgz4I\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_2.md\":\"BfG3umGO\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_20.md\":\"royf5I3T\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_21.md\":\"CmoEuQRQ\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_22.md\":\"5Bz1s6MM\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_23.md\":\"CZho3lv8\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_24.md\":\"BPs4s-6q\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_25.md\":\"DhIkQ8QI\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_26.md\":\"DQrDDSmD\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_3.md\":\"XzEbegi1\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_4.md\":\"Blv6FVHR\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_5.md\":\"C-qPQeyL\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_6.md\":\"6Y-BWQfb\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_7.md\":\"CAzQfyMt\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_8.md\":\"CsjQZCCO\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_9.md\":\"BASgbQl4\",\"articles_artificial-intelligence_books_ai-modern-approach_1.md\":\"DDDLmf54\",\"articles_artificial-intelligence_books_ai-modern-approach_10.md\":\"DhmTh9g1\",\"articles_artificial-intelligence_books_ai-modern-approach_11.md\":\"CX8Rq9wV\",\"articles_artificial-intelligence_books_ai-modern-approach_12.md\":\"fnPMZxKE\",\"articles_artificial-intelligence_books_ai-modern-approach_13.md\":\"DelyBh0u\",\"articles_artificial-intelligence_books_ai-modern-approach_14.md\":\"CEVzmm13\",\"articles_artificial-intelligence_books_ai-modern-approach_15.md\":\"BYaoy4oU\",\"articles_artificial-intelligence_books_ai-modern-approach_16.md\":\"CJBur2Mw\",\"articles_artificial-intelligence_books_ai-modern-approach_17.md\":\"Q8pYMbdg\",\"articles_artificial-intelligence_books_ai-modern-approach_18.md\":\"BEtfJPVK\",\"articles_artificial-intelligence_books_ai-modern-approach_19.md\":\"DWkWsT-C\",\"articles_artificial-intelligence_books_ai-modern-approach_2.md\":\"Ck1Z-mEe\",\"articles_artificial-intelligence_books_ai-modern-approach_20.md\":\"CbcsJXY_\",\"articles_artificial-intelligence_books_ai-modern-approach_21.md\":\"DOHxMpLE\",\"articles_artificial-intelligence_books_ai-modern-approach_22.md\":\"BrmXqyYy\",\"articles_artificial-intelligence_books_ai-modern-approach_23.md\":\"ufr3NqX2\",\"articles_artificial-intelligence_books_ai-modern-approach_24.md\":\"CfKi8b69\",\"articles_artificial-intelligence_books_ai-modern-approach_25.md\":\"D3FZV2ha\",\"articles_artificial-intelligence_books_ai-modern-approach_26.md\":\"C9NvT34X\",\"articles_artificial-intelligence_books_ai-modern-approach_3.md\":\"5B16Mude\",\"articles_artificial-intelligence_books_ai-modern-approach_4.md\":\"CFTsLVCQ\",\"articles_artificial-intelligence_books_ai-modern-approach_5.md\":\"B6w77Qe3\",\"articles_artificial-intelligence_books_ai-modern-approach_6.md\":\"DOwdgivt\",\"articles_artificial-intelligence_books_ai-modern-approach_7.md\":\"BKl-9NUI\",\"articles_artificial-intelligence_books_ai-modern-approach_8.md\":\"Ca5nK7HY\",\"articles_artificial-intelligence_books_ai-modern-approach_9.md\":\"bjCn9mRw\",\"articles_artificial-intelligence_books_build-a-llm_1.md\":\"Cn53qMLE\",\"articles_artificial-intelligence_books_build-a-llm_2-1.md\":\"BEGkEHbf\",\"articles_artificial-intelligence_books_build-a-llm_2.md\":\"B9f-kfwa\",\"articles_artificial-intelligence_books_build-a-llm_3.md\":\"BgPDZZNE\",\"articles_artificial-intelligence_books_build-a-llm_4.md\":\"BGvCF-sm\",\"articles_artificial-intelligence_books_build-a-llm_5.md\":\"D6qs6PuA\",\"articles_artificial-intelligence_books_build-a-llm_6.md\":\"Ohih56sP\",\"articles_artificial-intelligence_books_build-a-llm_7.md\":\"HTDAcsNc\",\"articles_artificial-intelligence_books_essential-math-for-ai_1-1.md\":\"j-08bog-\",\"articles_artificial-intelligence_books_essential-math-for-ai_1.md\":\"CyeVwxe6\",\"articles_artificial-intelligence_books_essential-math-for-ai_2.md\":\"DLf3lmAl\",\"articles_artificial-intelligence_books_mathematics-for-ml-in-plain-words_11.md\":\"deaEf6CH\",\"articles_artificial-intelligence_books_shitangjijianrengongzhinengke_1.md\":\"Dspbam5X\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_1.md\":\"CsHrSBOo\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_2.md\":\"Ch4VnrDN\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_3.md\":\"DOx3ENDu\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_4.md\":\"BwTW514D\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_5.md\":\"CMT0adxO\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_6.md\":\"Da5Lo1qJ\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_7.md\":\"IVT6-nY0\",\"articles_artificial-intelligence_mcp_1.md\":\"BSwKgK20\",\"articles_artificial-intelligence_mcp_2.md\":\"BqYmOfWE\",\"articles_artificial-intelligence_mcp_3.md\":\"CRqerqdh\",\"articles_artificial-intelligence_mcp_4.md\":\"DlZf-ZBs\",\"articles_artificial-intelligence_network-source_1.md\":\"7tN07cqO\",\"articles_artificial-intelligence_python_1.md\":\"DEs7NHra\",\"articles_artificial-intelligence_research_1.md\":\"BRYxkx9w\",\"articles_artificial-intelligence_research_2.md\":\"D1S9y95L\",\"articles_artificial-intelligence_research_3.md\":\"CDPKFpDS\",\"articles_artificial-intelligence_research_4.md\":\"gcdEnQ27\",\"articles_artificial-intelligence_research_5.md\":\"BWuimyaG\",\"articles_artificial-intelligence_research_6.md\":\"ChDVsr6P\",\"articles_artificial-intelligence_skills_1.md\":\"CE_3tidO\",\"articles_artificial-intelligence_skills_2.md\":\"Dw-LqypE\",\"articles_artificial-intelligence_vibe-coding_1.md\":\"CIaQQuRU\",\"articles_artificial-intelligence_vibe-coding_2.md\":\"BYp_N-la\",\"articles_books_0-10000_1.md\":\"CqfzqHFB\",\"articles_books_burn-the-boats_1.md\":\"DQW5Dj64\",\"articles_books_dontmakemethink_1.md\":\"FcQgzyiC\",\"articles_books_gaoxiaonengrenshideqigexiguan_1.md\":\"Di8W2D55\",\"articles_books_head-start_1.md\":\"DSEU1Nd4\",\"articles_books_honghuanghouxiaoying_1.md\":\"DsEwgoHE\",\"articles_books_how-program-works_1.md\":\"In6CRTPC\",\"articles_books_how-program-works_2.md\":\"C__yRHZZ\",\"articles_books_kebiansikao_1.md\":\"ZpZj4VBL\",\"articles_books_lixingdebianjie_1.md\":\"C2i5IU4p\",\"articles_books_match_1.md\":\"DQuyyF-w\",\"articles_books_next-age-of-uncertainty_1.md\":\"B3kXpIOT\",\"articles_books_piancha_1.md\":\"DUp5o2L7\",\"articles_books_programingwithtypes_1.md\":\"DPf6sVtD\",\"articles_books_ruhexuexi_1.md\":\"BiBkTqFk\",\"articles_books_ruozhedewuqi_1.md\":\"CJI0TUtU\",\"articles_books_shendugongzuo_1.md\":\"BAdThtq3\",\"articles_books_shishituichu_1.md\":\"DSMpw3Mj\",\"articles_books_siweideqiutu_1.md\":\"D9N51GZd\",\"articles_books_xingweichuanranxiaoying_1.md\":\"D8YfH3E9\",\"articles_books_yingxianglidebadazhangai_1.md\":\"BkSkh0ib\",\"articles_books_zenyanglongluorenxin_1.md\":\"DyaoIWo4\",\"articles_books_zhegezhexuejiajiulewo_1.md\":\"EBCGPBD1\",\"articles_daily-thoughts_1.md\":\"rLmpFK7a\",\"articles_frontend_1.md\":\"B3Ok2hY9\",\"articles_frontend_10.md\":\"uK6wPfMr\",\"articles_frontend_11.md\":\"B8q93MGs\",\"articles_frontend_12.md\":\"D2lc-Jbc\",\"articles_frontend_13.md\":\"D5nGGZ29\",\"articles_frontend_14.md\":\"67MvYpiC\",\"articles_frontend_15.md\":\"Bonqr1JH\",\"articles_frontend_16.md\":\"BIcIqlrh\",\"articles_frontend_17.md\":\"DT2OnR9t\",\"articles_frontend_18.md\":\"C2UgM1rp\",\"articles_frontend_19.md\":\"Cm_l10Pp\",\"articles_frontend_2.md\":\"BH6obgzX\",\"articles_frontend_20.md\":\"DYOd_Ygi\",\"articles_frontend_21.md\":\"BGvMohX8\",\"articles_frontend_22.md\":\"C9-4PiZs\",\"articles_frontend_23.md\":\"LFQ7EJby\",\"articles_frontend_24.md\":\"CxV3Qmff\",\"articles_frontend_25.md\":\"KDaPWGvE\",\"articles_frontend_3.md\":\"Ocf5SV2e\",\"articles_frontend_4.md\":\"8oQMBnVM\",\"articles_frontend_6.md\":\"DLjPQ4H2\",\"articles_frontend_7.md\":\"C3_rdklM\",\"articles_frontend_8.md\":\"DmoQqnzq\",\"articles_frontend_9.md\":\"BIp4wdMq\",\"articles_frontend_fluent-react_1.md\":\"BsLnBF9_\",\"articles_frontend_immerjs_1.md\":\"cAKCGuJw\",\"articles_frontend_immerjs_2.md\":\"DhP_sCjK\",\"articles_frontend_micro-frontends_1.md\":\"CTPkX7P4\",\"articles_frontend_micro-frontends_2.md\":\"BhiyXnsA\",\"articles_frontend_next-intl_1.md\":\"CHLJLMhT\",\"articles_frontend_nextjs_1.md\":\"FcBi0n4F\",\"articles_frontend_nextjs_2.md\":\"IMXOyUyo\",\"articles_frontend_nextjs_3.md\":\"sMqC4VLv\",\"articles_frontend_nextjs_4.md\":\"YErQgQac\",\"articles_frontend_nextjs_5.md\":\"BSvkBEDC\",\"articles_frontend_nextjs_6.md\":\"C3vMZWNU\",\"articles_frontend_programming-with-types_1.md\":\"BZDTAiUn\",\"articles_frontend_programming-with-types_2.md\":\"DvF69qyh\",\"articles_frontend_programming-with-types_3.md\":\"D5ySUS2k\",\"articles_frontend_programming-with-types_4-1.md\":\"DgmuJ2FE\",\"articles_frontend_programming-with-types_4.md\":\"DCyvJyTt\",\"articles_frontend_programming-with-types_5.md\":\"D5s4hW6n\",\"articles_frontend_programming-with-types_6.md\":\"0TkUZXWK\",\"articles_frontend_programming-with-types_7.md\":\"ChvDQygU\",\"articles_frontend_react-hooks_1.md\":\"Da9rnukC\",\"articles_frontend_react_1-1.md\":\"DTtIXyO7\",\"articles_frontend_react_1.md\":\"B5UJRAnh\",\"articles_frontend_react_2-1.md\":\"BbIbpqlZ\",\"articles_frontend_react_2.md\":\"CFuzM5My\",\"articles_frontend_react_3-1.md\":\"CB6esavT\",\"articles_frontend_react_3-2.md\":\"Ddn-EfA3\",\"articles_frontend_react_3.md\":\"COI_9hCd\",\"articles_frontend_react_4.md\":\"DmDsL2Q0\",\"articles_frontend_zustand_1-1.md\":\"Bq6-0ZBv\",\"articles_frontend_zustand_1.md\":\"CXYFgHGX\",\"articles_github_1.md\":\"CAskap8A\",\"articles_github_2.md\":\"BV3nkWQp\",\"articles_github_3.md\":\"CMzJSJkE\",\"articles_github_4.md\":\"DJP9VajY\",\"articles_github_5.md\":\"Bn3oSnIk\",\"articles_javascript_1.md\":\"3nNbgAfV\",\"articles_javascript_2.md\":\"CjZc98RL\",\"articles_javascript_3.md\":\"CL42n_iU\",\"articles_learn-js-design-pattern_1.md\":\"CZTgpT5Z\",\"articles_morden-browser_1.md\":\"CFKiS64y\",\"articles_morden-browser_2.md\":\"BXaAupn0\",\"articles_network_1.md\":\"C0I3csFQ\",\"articles_network_2.md\":\"DDLuT2tq\",\"articles_network_3.md\":\"CWo0kz2B\",\"articles_nodejs_1.md\":\"Db65q0P1\",\"articles_nodejs_2.md\":\"CQAqiGBk\",\"articles_nodejs_3.md\":\"4FAcAo6A\",\"articles_philosophy-of-software-design_1.md\":\"B9EW4TRr\",\"articles_philosophy-of-software-design_2.md\":\"Lhpe0bAQ\",\"articles_philosophy-of-software-design_3.md\":\"CJxtSZDL\",\"articles_plan_1.md\":\"uSPmD0KW\",\"articles_plan_动手学大模型智能体.md\":\"BSQ4xbeQ\",\"articles_plan_动手学强化学习.md\":\"Bvnyy0ei\",\"articles_plan_动手学机器学习.md\":\"BJQt5tTu\",\"articles_plan_动手学深度学习.md\":\"BXMo25LP\",\"articles_plan_动手学自然语言处理.md\":\"BeVLNyzS\",\"articles_read_1.md\":\"DNGJ03Om\",\"articles_self_1.md\":\"zoUg7f4K\",\"articles_self_2.md\":\"BfDDBfsY\",\"articles_self_3.md\":\"fP1FAGSq\",\"articles_self_4.md\":\"B9_3N0SV\",\"articles_self_5.md\":\"BwBA7c2t\",\"articles_self_6.md\":\"BBHEUU_t\",\"articles_self_7.md\":\"DWHrJTvQ\",\"articles_self_8.md\":\"CqKpQtPR\",\"articles_self_9.md\":\"45INF02j\",\"articles_sicp_1.md\":\"BO4gTEQ3\",\"articles_sicp_2.md\":\"DG_VPyb9\",\"articles_software-design_1.md\":\"BKCWLXN0\",\"articles_software-design_2.md\":\"fRR0rO3E\",\"articles_software-design_3.md\":\"DgNX2j82\",\"articles_software-design_4.md\":\"7DoTTce3\",\"articles_software-design_5.md\":\"BcfmIT7R\",\"articles_software-design_6.md\":\"CNGJwx2j\",\"articles_typescript_1.md\":\"B_Q8hMP7\",\"articles_work_project-log-and-summary.md\":\"B5joyKE6\",\"index.md\":\"ofGALGuw\"}");window.__VP_SITE_DATA__=JSON.parse("{\"lang\":\"en-US\",\"dir\":\"ltr\",\"title\":\"Oasis's Cloud\",\"description\":\"一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。—— 《一个数学家的辩白》\",\"base\":\"/\",\"head\":[],\"router\":{\"prefetchLinks\":true},\"appearance\":false,\"themeConfig\":{},\"locales\":{},\"scrollOffset\":134,\"cleanUrls\":false}");</script>
+    
+  </body>
 </html>

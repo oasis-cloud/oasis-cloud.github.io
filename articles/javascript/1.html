@@ -1,440 +1,170 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>JavaScript 基础</title>
-        <link rel="stylesheet" href="../../assets/fonts.css">
-        <link rel="stylesheet" href="../../assets/graphite.css">
-        <link rel="stylesheet" href="../../assets/pygments.css">
-        <script src="../../assets/image-zoom.js" defer></script>
-        
-        
-    </head>
-    <body class="node-articles-javascript-1 node-articles-javascript node-articles node">
-        <header class="masthead">
-            <h1><a href="../../index.html">Oasis's Cloud</a></h1>
-            
-                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
-            
-            
-            <nav class="menu">
-                <input id="menu-check" type="checkbox"/>
-                <label id="menu-label" for="menu-check" class="unselectable">
-                    <span class="icon close-icon">✕</span>
-                    <span class="icon open-icon">☰</span>
-                    <span class="text">Menu</span>
-                </label>
-                <ul>
-<li><a href="../../index.html">首页</a></li>
-</ul>
-            </nav>
-        </header>
-        <article class="main">
-            <header class="title">
-                <h1>JavaScript 基础</h1>
-                
-                
-                    <p class="author">作者：oasis</p>
-                
-                <hr>
-            </header>
-            <h2>&ldquo;use strict&rdquo;</h2>
-<p>&ldquo;use strict&rdquo; 可以明确地激活 ES5 新增的特性和一些被修改过的特性。</p>
-<p>&ldquo;use strict&rdquo; 可以放在脚本最顶部。
-放在脚本的最顶部，则整个文件都以现代模式工作。</p>
-<h2>变量</h2>
-<p>JS 中变量声明可以通过 var、let、const，</p>
-<p>var 声明的变量存在变量提升，如下例子
-<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">a</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">b</span><span class="p">)</span><span class="w"> </span><span class="c1">// undefined</span>
-<span class="w">    </span><span class="kd">var</span><span class="w"> </span><span class="nx">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1</span>
-<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">b</span><span class="p">)</span><span class="w"> </span><span class="c1">// 1</span>
-<span class="p">}</span>
-</code></pre></div>
-通过 let 声明的变量不存在提升。</p>
-<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">a</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">b</span><span class="p">)</span><span class="w"> </span><span class="c1">// Uncaught ReferenceError: Cannot access &#39;b&#39; before initialization</span>
-<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nx">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1</span>
-<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">b</span><span class="p">)</span><span class="w"> </span><span class="c1">// 1</span>
-<span class="p">}</span>
-<span class="nx">a</span><span class="p">()</span>
-</code></pre></div>
-<p>在 if 等语句中通过 var 声明的变量可以在程序中的其他地方使用，例如：
-<div class="highlight"><pre><span></span><code><span class="k">if</span><span class="p">(</span><span class="kc">true</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="kd">var</span><span class="w"> </span><span class="nx">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">10</span>
-<span class="p">}</span>
-<span class="kd">function</span><span class="w"> </span><span class="nx">say</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">a</span><span class="p">)</span><span class="w"> </span><span class="c1">// 10</span>
-<span class="p">}</span>
-</code></pre></div>
-通过 let 和 const 声明的变量则存在块级作用域的限制。</p>
-<div class="highlight"><pre><span></span><code><span class="k">if</span><span class="p">(</span><span class="kc">true</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nx">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">10</span>
-<span class="p">}</span>
-<span class="kd">function</span><span class="w"> </span><span class="nx">say</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">a</span><span class="p">)</span><span class="w"> </span><span class="c1">// a is not defined</span>
-<span class="p">}</span>
-</code></pre></div>
-<p>通过 var 声明变量的话可以重复声明。而 let 和 const 不可以。</p>
-<p>const 表示声明一个常量，而且要声明和初始化一起。否则会报错。</p>
-<p>const 声明并初始化一个数组或对象，我们可以修改数组的元素或对象属性的值。这里的深层原因是 const 保留的是数组或对象的指针，仅仅是确保指针不变。</p>
-<p>如何声明不可修改的对象呢？可以通过 Object.defineProperty()
-<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span>
-<span class="nb">Object</span><span class="p">.</span><span class="nx">defineProperty</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;property1&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="mf">42</span><span class="p">,</span>
-<span class="w">  </span><span class="nx">writable</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span>
-<span class="p">});</span>
-<span class="nx">a</span><span class="p">.</span><span class="nx">property1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1</span>
-<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">a</span><span class="p">)</span><span class="w"> </span><span class="c1">// {property1: 42}</span>
-</code></pre></div></p>
-<h2>类型</h2>
-<p>首先思考为什么编程语言中提供了类型这种抽象，类型帮助我们解决了什么问题？</p>
-<ul>
-<li>类型解决了数据存的问题：通过不同的类型，编译器可以开辟不同的内存大小，解决数据如何存的问题。</li>
-<li>类型解决了数据取的问题：由于内存中的数据本没有意义，而是通过人为的界定数据才有了实际的意义，比如内存中同样的 4 个字节，存放着同样的二进制码，如果这两块内存对应的两个变量类型不一样，那么它们意义就不一样了。</li>
-</ul>
-<p>JS 中主要提供了如下类型：</p>
-<ul>
-<li>boolean</li>
-<li>number</li>
-<li>string</li>
-<li>null</li>
-<li>undefined</li>
-<li>symbol</li>
-<li>bigint</li>
-<li>object</li>
-</ul>
-<p>在 JS 中 函数和正则都属于 object 类型，数组也属于 object 类型。</p>
-<h3>类型转换</h3>
-<p>转换算法是：</p>
-<ul>
-<li>调用 obj<a href="hint">Symbol.toPrimitive</a> 如果这个方法存在，</li>
-<li>否则，如果 hint 是 &ldquo;string&rdquo;</li>
-<li>尝试调用 obj.toString() 或 obj.valueOf()，无论哪个存在。</li>
-<li>否则，如果 hint 是 &ldquo;number&rdquo; 或者 &ldquo;default&rdquo;</li>
-<li>尝试调用 obj.valueOf() 或 obj.toString()，无论哪个存在。</li>
-</ul>
-<h3>null 和 undefined 的却别</h3>
-<ul>
-<li>null 代表“无”、“空”或“值未知”的特殊值，undefined 表示未被赋值</li>
-<li>typeof null 返回 object，typeof undefined 返回 undefined</li>
-<li>null === null // true</li>
-<li>undefined === undefined // ture</li>
-<li>undefined === null // false</li>
-</ul>
-<h3>number 类型注意点</h3>
-<ul>
-<li>0.1 + 0.2 === 0.3 // false</li>
-<li>NaN == NaN // false</li>
-<li>NaN === Nan // false</li>
-</ul>
-<p>NaN 表示不是一个数字，比如做显示类型转换的时候可能会得到这个结果。 Number(0/0)</p>
-<h3>数组的检测</h3>
-<ul>
-<li><code>Array.isArray()</code></li>
-<li><code>Object.prototype.toString.call([])</code>，解释原理：</li>
-</ul>
-<h3>Object 类型</h3>
-<h4>对象的创建</h4>
-<ul>
-<li>可通过对象字面量创建</li>
-<li>可通过 new 关键字创建</li>
-<li>new 关键字的过程如下<ul>
-<li>一个新的空对象被创建并分配给 this。</li>
-<li>函数体执行。通常它会修改 this，为其添加新的属性。</li>
-<li>返回 this 的值。</li>
-</ul>
-</li>
-<li>可通过 Object.create() 创建，使用 Object.create(null) 创建原型为 null 的对象。相当于使用 <code>{__proto__: null}</code></li>
-</ul>
-<h4>对象的继承</h4>
-<ul>
-<li>
-<p>通过 <code>Object.create()</code> 实现继承</p>
-</li>
-<li>
-<p>通过 <code>prototype</code> 实现继承</p>
-</li>
-<li>
-<p>通过 <code>mixin</code> 实现继承</p>
-</li>
-</ul>
-<h4><code>__proto__</code> 和  <code>prototype</code> 的区别</h4>
-<p><code>__proto__</code>用于设置对象的原型</p>
-<h4><code>for .. in</code> 和 <code>for ... of</code> 区别</h4>
-<ul>
-<li>for..in 会跳过 symbol</li>
-<li>for..in 会遍历出原型链上的属性</li>
-<li>for..of 用与可迭代对象，通过 for&hellip;of 和 Symbo.iterator 的配合，可以对 JS 中的很多数据结构进行统一的迭代处理</li>
-</ul>
-<h4>symbol</h4>
-<p>表示唯一标识，for..in 会跳过 symbol。Object.assign 会复制 symbol 属性。</p>
-<p>symbol 可以在全局使用，利用 symbol.for(),此方法会查找全局 symbol 表，如果 symbol 不存在，则创建它。
-<div class="highlight"><pre><span></span><code><span class="c1">// 从全局注册表中读取</span>
-<span class="kd">let</span><span class="w"> </span><span class="nx">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Symbol</span><span class="p">.</span><span class="k">for</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">);</span><span class="w"> </span><span class="c1">// 如果该 symbol 不存在，则创建它</span>
-
-<span class="c1">// 再次读取（可能是在代码中的另一个位置）</span>
-<span class="kd">let</span><span class="w"> </span><span class="nx">idAgain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Symbol</span><span class="p">.</span><span class="k">for</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">);</span>
-
-<span class="c1">// 相同的 symbol</span>
-<span class="nx">alert</span><span class="p">(</span><span class="w"> </span><span class="nx">id</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">idAgain</span><span class="w"> </span><span class="p">);</span><span class="w"> </span><span class="c1">// true</span>
-</code></pre></div></p>
-<p>JS 内部有很多&rdquo;系统&rdquo;层的 symbol，通过它们可以微调对象的各个方面：</p>
-<div class="highlight"><pre><span></span><code><span class="nb">Symbol</span><span class="p">.</span><span class="nx">hasInstance</span>
-<span class="nb">Symbol</span><span class="p">.</span><span class="nx">isConcatSpreadable</span>
-<span class="nb">Symbol</span><span class="p">.</span><span class="nx">iterator</span>
-<span class="nb">Symbol</span><span class="p">.</span><span class="nx">toPrimitive</span>
-<span class="p">...</span>
-</code></pre></div>
-<p>Object.keys/values/entries 会忽略 symbol 属性</p>
-<h4>类数组</h4>
-<p>类数组是有索引和 length 属性的对象。类数组没有数组的一些方法，比如 pop、push。可以通过 Array.from 将其转为数组。</p>
-<p>类数组也不能通过 for&hellip;of 遍历。</p>
-<p>技术上来说，可迭代对象必须实现 Symbol.iterator 方法。
-obj<a href="">Symbol.iterator</a> 的结果被称为 迭代器（iterator）。由它处理进一步的迭代过程。
-一个迭代器必须有 next() 方法，它返回一个 {done: Boolean, value: any} 对象，这里 done:true 表明迭代结束，否则 value 就是下一个值。
-Symbol.iterator 方法会被 for..of 自动调用，但我们也可以直接调用它。
-内建的可迭代对象例如字符串和数组，都实现了 Symbol.iterator。
-字符串迭代器能够识别代理对（surrogate pair）。（译注：代理对也就是 UTF-16 扩展字符。）</p>
-<h2>Promise 和 async/await</h2>
-<p>在使用 promise 时候，为了防止代码抛出异常影响正常流程，需要增加 catch。
-<div class="highlight"><pre><span></span><code><span class="ow">new</span><span class="w"> </span><span class="nb">Promise</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nx">noSuchFunction</span><span class="p">();</span><span class="w"> </span><span class="c1">// 这里出现 error（没有这个函数）</span>
-<span class="p">}).</span><span class="nx">then</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{});</span>
-<span class="c1">// VM5149:2 Uncaught (in promise) ReferenceError: noSuchFunction is not defined</span>
-
-<span class="k">try</span><span class="p">{</span>
-<span class="w">  </span><span class="ow">new</span><span class="w"> </span><span class="nb">Promise</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">noSuchFunction</span><span class="p">();</span><span class="w"> </span><span class="c1">// 这里出现 error（没有这个函数）</span>
-<span class="w">  </span><span class="p">}).</span><span class="nx">then</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{});</span><span class="w"> </span>
-<span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="c1">// 无法捕获 promise 中的错误</span>
-<span class="p">}</span>
-</code></pre></div>
-可以对上面的代码增加 catch 方法：
-<div class="highlight"><pre><span></span><code><span class="ow">new</span><span class="w"> </span><span class="nb">Promise</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nx">noSuchFunction</span><span class="p">();</span><span class="w"> </span><span class="c1">// 这里出现 error（没有这个函数）</span>
-<span class="p">}).</span><span class="nx">then</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{}).</span><span class="k">catch</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{});</span>
-</code></pre></div></p>
-<p>async/await 可以通过 try&hellip;catch 捕获异常
-<div class="highlight"><pre><span></span><code><span class="k">async</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">f</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">fetch</span><span class="p">(</span><span class="s1">&#39;http://no-such-url&#39;</span><span class="p">);</span>
-<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">err</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">alert</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span><span class="w"> </span><span class="c1">// TypeError: failed to fetch</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="p">}</span>
-
-<span class="nx">f</span><span class="p">()</span>
-</code></pre></div></p>
-<h2>可迭代对象 和 generator</h2>
-<p>可迭代对象是数组的泛化，可迭代对象需要对象实现 Symbol.iterator 方法，并返回带有 next 方法的对象。</p>
-<div class="highlight"><pre><span></span><code><span class="kd">let</span><span class="w"> </span><span class="nx">range</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="kr">from</span><span class="o">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span>
-<span class="w">  </span><span class="nx">to</span><span class="o">:</span><span class="w"> </span><span class="mf">5</span>
-<span class="p">};</span>
-
-<span class="c1">// 1. for..of 调用首先会调用这个：</span>
-<span class="nx">range</span><span class="p">[</span><span class="nb">Symbol</span><span class="p">.</span><span class="nx">iterator</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kd">function</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-
-<span class="w">  </span><span class="c1">// ……它返回迭代器对象（iterator object）：</span>
-<span class="w">  </span><span class="c1">// 2. 接下来，for..of 仅与下面的迭代器对象一起工作，要求它提供下一个值</span>
-<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">current</span><span class="o">:</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="kr">from</span><span class="p">,</span>
-<span class="w">    </span><span class="nx">last</span><span class="o">:</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">to</span><span class="p">,</span>
-
-<span class="w">    </span><span class="c1">// 3. next() 在 for..of 的每一轮循环迭代中被调用</span>
-<span class="w">    </span><span class="nx">next</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="c1">// 4. 它将会返回 {done:.., value :...} 格式的对象</span>
-<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">current</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">last</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">done</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">current</span><span class="o">++</span><span class="w"> </span><span class="p">};</span>
-<span class="w">      </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">done</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">};</span>
-<span class="w">      </span><span class="p">}</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">  </span><span class="p">};</span>
-<span class="p">};</span>
-
-<span class="c1">// 现在它可以运行了！</span>
-<span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">let</span><span class="w"> </span><span class="nx">num</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">range</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nx">alert</span><span class="p">(</span><span class="nx">num</span><span class="p">);</span><span class="w"> </span><span class="c1">// 1, 然后是 2, 3, 4, 5</span>
-<span class="p">}</span>
-</code></pre></div>
-<h2>递归</h2>
-<p>递归是一种强大的抽象，使得问题解决自然而然，而且代码量小。但是由于递归的执行机制，递归所使用的内存空间会比较大。好在递归基本上都可以转化为循环的实现，从而降低内存空间的占用。</p>
-<div class="highlight"><pre><span></span><code><span class="c1">// 非尾递归</span>
-<span class="kd">function</span><span class="w"> </span><span class="nx">pow</span><span class="p">(</span><span class="nx">x</span><span class="p">,</span><span class="w"> </span><span class="nx">n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="k">if</span><span class="p">(</span><span class="nx">n</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mf">1</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="nx">x</span>
-<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">pow</span><span class="p">(</span><span class="nx">x</span><span class="p">,</span><span class="w"> </span><span class="nx">n</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">1</span><span class="p">)</span>
-<span class="p">}</span>
-<span class="c1">// 尾递归</span>
-<span class="kd">function</span><span class="w"> </span><span class="nx">pow</span><span class="p">(</span><span class="nx">x</span><span class="p">,</span><span class="w"> </span><span class="nx">n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="k">if</span><span class="p">(</span><span class="nx">n</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mf">1</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="nx">x</span>
-<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">pow</span><span class="p">(</span><span class="nx">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">x</span><span class="p">,</span><span class="w"> </span><span class="nx">n</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">1</span><span class="p">)</span>
-<span class="p">}</span>
-<span class="c1">// 循环</span>
-<span class="kd">function</span><span class="w"> </span><span class="nx">pow</span><span class="p">(</span><span class="nx">x</span><span class="p">,</span><span class="w"> </span><span class="nx">n</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="k">while</span><span class="p">(</span><span class="nx">n</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">x</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">x</span>
-<span class="w">    </span><span class="nx">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">n</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mf">1</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">x</span>
-<span class="p">}</span>
-</code></pre></div>
-<p>不同的递归实现，其表现出来的执行时的形状是不一致的。尾递归很容易转换为循环。</p>
-<p>递归的汇编实现？</p>
-<h2>Proxy 和 Reflect</h2>
-<h2>事件循环</h2>
-<p>浏览器中 JS 的执行流程和 Node.js 中的执行流程都是基于事件循环的。
-正因为事件循环才让 JS 变成了异步事件驱动的变成模型。</p>
-<p>JS 事件通过事件队列实现，事件队列分为：宏任务队列和微任务队列</p>
-<p>宏任务包括：鼠标事件，脚本加载事件、setTimeout 等，宏任务是更底层的机制。</p>
-<p>微任务包括： Promise、async/await，微任务主要来自我们编写的代码。</p>
-<p>每个宏任务之后，引擎会立即执行微任务队列中的所有任务，然后再执行其他的宏任务，或渲染，或进行其他任何操作。
-<div class="highlight"><pre><span></span><code><span class="nx">setTimeout</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;timeout&#39;</span><span class="p">))</span>
-<span class="nb">Promise</span><span class="p">.</span><span class="nx">resolve</span><span class="p">().</span><span class="nx">then</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;promise&#39;</span><span class="p">))</span>
-<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;console&#39;</span><span class="p">)</span>
-<span class="c1">// console</span>
-<span class="c1">// promise</span>
-<span class="c1">// timeout</span>
-</code></pre></div></p>
-<object type="image/svg+xml" data="https://zh.javascript.info/article/event-loop/eventLoop-full.svg" width="407" height="391" class="image__image" data-use-theme="">
-        <img src="https://zh.javascript.info/article/event-loop/eventLoop-full.svg" alt="" width="407" height="391">
-      </object>
-
-<div class="highlight"><pre><span></span><code><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="mf">1</span><span class="p">);</span>
-<span class="nx">setTimeout</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="mf">2</span><span class="p">));</span>
-<span class="nb">Promise</span><span class="p">.</span><span class="nx">resolve</span><span class="p">().</span><span class="nx">then</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="mf">3</span><span class="p">));</span>
-<span class="nb">Promise</span><span class="p">.</span><span class="nx">resolve</span><span class="p">().</span><span class="nx">then</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">setTimeout</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="mf">4</span><span class="p">)));</span>
-<span class="nb">Promise</span><span class="p">.</span><span class="nx">resolve</span><span class="p">().</span><span class="nx">then</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="mf">5</span><span class="p">));</span>
-<span class="nx">setTimeout</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="mf">6</span><span class="p">));</span>
-<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="mf">7</span><span class="p">);</span>
-<span class="c1">// 1</span>
-<span class="c1">// 7</span>
-<span class="c1">// 3</span>
-<span class="c1">// 5</span>
-<span class="c1">// 2</span>
-<span class="c1">// 6 </span>
-<span class="c1">// 4</span>
-</code></pre></div>
-<h2>事件冒泡和捕获</h2>
-<p>事件冒泡是从里向外，事件捕获是从外向里。通过设置 addEventListener 的参数可以进行控制。</p>
-<p>事件委托是基于事件冒泡或事件捕获实现的，通过判断 event.target 是不是待处理的元素来实现</p>
-<p><div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;books&quot;</span><span class="p">&gt;</span>
-  <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;book&quot;</span><span class="p">&gt;</span>1<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
-  <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;book&quot;</span><span class="p">&gt;</span>2<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
-<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="nb">document</span><span class="p">.</span><span class="nx">querySelector</span><span class="p">(</span><span class="s1">&#39;.books&#39;</span><span class="p">).</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">&#39;click&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">e</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nx">e</span><span class="p">.</span><span class="nx">target</span><span class="p">.</span><span class="nx">className</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;book&#39;</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;selected&#39;</span><span class="p">)</span>
-<span class="p">})</span>
-</code></pre></div></p>
-<p>event.target 获取的是实际触发时间的元素，event.currentTarget 获取的是绑定此事件的元素</p>
-<p>事件捕获很少在实际开发中应用，之前主要是因为事件捕获并未被大多数浏览器实现。</p>
-<h2>创建自定义事件</h2>
-<h2>浏览器中的数据存储</h2>
-<h2>HTML文档加载和资源加载</h2>
-<p>HTML 页面主要声明周期包括三个 <code>DOMContentLoaded</code>,<code>load</code>,<code>beforeunload</code>,<code>unload</code></p>
-<p><code>DOMContentLoaded</code>  浏览器已完全加载 HTML，并构建了 DOM 树，但像 <img> 和样式表之类的外部资源可能尚未加载完成</p>
-<p><code>load</code>在页面中所有资源加载完毕后触发，包含图片资源，样式表。</p>
-<p>DOMContentLoaded 事件 —— DOM 已经就绪，因此处理程序可以查找 DOM 节点，并初始化接口。</p>
-<p>load 事件 —— 外部资源已加载完成，样式已被应用，图片大小也已知了。</p>
-<p>beforeunload 事件 —— 用户正在离开：我们可以检查用户是否保存了更改，并询问他是否真的要离开。</p>
-<p>unload 事件 —— 用户几乎已经离开了，但是我们仍然可以启动一些操作，例如发送统计数据。</p>
-<h3>script 的 defer 和 async</h3>
-<p>script 会阻塞 DOM 的构建，需要 script 执行完成才能继续 DOM 的构建。这会带来两个问题：</p>
-<ol>
-<li>脚本不能访问它下面的 DOM 元素，因此，脚本无法给它们添加处理程序等。</li>
-<li>如果脚本执行时间长，它会阻塞页面，用户可能看不到页面内容，这也是为什么推荐将脚本放在 body 的最后面的原因。</li>
-</ol>
-<p>浏览器支持给 script 设置 defer 和 async 属性</p>
-<p>defer 会延迟加载脚本，让 script 不阻塞 DOM 的构建，等 DOM 构建完成后带有 defer 的脚本才会执行。</p>
-<ul>
-<li>具有 defer 特性的脚本不会阻塞页面。</li>
-<li>具有 defer 特性的脚本总是要等到 DOM 解析完毕，但在 DOMContentLoaded 事件之前执行。</li>
-<li>具有 defer 特性的脚本保持其相对顺序，就像常规脚本一样。
-<div class="highlight"><pre><span></span><code><span class="o">&lt;</span><span class="nx">script</span><span class="w"> </span><span class="nx">defer</span><span class="w"> </span><span class="nx">src</span><span class="o">=</span><span class="s2">&quot;https://javascript.info/article/script-async-defer/long.js&quot;</span><span class="o">&gt;&lt;</span><span class="err">/script&gt;</span>
-<span class="o">&lt;</span><span class="nx">script</span><span class="w"> </span><span class="nx">defer</span><span class="w"> </span><span class="nx">src</span><span class="o">=</span><span class="s2">&quot;https://javascript.info/article/script-async-defer/small.js&quot;</span><span class="o">&gt;&lt;</span><span class="err">/script&gt;</span>
-</code></pre></div></li>
-<li>如果 <script> 脚本没有 src，则会忽略 defer 特性。</li>
-</ul>
-<p>async 特性意味着脚本是完全独立的：</p>
-<ul>
-<li>浏览器不会因 async 脚本而阻塞（与 defer 类似）。</li>
-<li>其他脚本不会等待 async 脚本加载完成，同样，async 脚本也不会等待其他脚本。</li>
-<li>DOMContentLoaded 和异步脚本不会彼此等待</li>
-<li>异步脚本以“加载优先”的顺序执行。</li>
-</ul>
-<h2>字符串</h2>
-<p>JS 中的字符串和其他语言的字符串不一样，其他语言中的字符串用对象表示。</p>
-<p>在 js 中，字符串分为字符串字面量和字符串对象，字符串字面量不能设置属性。字符串对象能设置属性。</p>
-<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;test string&#39;</span>
-<span class="nx">a</span><span class="p">.</span><span class="nx">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;test name&#39;</span>
-<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">a</span><span class="p">.</span><span class="nx">name</span><span class="p">)</span>
-<span class="kd">const</span><span class="w"> </span><span class="nx">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">String</span><span class="p">(</span><span class="s1">&#39;test string&#39;</span><span class="p">)</span>
-<span class="nx">b</span><span class="p">.</span><span class="nx">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;test name&#39;</span>
-<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">b</span><span class="p">.</span><span class="nx">name</span><span class="p">)</span>
-</code></pre></div>
-<p>在调用字符串字面量的方式入 substring 等方法时，会创建包装类型的对象，例如：<code>a.substring(2)</code>实际相当于执行如下：
-<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">String</span><span class="p">(</span><span class="s1">&#39;test&#39;</span><span class="p">)</span>
-<span class="nx">a</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mf">2</span><span class="p">)</span>
-<span class="nx">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span>
-</code></pre></div></p>
-<p>Object 构造函数是一个工厂方法，能根据传入的值返回相应的原始值包装类型的实例。</p>
-<div class="highlight"><pre><span></span><code><span class="kd">let</span><span class="w"> </span><span class="nx">obj</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Object</span><span class="p">(</span><span class="s1">&#39;test&#39;</span><span class="p">)</span>
-<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">obj</span><span class="w"> </span><span class="ow">instanceof</span><span class="w"> </span><span class="nb">String</span><span class="p">)</span>
-<span class="kd">let</span><span class="w"> </span><span class="nx">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Object</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span>
-<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">b</span><span class="w"> </span><span class="ow">instanceof</span><span class="w"> </span><span class="nb">Boolean</span><span class="p">)</span>
-</code></pre></div>
-<p>通过构造函数创建的数字、字符串、布尔值，都是 object 类型。</p>
-<div class="highlight"><pre><span></span><code><span class="kd">let</span><span class="w"> </span><span class="nx">str</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">String</span><span class="p">(</span><span class="s1">&#39;test&#39;</span><span class="p">)</span>
-<span class="ow">typeof</span><span class="w"> </span><span class="nx">str</span><span class="w"> </span><span class="c1">// object</span>
-<span class="nb">Object</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">toString</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">str</span><span class="p">)</span><span class="w"> </span><span class="c1">// &#39;[object String]&#39;</span>
-<span class="ow">typeof</span><span class="w"> </span><span class="s1">&#39;test&#39;</span><span class="w"> </span><span class="c1">// string</span>
-</code></pre></div>
-<p>字符串也是类数组，因为有下标和 length 属性。</p>
-<h2>单例内置对象</h2>
-<p>单例内置对象包含 Global 和 Math。Global 是 ECMA-262 规定的兜底对象。isNaN、isFinite、parseInt、parseFloat、encodeURI、encodeURIComponent 在 global 对象上。</p>
-<p>global 对象上的属性：undefined\NaN\Infinity\Object\Array\Function\Boolean\String\Number\Date\RegExp\Symbol\Error\EvalError\RangeError\ReferenceError\SyntaxError\TypeError\URIError</p>
-<p>encodeURI 不会编码 URL 组件的特殊字符,比如 冒号、斜杠、问号、井号</p>
-<p>encodeURIComponent 会对所有字符进行编码。</p>
-<p>eval 所执行的代码和 eval 调用的代码共享作用域。
-<div class="highlight"><pre><span></span><code><span class="nb">eval</span><span class="p">(</span><span class="s2">&quot;let msg = &#39;test&#39;&quot;</span><span class="p">)</span>
-<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">msg</span><span class="p">)</span>
-</code></pre></div></p>
-<h2>数组空位</h2>
-<p>可以使用一串逗号创建空位。ES6 遍历这种数组，会将值当 undefined。ES6 之前的方法则会忽略这个空位，但具体行为也会因方法而异。
-<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">arr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="mf">1</span><span class="p">,</span><span class="mf">2</span><span class="p">]</span>
-<span class="nx">arr</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1</span>
-
-<span class="k">for</span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">a</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">arr</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">a</span><span class="p">)</span>
-<span class="p">}</span>
-<span class="c1">// 1</span>
-</code></pre></div></p>
-<p>ES6 新增方法： fill、copyWithin</p>
-<h2>对象池的实现</h2>
-<h2>正则表达式</h2>
-<p>全局匹配 vs 多行匹配</p>
-<p>g：全局模式，表示查找字符串的全部内容，而不是找到第一个匹配的内容就结束。
-m：多行模式，表示查找到一行文本末尾时会继续查找。</p>
-        </article>
-        
-        <script src="https://giscus.app/client.js"
-                data-repo="oasis-cloud/blog-comments"
-                data-repo-id="R_kgDOKEliHA"
-                data-category="General"
-                data-category-id="DIC_kwDOKEliHM4CYb6e"
-                data-mapping="pathname"
-                data-strict="0"
-                data-reactions-enabled="1"
-                data-emit-metadata="0"
-                data-input-position="bottom"
-                data-theme="preferred_color_scheme"
-                data-lang="zh-CN"
-                crossorigin="anonymous"
-                async>
-        </script>
-    </body>
+<html lang="en-US" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>JavaScript 基础 | Oasis's Cloud</title>
+    <meta name="description" content="一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。—— 《一个数学家的辩白》">
+    <meta name="generator" content="VitePress v1.6.4">
+    <link rel="preload stylesheet" href="/assets/style.BubUdk9b.css" as="style">
+    <link rel="preload stylesheet" href="/vp-icons.css" as="style">
+    
+    <script type="module" src="/assets/app.BuMT4ivz.js"></script>
+    <link rel="modulepreload" href="/assets/chunks/theme.HZhl2uCL.js">
+    <link rel="modulepreload" href="/assets/chunks/framework.86O3EbG5.js">
+    <link rel="modulepreload" href="/assets/articles_javascript_1.md.3nNbgAfV.lean.js">
+    <script id="check-mac-os">document.documentElement.classList.toggle("mac",/Mac|iPhone|iPod|iPad/i.test(navigator.platform));</script>
+  </head>
+  <body>
+    <div id="app"><div class="graphite-page"><header class="masthead"><h1><a href="/">Oasis&#39;s Cloud</a></h1><p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p><nav class="menu"><input id="menu-check" type="checkbox"><label id="menu-label" for="menu-check" class="unselectable"><span class="icon close-icon">✕</span><span class="icon open-icon">☰</span><span class="text">Menu</span></label><ul><li><a href="/">首页</a></li></ul></nav></header><article class="main"><header class="title"><h1>JavaScript 基础</h1><!----><p class="author">作者：oasis</p><hr></header><div style="position:relative;"><div><h2 id="use-strict" tabindex="-1">&quot;use strict&quot;</h2><p>&quot;use strict&quot; 可以明确地激活 ES5 新增的特性和一些被修改过的特性。</p><p>&quot;use strict&quot; 可以放在脚本最顶部。 放在脚本的最顶部，则整个文件都以现代模式工作。</p><h2 id="变量" tabindex="-1">变量</h2><p>JS 中变量声明可以通过 var、let、const，</p><p>var 声明的变量存在变量提升，如下例子</p><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">function</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> a</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">() {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(b) </span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// undefined</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    var</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> b </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 1</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(b) </span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 1</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span></code></pre></div><p>通过 let 声明的变量不存在提升。</p><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">function</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> a</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">() {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(b) </span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// Uncaught ReferenceError: Cannot access &#39;b&#39; before initialization</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    let</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> b </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 1</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(b) </span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 1</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">a</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">()</span></span></code></pre></div><p>在 if 等语句中通过 var 声明的变量可以在程序中的其他地方使用，例如：</p><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">true</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    var</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> a </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 10</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">function</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> say</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">() {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(a) </span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 10</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span></code></pre></div><p>通过 let 和 const 声明的变量则存在块级作用域的限制。</p><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">true</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    let</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> a </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 10</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">function</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> say</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">() {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(a) </span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// a is not defined</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span></code></pre></div><p>通过 var 声明变量的话可以重复声明。而 let 和 const 不可以。</p><p>const 表示声明一个常量，而且要声明和初始化一起。否则会报错。</p><p>const 声明并初始化一个数组或对象，我们可以修改数组的元素或对象属性的值。这里的深层原因是 const 保留的是数组或对象的指针，仅仅是确保指针不变。</p><p>如何声明不可修改的对象呢？可以通过 Object.defineProperty()</p><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> a</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {}</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">Object.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">defineProperty</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(a, </span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&#39;property1&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">, {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  value: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">42</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">,</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  writable: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">false</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">});</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">a.property1 </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 1</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(a) </span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// {property1: 42}</span></span></code></pre></div><h2 id="类型" tabindex="-1">类型</h2><p>首先思考为什么编程语言中提供了类型这种抽象，类型帮助我们解决了什么问题？</p><ul><li>类型解决了数据存的问题：通过不同的类型，编译器可以开辟不同的内存大小，解决数据如何存的问题。</li><li>类型解决了数据取的问题：由于内存中的数据本没有意义，而是通过人为的界定数据才有了实际的意义，比如内存中同样的 4 个字节，存放着同样的二进制码，如果这两块内存对应的两个变量类型不一样，那么它们意义就不一样了。</li></ul><p>JS 中主要提供了如下类型：</p><ul><li>boolean</li><li>number</li><li>string</li><li>null</li><li>undefined</li><li>symbol</li><li>bigint</li><li>object</li></ul><p>在 JS 中 函数和正则都属于 object 类型，数组也属于 object 类型。</p><h3 id="类型转换" tabindex="-1">类型转换</h3><p>转换算法是：</p><ul><li>调用 obj<a href="./hint.html">Symbol.toPrimitive</a> 如果这个方法存在，</li><li>否则，如果 hint 是 &quot;string&quot; <ul><li>尝试调用 obj.toString() 或 obj.valueOf()，无论哪个存在。</li></ul></li><li>否则，如果 hint 是 &quot;number&quot; 或者 &quot;default&quot; <ul><li>尝试调用 obj.valueOf() 或 obj.toString()，无论哪个存在。</li></ul></li></ul><h3 id="null-和-undefined-的却别" tabindex="-1">null 和 undefined 的却别</h3><ul><li>null 代表“无”、“空”或“值未知”的特殊值，undefined 表示未被赋值</li><li>typeof null 返回 object，typeof undefined 返回 undefined</li><li>null === null // true</li><li>undefined === undefined // ture</li><li>undefined === null // false</li></ul><h3 id="number-类型注意点" tabindex="-1">number 类型注意点</h3><ul><li>0.1 + 0.2 === 0.3 // false</li><li>NaN == NaN // false</li><li>NaN === Nan // false</li></ul><p>NaN 表示不是一个数字，比如做显示类型转换的时候可能会得到这个结果。 Number(0/0)</p><h3 id="数组的检测" tabindex="-1">数组的检测</h3><ul><li><code>Array.isArray()</code></li><li><code>Object.prototype.toString.call([])</code>，解释原理：</li></ul><h3 id="object-类型" tabindex="-1">Object 类型</h3><h4 id="对象的创建" tabindex="-1">对象的创建</h4><ul><li>可通过对象字面量创建</li><li>可通过 new 关键字创建 <ul><li>new 关键字的过程如下 <ul><li>一个新的空对象被创建并分配给 this。</li><li>函数体执行。通常它会修改 this，为其添加新的属性。</li><li>返回 this 的值。</li></ul></li></ul></li><li>可通过 Object.create() 创建，使用 Object.create(null) 创建原型为 null 的对象。相当于使用 <code>{__proto__: null}</code></li></ul><h4 id="对象的继承" tabindex="-1">对象的继承</h4><ul><li><p>通过 <code>Object.create()</code> 实现继承</p></li><li><p>通过 <code>prototype</code> 实现继承</p></li><li><p>通过 <code>mixin</code> 实现继承</p></li></ul><h4 id="proto-和-prototype-的区别" tabindex="-1"><code>__proto__</code> 和 <code>prototype</code> 的区别</h4><p><code>__proto__</code>用于设置对象的原型</p><h4 id="for-in-和-for-of-区别" tabindex="-1"><code>for .. in</code> 和 <code>for ... of</code> 区别</h4><ul><li>for..in 会跳过 symbol</li><li>for..in 会遍历出原型链上的属性</li><li>for..of 用与可迭代对象，通过 for...of 和 Symbo.iterator 的配合，可以对 JS 中的很多数据结构进行统一的迭代处理</li></ul><h4 id="symbol" tabindex="-1">symbol</h4><p>表示唯一标识，for..in 会跳过 symbol。Object.assign 会复制 symbol 属性。</p><p>symbol 可以在全局使用，利用 symbol.for(),此方法会查找全局 symbol 表，如果 symbol 不存在，则创建它。</p><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 从全局注册表中读取</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">let</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> id </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> Symbol.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">for</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&quot;id&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">); </span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 如果该 symbol 不存在，则创建它</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 再次读取（可能是在代码中的另一个位置）</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">let</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> idAgain </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> Symbol.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">for</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&quot;id&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 相同的 symbol</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">alert</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">( id </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">===</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> idAgain ); </span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// true</span></span></code></pre></div><p>JS 内部有很多&quot;系统&quot;层的 symbol，通过它们可以微调对象的各个方面：</p><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">Symbol.hasInstance</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">Symbol.isConcatSpreadable</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">Symbol.iterator</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">Symbol.toPrimitive</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">...</span></span></code></pre></div><p>Object.keys/values/entries 会忽略 symbol 属性</p><h4 id="类数组" tabindex="-1">类数组</h4><p>类数组是有索引和 length 属性的对象。类数组没有数组的一些方法，比如 pop、push。可以通过 Array.from 将其转为数组。</p><p>类数组也不能通过 for...of 遍历。</p><p>技术上来说，可迭代对象必须实现 Symbol.iterator 方法。 obj<a href="./.html">Symbol.iterator</a> 的结果被称为 迭代器（iterator）。由它处理进一步的迭代过程。 一个迭代器必须有 next() 方法，它返回一个 {done: Boolean, value: any} 对象，这里 done:true 表明迭代结束，否则 value 就是下一个值。 Symbol.iterator 方法会被 for..of 自动调用，但我们也可以直接调用它。 内建的可迭代对象例如字符串和数组，都实现了 Symbol.iterator。 字符串迭代器能够识别代理对（surrogate pair）。（译注：代理对也就是 UTF-16 扩展字符。）</p><h2 id="promise-和-async-await" tabindex="-1">Promise 和 async/await</h2><p>在使用 promise 时候，为了防止代码抛出异常影响正常流程，需要增加 catch。</p><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">new</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> Promise</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">function</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">() {</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">  noSuchFunction</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(); </span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 这里出现 error（没有这个函数）</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}).</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">then</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(() </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {});</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// VM5149:2 Uncaught (in promise) ReferenceError: noSuchFunction is not defined</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">try</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">{</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  new</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> Promise</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">function</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">() {</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">    noSuchFunction</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(); </span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 这里出现 error（没有这个函数）</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  }).</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">then</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(() </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {}); </span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">} </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">catch</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (e) {</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">  // 无法捕获 promise 中的错误</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span></code></pre></div><p>可以对上面的代码增加 catch 方法：</p><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">new</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> Promise</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">function</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">() {</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">  noSuchFunction</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(); </span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 这里出现 error（没有这个函数）</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}).</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">then</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(() </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {}).</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">catch</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(() </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {});</span></span></code></pre></div><p>async/await 可以通过 try...catch 捕获异常</p><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">async</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> function</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> f</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">() {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  try</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    let</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> response </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> await</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> fetch</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&#39;http://no-such-url&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  } </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">catch</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (err) {</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">    alert</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(err); </span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// TypeError: failed to fetch</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">f</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">()</span></span></code></pre></div><h2 id="可迭代对象-和-generator" tabindex="-1">可迭代对象 和 generator</h2><p>可迭代对象是数组的泛化，可迭代对象需要对象实现 Symbol.iterator 方法，并返回带有 next 方法的对象。</p><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">let</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> range </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  from: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">1</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">,</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  to: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">5</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">};</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 1. for..of 调用首先会调用这个：</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">range[Symbol.iterator] </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> function</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">() {</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">  // ……它返回迭代器对象（iterator object）：</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">  // 2. 接下来，for..of 仅与下面的迭代器对象一起工作，要求它提供下一个值</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  return</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    current: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.from,</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    last: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.to,</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    // 3. next() 在 for..of 的每一轮循环迭代中被调用</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">    next</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">() {</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">      // 4. 它将会返回 {done:.., value :...} 格式的对象</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">      if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.current </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">&lt;=</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.last) {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">        return</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> { done: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">false</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">, value: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.current</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">++</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> };</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      } </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">else</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">        return</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> { done: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">true</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> };</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  };</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">};</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 现在它可以运行了！</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">for</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">let</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> num </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">of</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> range) {</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">  alert</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(num); </span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 1, 然后是 2, 3, 4, 5</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span></code></pre></div><h2 id="递归" tabindex="-1">递归</h2><p>递归是一种强大的抽象，使得问题解决自然而然，而且代码量小。但是由于递归的执行机制，递归所使用的内存空间会比较大。好在递归基本上都可以转化为循环的实现，从而降低内存空间的占用。</p><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 非尾递归</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">function</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> pow</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">x</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">, </span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">n</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(n </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">==</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 1</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">return</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> x</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  return</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> x </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">*</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> pow</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(x, n </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">-</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 1</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">)</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 尾递归</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">function</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> pow</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">x</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">, </span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">n</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(n </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">==</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 1</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">return</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> x</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  return</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> pow</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(x </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">*</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> x, n </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">-</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 1</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">)</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 循环</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">function</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> pow</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">x</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">, </span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">n</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  while</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(n </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">&gt;</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 1</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    x </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> x </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">*</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> x</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    n </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> n </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">-</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 1</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  }</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  return</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> x</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span></code></pre></div><p>不同的递归实现，其表现出来的执行时的形状是不一致的。尾递归很容易转换为循环。</p><p>递归的汇编实现？</p><h2 id="proxy-和-reflect" tabindex="-1">Proxy 和 Reflect</h2><h2 id="事件循环" tabindex="-1">事件循环</h2><p>浏览器中 JS 的执行流程和 Node.js 中的执行流程都是基于事件循环的。 正因为事件循环才让 JS 变成了异步事件驱动的变成模型。</p><p>JS 事件通过事件队列实现，事件队列分为：宏任务队列和微任务队列</p><p>宏任务包括：鼠标事件，脚本加载事件、setTimeout 等，宏任务是更底层的机制。</p><p>微任务包括： Promise、async/await，微任务主要来自我们编写的代码。</p><p>每个宏任务之后，引擎会立即执行微任务队列中的所有任务，然后再执行其他的宏任务，或渲染，或进行其他任何操作。</p><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">setTimeout</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(() </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&#39;timeout&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">))</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">Promise</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">resolve</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">().</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">then</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(() </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&#39;promise&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">))</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&#39;console&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">)</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// console</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// promise</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// timeout</span></span></code></pre></div><p>&lt;object type=&quot;image/svg+xml&quot; data=&quot;<a href="https://zh.javascript.info/article/event-loop/eventLoop-full.svg" target="_blank" rel="noreferrer">https://zh.javascript.info/article/event-loop/eventLoop-full.svg</a>&quot; width=&quot;407&quot; height=&quot;391&quot; class=&quot;image__image&quot; data-use-theme=&quot;&quot;&gt; <img src="https://zh.javascript.info/article/event-loop/eventLoop-full.svg" alt="" width="407" height="391"> &lt;/object&gt;</p><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">1</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">);</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">setTimeout</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(() </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">2</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">));</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">Promise</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">resolve</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">().</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">then</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(() </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">3</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">));</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">Promise</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">resolve</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">().</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">then</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(() </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=&gt;</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> setTimeout</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(() </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">4</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">)));</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">Promise</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">resolve</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">().</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">then</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(() </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">5</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">));</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">setTimeout</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(() </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">6</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">));</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">7</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">);</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 1</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 7</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 3</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 5</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 2</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 6 </span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 4</span></span></code></pre></div><h2 id="事件冒泡和捕获" tabindex="-1">事件冒泡和捕获</h2><p>事件冒泡是从里向外，事件捕获是从外向里。通过设置 addEventListener 的参数可以进行控制。</p><p>事件委托是基于事件冒泡或事件捕获实现的，通过判断 event.target 是不是待处理的元素来实现</p><div class="language-html vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">html</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">&lt;</span><span style="--shiki-light:#22863A;--shiki-dark:#22863A;">div</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> class</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">=</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&quot;books&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">&gt;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  &lt;</span><span style="--shiki-light:#22863A;--shiki-dark:#22863A;">div</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> class</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">=</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&quot;book&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">&gt;1&lt;/</span><span style="--shiki-light:#22863A;--shiki-dark:#22863A;">div</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">&gt;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  &lt;</span><span style="--shiki-light:#22863A;--shiki-dark:#22863A;">div</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> class</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">=</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&quot;book&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">&gt;2&lt;/</span><span style="--shiki-light:#22863A;--shiki-dark:#22863A;">div</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">&gt;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">&lt;/</span><span style="--shiki-light:#22863A;--shiki-dark:#22863A;">div</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">&gt;</span></span></code></pre></div><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">document.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">querySelector</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&#39;.books&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">).</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">addEventListener</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&#39;click&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">, (</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">e</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  e.target.className </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">===</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &#39;book&#39;</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> &amp;&amp;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&#39;selected&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">)</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">})</span></span></code></pre></div><p>event.target 获取的是实际触发时间的元素，event.currentTarget 获取的是绑定此事件的元素</p><p>事件捕获很少在实际开发中应用，之前主要是因为事件捕获并未被大多数浏览器实现。</p><h2 id="创建自定义事件" tabindex="-1">创建自定义事件</h2><h2 id="浏览器中的数据存储" tabindex="-1">浏览器中的数据存储</h2><h2 id="html文档加载和资源加载" tabindex="-1">HTML文档加载和资源加载</h2><p>HTML 页面主要声明周期包括三个 <code>DOMContentLoaded</code>,<code>load</code>,<code>beforeunload</code>,<code>unload</code></p><p><code>DOMContentLoaded</code> 浏览器已完全加载 HTML，并构建了 DOM 树，但像 <img> 和样式表之类的外部资源可能尚未加载完成</p><p><code>load</code>在页面中所有资源加载完毕后触发，包含图片资源，样式表。</p><p>DOMContentLoaded 事件 —— DOM 已经就绪，因此处理程序可以查找 DOM 节点，并初始化接口。</p><p>load 事件 —— 外部资源已加载完成，样式已被应用，图片大小也已知了。</p><p>beforeunload 事件 —— 用户正在离开：我们可以检查用户是否保存了更改，并询问他是否真的要离开。</p><p>unload 事件 —— 用户几乎已经离开了，但是我们仍然可以启动一些操作，例如发送统计数据。</p><h3 id="script-的-defer-和-async" tabindex="-1">script 的 defer 和 async</h3><p>script 会阻塞 DOM 的构建，需要 script 执行完成才能继续 DOM 的构建。这会带来两个问题：</p><ol><li>脚本不能访问它下面的 DOM 元素，因此，脚本无法给它们添加处理程序等。</li><li>如果脚本执行时间长，它会阻塞页面，用户可能看不到页面内容，这也是为什么推荐将脚本放在 body 的最后面的原因。</li></ol><p>浏览器支持给 script 设置 defer 和 async 属性</p><p>defer 会延迟加载脚本，让 script 不阻塞 DOM 的构建，等 DOM 构建完成后带有 defer 的脚本才会执行。</p><ul><li>具有 defer 特性的脚本不会阻塞页面。</li><li>具有 defer 特性的脚本总是要等到 DOM 解析完毕，但在 DOMContentLoaded 事件之前执行。</li><li>具有 defer 特性的脚本保持其相对顺序，就像常规脚本一样。</li></ul><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">&lt;</span><span style="--shiki-light:#22863A;--shiki-dark:#22863A;">script</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> defer</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> src</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&quot;https://javascript.info/article/script-async-defer/long.js&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">&gt;&lt;/</span><span style="--shiki-light:#22863A;--shiki-dark:#22863A;">script</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">&gt;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">&lt;</span><span style="--shiki-light:#22863A;--shiki-dark:#22863A;">script</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> defer</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> src</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&quot;https://javascript.info/article/script-async-defer/small.js&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">&gt;&lt;/</span><span style="--shiki-light:#22863A;--shiki-dark:#22863A;">script</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">&gt;</span></span></code></pre></div><ul><li>如果 &lt;script&gt; 脚本没有 src，则会忽略 defer 特性。</li></ul><p>async 特性意味着脚本是完全独立的：</p><ul><li>浏览器不会因 async 脚本而阻塞（与 defer 类似）。</li><li>其他脚本不会等待 async 脚本加载完成，同样，async 脚本也不会等待其他脚本。</li><li>DOMContentLoaded 和异步脚本不会彼此等待</li><li>异步脚本以“加载优先”的顺序执行。</li></ul><h2 id="字符串" tabindex="-1">字符串</h2><p>JS 中的字符串和其他语言的字符串不一样，其他语言中的字符串用对象表示。</p><p>在 js 中，字符串分为字符串字面量和字符串对象，字符串字面量不能设置属性。字符串对象能设置属性。</p><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> a</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &#39;test string&#39;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">a.name </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &#39;test name&#39;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(a.name)</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> b</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> new</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> String</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&#39;test string&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">)</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">b.name </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &#39;test name&#39;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(b.name)</span></span></code></pre></div><p>在调用字符串字面量的方式入 substring 等方法时，会创建包装类型的对象，例如：<code>a.substring(2)</code>实际相当于执行如下：</p><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> a</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> new</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> String</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&#39;test&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">)</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">a.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">substring</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">2</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">)</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">a </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> null</span></span></code></pre></div><p>Object 构造函数是一个工厂方法，能根据传入的值返回相应的原始值包装类型的实例。</p><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">let</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> obj </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> new</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> Object</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&#39;test&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">)</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(obj </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">instanceof</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> String</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">)</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">let</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> b </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> new</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> Object</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">true</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(b </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">instanceof</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> Boolean</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">)</span></span></code></pre></div><p>通过构造函数创建的数字、字符串、布尔值，都是 object 类型。</p><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">let</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> str </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> new</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> String</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&#39;test&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">)</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">typeof</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> str </span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// object</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">Object</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">prototype</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.toString.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">call</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(str) </span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// &#39;[object String]&#39;</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">typeof</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &#39;test&#39;</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;"> // string</span></span></code></pre></div><p>字符串也是类数组，因为有下标和 length 属性。</p><h2 id="单例内置对象" tabindex="-1">单例内置对象</h2><p>单例内置对象包含 Global 和 Math。Global 是 ECMA-262 规定的兜底对象。isNaN、isFinite、parseInt、parseFloat、encodeURI、encodeURIComponent 在 global 对象上。</p><p>global 对象上的属性：undefined\NaN\Infinity\Object\Array\Function\Boolean\String\Number\Date\RegExp\Symbol\Error\EvalError\RangeError\ReferenceError\SyntaxError\TypeError\URIError</p><p>encodeURI 不会编码 URL 组件的特殊字符,比如 冒号、斜杠、问号、井号</p><p>encodeURIComponent 会对所有字符进行编码。</p><p>eval 所执行的代码和 eval 调用的代码共享作用域。</p><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">eval</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&quot;let msg = &#39;test&#39;&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">)</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(msg)</span></span></code></pre></div><h2 id="数组空位" tabindex="-1">数组空位</h2><p>可以使用一串逗号创建空位。ES6 遍历这种数组，会将值当 undefined。ES6 之前的方法则会忽略这个空位，但具体行为也会因方法而异。</p><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> arr</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> [</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">1</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">,</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">2</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">]</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">arr.</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">length</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 1</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">for</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> a</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> of</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> arr) {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(a)</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 1</span></span></code></pre></div><p>ES6 新增方法： fill、copyWithin</p><h2 id="对象池的实现" tabindex="-1">对象池的实现</h2><h2 id="正则表达式" tabindex="-1">正则表达式</h2><p>全局匹配 vs 多行匹配</p><p>g：全局模式，表示查找字符串的全部内容，而不是找到第一个匹配的内容就结束。 m：多行模式，表示查找到一行文本末尾时会继续查找。</p></div></div></article><div id="giscus-host"></div></div></div>
+    <script>window.__VP_HASH_MAP__=JSON.parse("{\"articles_1.md\":\"BcbiCNen\",\"articles_2.md\":\"BOs6JrAg\",\"articles_3.md\":\"CyolPGRT\",\"articles_4.md\":\"CQKiIuaw\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_0.md\":\"Doxdb5Ij\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_1.md\":\"wjOL1phh\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_10.md\":\"LyZJnSxs\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_11.md\":\"C2FmrDp9\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_12.md\":\"BEHmrOu0\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_13.md\":\"DiD-bHGf\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_14.md\":\"BBmdeYZf\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_15.md\":\"f2O62Iuk\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_16.md\":\"BKGADZ4j\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_17.md\":\"C5m88eYa\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_18.md\":\"DFfKG_xT\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_19.md\":\"C58qgz4I\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_2.md\":\"BfG3umGO\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_20.md\":\"royf5I3T\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_21.md\":\"CmoEuQRQ\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_22.md\":\"5Bz1s6MM\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_23.md\":\"CZho3lv8\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_24.md\":\"BPs4s-6q\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_25.md\":\"DhIkQ8QI\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_26.md\":\"DQrDDSmD\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_3.md\":\"XzEbegi1\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_4.md\":\"Blv6FVHR\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_5.md\":\"C-qPQeyL\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_6.md\":\"6Y-BWQfb\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_7.md\":\"CAzQfyMt\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_8.md\":\"CsjQZCCO\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_9.md\":\"BASgbQl4\",\"articles_artificial-intelligence_books_ai-modern-approach_1.md\":\"DDDLmf54\",\"articles_artificial-intelligence_books_ai-modern-approach_10.md\":\"DhmTh9g1\",\"articles_artificial-intelligence_books_ai-modern-approach_11.md\":\"CX8Rq9wV\",\"articles_artificial-intelligence_books_ai-modern-approach_12.md\":\"fnPMZxKE\",\"articles_artificial-intelligence_books_ai-modern-approach_13.md\":\"DelyBh0u\",\"articles_artificial-intelligence_books_ai-modern-approach_14.md\":\"CEVzmm13\",\"articles_artificial-intelligence_books_ai-modern-approach_15.md\":\"BYaoy4oU\",\"articles_artificial-intelligence_books_ai-modern-approach_16.md\":\"CJBur2Mw\",\"articles_artificial-intelligence_books_ai-modern-approach_17.md\":\"Q8pYMbdg\",\"articles_artificial-intelligence_books_ai-modern-approach_18.md\":\"BEtfJPVK\",\"articles_artificial-intelligence_books_ai-modern-approach_19.md\":\"DWkWsT-C\",\"articles_artificial-intelligence_books_ai-modern-approach_2.md\":\"Ck1Z-mEe\",\"articles_artificial-intelligence_books_ai-modern-approach_20.md\":\"CbcsJXY_\",\"articles_artificial-intelligence_books_ai-modern-approach_21.md\":\"DOHxMpLE\",\"articles_artificial-intelligence_books_ai-modern-approach_22.md\":\"BrmXqyYy\",\"articles_artificial-intelligence_books_ai-modern-approach_23.md\":\"ufr3NqX2\",\"articles_artificial-intelligence_books_ai-modern-approach_24.md\":\"CfKi8b69\",\"articles_artificial-intelligence_books_ai-modern-approach_25.md\":\"D3FZV2ha\",\"articles_artificial-intelligence_books_ai-modern-approach_26.md\":\"C9NvT34X\",\"articles_artificial-intelligence_books_ai-modern-approach_3.md\":\"5B16Mude\",\"articles_artificial-intelligence_books_ai-modern-approach_4.md\":\"CFTsLVCQ\",\"articles_artificial-intelligence_books_ai-modern-approach_5.md\":\"B6w77Qe3\",\"articles_artificial-intelligence_books_ai-modern-approach_6.md\":\"DOwdgivt\",\"articles_artificial-intelligence_books_ai-modern-approach_7.md\":\"BKl-9NUI\",\"articles_artificial-intelligence_books_ai-modern-approach_8.md\":\"Ca5nK7HY\",\"articles_artificial-intelligence_books_ai-modern-approach_9.md\":\"bjCn9mRw\",\"articles_artificial-intelligence_books_build-a-llm_1.md\":\"Cn53qMLE\",\"articles_artificial-intelligence_books_build-a-llm_2-1.md\":\"BEGkEHbf\",\"articles_artificial-intelligence_books_build-a-llm_2.md\":\"B9f-kfwa\",\"articles_artificial-intelligence_books_build-a-llm_3.md\":\"BgPDZZNE\",\"articles_artificial-intelligence_books_build-a-llm_4.md\":\"BGvCF-sm\",\"articles_artificial-intelligence_books_build-a-llm_5.md\":\"D6qs6PuA\",\"articles_artificial-intelligence_books_build-a-llm_6.md\":\"Ohih56sP\",\"articles_artificial-intelligence_books_build-a-llm_7.md\":\"HTDAcsNc\",\"articles_artificial-intelligence_books_essential-math-for-ai_1-1.md\":\"j-08bog-\",\"articles_artificial-intelligence_books_essential-math-for-ai_1.md\":\"CyeVwxe6\",\"articles_artificial-intelligence_books_essential-math-for-ai_2.md\":\"DLf3lmAl\",\"articles_artificial-intelligence_books_mathematics-for-ml-in-plain-words_11.md\":\"deaEf6CH\",\"articles_artificial-intelligence_books_shitangjijianrengongzhinengke_1.md\":\"Dspbam5X\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_1.md\":\"CsHrSBOo\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_2.md\":\"Ch4VnrDN\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_3.md\":\"DOx3ENDu\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_4.md\":\"BwTW514D\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_5.md\":\"CMT0adxO\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_6.md\":\"Da5Lo1qJ\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_7.md\":\"IVT6-nY0\",\"articles_artificial-intelligence_mcp_1.md\":\"BSwKgK20\",\"articles_artificial-intelligence_mcp_2.md\":\"BqYmOfWE\",\"articles_artificial-intelligence_mcp_3.md\":\"CRqerqdh\",\"articles_artificial-intelligence_mcp_4.md\":\"DlZf-ZBs\",\"articles_artificial-intelligence_network-source_1.md\":\"7tN07cqO\",\"articles_artificial-intelligence_python_1.md\":\"DEs7NHra\",\"articles_artificial-intelligence_research_1.md\":\"BRYxkx9w\",\"articles_artificial-intelligence_research_2.md\":\"D1S9y95L\",\"articles_artificial-intelligence_research_3.md\":\"CDPKFpDS\",\"articles_artificial-intelligence_research_4.md\":\"gcdEnQ27\",\"articles_artificial-intelligence_research_5.md\":\"BWuimyaG\",\"articles_artificial-intelligence_research_6.md\":\"ChDVsr6P\",\"articles_artificial-intelligence_skills_1.md\":\"CE_3tidO\",\"articles_artificial-intelligence_skills_2.md\":\"Dw-LqypE\",\"articles_artificial-intelligence_vibe-coding_1.md\":\"CIaQQuRU\",\"articles_artificial-intelligence_vibe-coding_2.md\":\"BYp_N-la\",\"articles_books_0-10000_1.md\":\"CqfzqHFB\",\"articles_books_burn-the-boats_1.md\":\"DQW5Dj64\",\"articles_books_dontmakemethink_1.md\":\"FcQgzyiC\",\"articles_books_gaoxiaonengrenshideqigexiguan_1.md\":\"Di8W2D55\",\"articles_books_head-start_1.md\":\"DSEU1Nd4\",\"articles_books_honghuanghouxiaoying_1.md\":\"DsEwgoHE\",\"articles_books_how-program-works_1.md\":\"In6CRTPC\",\"articles_books_how-program-works_2.md\":\"C__yRHZZ\",\"articles_books_kebiansikao_1.md\":\"ZpZj4VBL\",\"articles_books_lixingdebianjie_1.md\":\"C2i5IU4p\",\"articles_books_match_1.md\":\"DQuyyF-w\",\"articles_books_next-age-of-uncertainty_1.md\":\"B3kXpIOT\",\"articles_books_piancha_1.md\":\"DUp5o2L7\",\"articles_books_programingwithtypes_1.md\":\"DPf6sVtD\",\"articles_books_ruhexuexi_1.md\":\"BiBkTqFk\",\"articles_books_ruozhedewuqi_1.md\":\"CJI0TUtU\",\"articles_books_shendugongzuo_1.md\":\"BAdThtq3\",\"articles_books_shishituichu_1.md\":\"DSMpw3Mj\",\"articles_books_siweideqiutu_1.md\":\"D9N51GZd\",\"articles_books_xingweichuanranxiaoying_1.md\":\"D8YfH3E9\",\"articles_books_yingxianglidebadazhangai_1.md\":\"BkSkh0ib\",\"articles_books_zenyanglongluorenxin_1.md\":\"DyaoIWo4\",\"articles_books_zhegezhexuejiajiulewo_1.md\":\"EBCGPBD1\",\"articles_daily-thoughts_1.md\":\"rLmpFK7a\",\"articles_frontend_1.md\":\"B3Ok2hY9\",\"articles_frontend_10.md\":\"uK6wPfMr\",\"articles_frontend_11.md\":\"B8q93MGs\",\"articles_frontend_12.md\":\"D2lc-Jbc\",\"articles_frontend_13.md\":\"D5nGGZ29\",\"articles_frontend_14.md\":\"67MvYpiC\",\"articles_frontend_15.md\":\"Bonqr1JH\",\"articles_frontend_16.md\":\"BIcIqlrh\",\"articles_frontend_17.md\":\"DT2OnR9t\",\"articles_frontend_18.md\":\"C2UgM1rp\",\"articles_frontend_19.md\":\"Cm_l10Pp\",\"articles_frontend_2.md\":\"BH6obgzX\",\"articles_frontend_20.md\":\"DYOd_Ygi\",\"articles_frontend_21.md\":\"BGvMohX8\",\"articles_frontend_22.md\":\"C9-4PiZs\",\"articles_frontend_23.md\":\"LFQ7EJby\",\"articles_frontend_24.md\":\"CxV3Qmff\",\"articles_frontend_25.md\":\"KDaPWGvE\",\"articles_frontend_3.md\":\"Ocf5SV2e\",\"articles_frontend_4.md\":\"8oQMBnVM\",\"articles_frontend_6.md\":\"DLjPQ4H2\",\"articles_frontend_7.md\":\"C3_rdklM\",\"articles_frontend_8.md\":\"DmoQqnzq\",\"articles_frontend_9.md\":\"BIp4wdMq\",\"articles_frontend_fluent-react_1.md\":\"BsLnBF9_\",\"articles_frontend_immerjs_1.md\":\"cAKCGuJw\",\"articles_frontend_immerjs_2.md\":\"DhP_sCjK\",\"articles_frontend_micro-frontends_1.md\":\"CTPkX7P4\",\"articles_frontend_micro-frontends_2.md\":\"BhiyXnsA\",\"articles_frontend_next-intl_1.md\":\"CHLJLMhT\",\"articles_frontend_nextjs_1.md\":\"FcBi0n4F\",\"articles_frontend_nextjs_2.md\":\"IMXOyUyo\",\"articles_frontend_nextjs_3.md\":\"sMqC4VLv\",\"articles_frontend_nextjs_4.md\":\"YErQgQac\",\"articles_frontend_nextjs_5.md\":\"BSvkBEDC\",\"articles_frontend_nextjs_6.md\":\"C3vMZWNU\",\"articles_frontend_programming-with-types_1.md\":\"BZDTAiUn\",\"articles_frontend_programming-with-types_2.md\":\"DvF69qyh\",\"articles_frontend_programming-with-types_3.md\":\"D5ySUS2k\",\"articles_frontend_programming-with-types_4-1.md\":\"DgmuJ2FE\",\"articles_frontend_programming-with-types_4.md\":\"DCyvJyTt\",\"articles_frontend_programming-with-types_5.md\":\"D5s4hW6n\",\"articles_frontend_programming-with-types_6.md\":\"0TkUZXWK\",\"articles_frontend_programming-with-types_7.md\":\"ChvDQygU\",\"articles_frontend_react-hooks_1.md\":\"Da9rnukC\",\"articles_frontend_react_1-1.md\":\"DTtIXyO7\",\"articles_frontend_react_1.md\":\"B5UJRAnh\",\"articles_frontend_react_2-1.md\":\"BbIbpqlZ\",\"articles_frontend_react_2.md\":\"CFuzM5My\",\"articles_frontend_react_3-1.md\":\"CB6esavT\",\"articles_frontend_react_3-2.md\":\"Ddn-EfA3\",\"articles_frontend_react_3.md\":\"COI_9hCd\",\"articles_frontend_react_4.md\":\"DmDsL2Q0\",\"articles_frontend_zustand_1-1.md\":\"Bq6-0ZBv\",\"articles_frontend_zustand_1.md\":\"CXYFgHGX\",\"articles_github_1.md\":\"CAskap8A\",\"articles_github_2.md\":\"BV3nkWQp\",\"articles_github_3.md\":\"CMzJSJkE\",\"articles_github_4.md\":\"DJP9VajY\",\"articles_github_5.md\":\"Bn3oSnIk\",\"articles_javascript_1.md\":\"3nNbgAfV\",\"articles_javascript_2.md\":\"CjZc98RL\",\"articles_javascript_3.md\":\"CL42n_iU\",\"articles_learn-js-design-pattern_1.md\":\"CZTgpT5Z\",\"articles_morden-browser_1.md\":\"CFKiS64y\",\"articles_morden-browser_2.md\":\"BXaAupn0\",\"articles_network_1.md\":\"C0I3csFQ\",\"articles_network_2.md\":\"DDLuT2tq\",\"articles_network_3.md\":\"CWo0kz2B\",\"articles_nodejs_1.md\":\"Db65q0P1\",\"articles_nodejs_2.md\":\"CQAqiGBk\",\"articles_nodejs_3.md\":\"4FAcAo6A\",\"articles_philosophy-of-software-design_1.md\":\"B9EW4TRr\",\"articles_philosophy-of-software-design_2.md\":\"Lhpe0bAQ\",\"articles_philosophy-of-software-design_3.md\":\"CJxtSZDL\",\"articles_plan_1.md\":\"uSPmD0KW\",\"articles_plan_动手学大模型智能体.md\":\"BSQ4xbeQ\",\"articles_plan_动手学强化学习.md\":\"Bvnyy0ei\",\"articles_plan_动手学机器学习.md\":\"BJQt5tTu\",\"articles_plan_动手学深度学习.md\":\"BXMo25LP\",\"articles_plan_动手学自然语言处理.md\":\"BeVLNyzS\",\"articles_read_1.md\":\"DNGJ03Om\",\"articles_self_1.md\":\"zoUg7f4K\",\"articles_self_2.md\":\"BfDDBfsY\",\"articles_self_3.md\":\"fP1FAGSq\",\"articles_self_4.md\":\"B9_3N0SV\",\"articles_self_5.md\":\"BwBA7c2t\",\"articles_self_6.md\":\"BBHEUU_t\",\"articles_self_7.md\":\"DWHrJTvQ\",\"articles_self_8.md\":\"CqKpQtPR\",\"articles_self_9.md\":\"45INF02j\",\"articles_sicp_1.md\":\"BO4gTEQ3\",\"articles_sicp_2.md\":\"DG_VPyb9\",\"articles_software-design_1.md\":\"BKCWLXN0\",\"articles_software-design_2.md\":\"fRR0rO3E\",\"articles_software-design_3.md\":\"DgNX2j82\",\"articles_software-design_4.md\":\"7DoTTce3\",\"articles_software-design_5.md\":\"BcfmIT7R\",\"articles_software-design_6.md\":\"CNGJwx2j\",\"articles_typescript_1.md\":\"B_Q8hMP7\",\"articles_work_project-log-and-summary.md\":\"B5joyKE6\",\"index.md\":\"ofGALGuw\"}");window.__VP_SITE_DATA__=JSON.parse("{\"lang\":\"en-US\",\"dir\":\"ltr\",\"title\":\"Oasis's Cloud\",\"description\":\"一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。—— 《一个数学家的辩白》\",\"base\":\"/\",\"head\":[],\"router\":{\"prefetchLinks\":true},\"appearance\":false,\"themeConfig\":{},\"locales\":{},\"scrollOffset\":134,\"cleanUrls\":false}");</script>
+    
+  </body>
 </html>

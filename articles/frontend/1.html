@@ -1,328 +1,248 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Sass @use vs @import</title>
-        <link rel="stylesheet" href="../../assets/fonts.css">
-        <link rel="stylesheet" href="../../assets/graphite.css">
-        <link rel="stylesheet" href="../../assets/pygments.css">
-        <script src="../../assets/image-zoom.js" defer></script>
-        
-        
-    </head>
-    <body class="node-articles-frontend-1 node-articles-frontend node-articles node">
-        <header class="masthead">
-            <h1><a href="../../index.html">Oasis's Cloud</a></h1>
-            
-                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
-            
-            
-            <nav class="menu">
-                <input id="menu-check" type="checkbox"/>
-                <label id="menu-label" for="menu-check" class="unselectable">
-                    <span class="icon close-icon">✕</span>
-                    <span class="icon open-icon">☰</span>
-                    <span class="text">Menu</span>
-                </label>
-                <ul>
-<li><a href="../../index.html">首页</a></li>
-</ul>
-            </nav>
-        </header>
-        <article class="main">
-            <header class="title">
-                <h1>Sass @use vs @import</h1>
-                
-                
-                    <p class="author">作者：oasis</p>
-                
-                <hr>
-            </header>
-            <h2>@import</h2>
-<p>Sass 扩展了 CSS 的 @import 规则，能够导入 Sass样式表和 CSS样式表，提供对 mixins，functions,variables 的访问，并将多个样式表的 CSS 合并。</p>
-<p>CSS @import 指令在每次调用时，都会创建一个额外的 HTTP 请求，但 Sass @import 指令将文件包含在 CSS 中，不需要额外的 HTTP 请求。因为 Sass 的导入在编译阶段处理。</p>
-<p>Sass @import 指令语法：
-<div class="highlight"><pre><span></span><code><span class="k">@import</span><span class="w"> </span><span class="n">filename</span><span class="p">;</span>
-<span class="k">@import</span><span class="w"> </span><span class="n">filename</span><span class="o">,</span><span class="w"> </span><span class="n">filename</span><span class="p">;</span>
-</code></pre></div></p>
-<h2>工作过程说明</h2>
-<ol>
-<li>当 Sass 导入一个文件时，文件的内容将会被放到 @import 出现的位置。导入文件以及 @import 之前定义的任何 mixin，function，variable 都是可用的</li>
-<li>如果同一个样式表被多次导入，它会被计算相应的次数。如果被导入文件中只定义函数和 mixin，则没什么问题，因为 function、mixin、varibale会被插入到实际使用的位置。但是具体的样式规则会被多次插入。
-<div class="highlight"><pre><span></span><code><span class="c1">// index.scss</span>
-<span class="k">@import</span><span class="w"> </span><span class="s2">&quot;variables&quot;</span>
-<span class="o">@</span><span class="n">import</span><span class="w"> </span><span class="s2">&quot;border&quot;</span>
-<span class="o">@</span><span class="n">import</span><span class="w"> </span><span class="s2">&quot;background&quot;</span>
-
-<span class="c1">// _variables.scss</span>
-<span class="nv">$color</span><span class="o">:</span><span class="w"> </span><span class="ni">red</span><span class="p">;</span>
-<span class="nc">.square</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">width</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
-<span class="w">  </span><span class="nt">height</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
-<span class="w">  </span><span class="nt">background-color</span><span class="nd">:</span><span class="w"> </span><span class="err">$</span><span class="nt">color</span><span class="o">;</span>
-<span class="p">}</span>
-<span class="c1">// border.scss</span>
-<span class="k">@import</span><span class="w"> </span><span class="s1">&#39;variables&#39;</span><span class="p">;</span>
-<span class="nc">.border</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">border</span><span class="nd">:</span><span class="w"> </span><span class="nt">1px</span><span class="w"> </span><span class="nt">solid</span><span class="w"> </span><span class="err">$</span><span class="nt">color</span><span class="o">;</span>
-<span class="p">}</span>
-<span class="c1">// background.scss</span>
-<span class="nc">.background</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">background</span><span class="nd">:</span><span class="w"> </span><span class="err">$</span><span class="nt">color</span><span class="o">;</span>
-<span class="p">}</span>
-<span class="k">@import</span><span class="w"> </span><span class="s1">&#39;variables&#39;</span><span class="p">;</span>
-<span class="c1">// output.scss</span>
-<span class="nc">.square</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">width</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
-<span class="w">  </span><span class="nt">height</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
-<span class="w">  </span><span class="nt">background-color</span><span class="nd">:</span><span class="w"> </span><span class="nt">red</span><span class="o">;</span>
-<span class="p">}</span>
-
-<span class="nc">.square</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">width</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
-<span class="w">  </span><span class="nt">height</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
-<span class="w">  </span><span class="nt">background-color</span><span class="nd">:</span><span class="w"> </span><span class="nt">red</span><span class="o">;</span>
-<span class="p">}</span>
-
-<span class="nc">.border</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">border</span><span class="nd">:</span><span class="w"> </span><span class="nt">1px</span><span class="w"> </span><span class="nt">solid</span><span class="w"> </span><span class="nt">red</span><span class="o">;</span>
-<span class="p">}</span>
-
-<span class="nc">.background</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">background</span><span class="nd">:</span><span class="w"> </span><span class="nt">red</span><span class="o">;</span>
-<span class="p">}</span>
-
-<span class="nc">.square</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">width</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
-<span class="w">  </span><span class="nt">height</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
-<span class="w">  </span><span class="nt">background-color</span><span class="nd">:</span><span class="w"> </span><span class="nt">red</span><span class="o">;</span>
-<span class="p">}</span>
-</code></pre></div></li>
-<li>Sass 查找文件通过 URL 的方式工作，而不是通过文件路径的方式，这样可以兼容 windows 系统。文件后缀名也不是必须。</li>
-<li>以 <code>_</code> 开头的 Sass 文件本身不会被编译，而是单纯的作为被导入的文件，这些文件是片段文件，再导入片段文件时可以省略<code>_</code>
-<div class="highlight"><pre><span></span><code><span class="c1">// index.scss</span>
-<span class="k">@import</span><span class="w"> </span><span class="s2">&quot;variables&quot;</span>
-<span class="o">@</span><span class="n">import</span><span class="w"> </span><span class="s2">&quot;border&quot;</span>
-<span class="o">@</span><span class="n">import</span><span class="w"> </span><span class="s2">&quot;background&quot;</span>
-
-<span class="c1">// _variables.scss</span>
-<span class="nv">$color</span><span class="o">:</span><span class="w"> </span><span class="ni">red</span><span class="p">;</span>
-<span class="nc">.square</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">width</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
-<span class="w">  </span><span class="nt">height</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
-<span class="p">}</span>
-
-<span class="c1">// border.scss</span>
-<span class="nc">.border</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">border</span><span class="nd">:</span><span class="w"> </span><span class="nt">1px</span><span class="w"> </span><span class="nt">solid</span><span class="w"> </span><span class="err">$</span><span class="nt">color</span><span class="o">;</span>
-<span class="p">}</span>
-
-<span class="c1">// background</span>
-<span class="nc">.background</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">background</span><span class="nd">:</span><span class="w"> </span><span class="err">$</span><span class="nt">color</span><span class="o">;</span>
-<span class="p">}</span>
-
-<span class="c1">// output.css</span>
-<span class="nc">.border</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">border</span><span class="nd">:</span><span class="w"> </span><span class="nt">1px</span><span class="w"> </span><span class="nt">solid</span><span class="w"> </span><span class="nt">red</span><span class="o">;</span>
-<span class="p">}</span>
-
-<span class="nc">.background</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">background</span><span class="nd">:</span><span class="w"> </span><span class="nt">red</span><span class="o">;</span>
-<span class="p">}</span>
-</code></pre></div></li>
-<li>@import 导入的变量可以全局使用
-<div class="highlight"><pre><span></span><code><span class="c1">// index.scss</span>
-<span class="k">@import</span><span class="w"> </span><span class="s2">&quot;variables&quot;</span>
-<span class="o">@</span><span class="n">import</span><span class="w"> </span><span class="s2">&quot;border&quot;</span>
-<span class="o">@</span><span class="n">import</span><span class="w"> </span><span class="s2">&quot;background&quot;</span>
-
-<span class="c1">// variables.scss</span>
-<span class="nv">$color</span><span class="o">:</span><span class="w"> </span><span class="ni">red</span><span class="p">;</span>
-
-<span class="c1">// border.scss</span>
-<span class="nc">.border</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">border</span><span class="nd">:</span><span class="w"> </span><span class="nt">1px</span><span class="w"> </span><span class="nt">solid</span><span class="w"> </span><span class="err">$</span><span class="nt">color</span><span class="o">;</span>
-<span class="p">}</span>
-
-<span class="c1">// background</span>
-<span class="nc">.background</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">background</span><span class="nd">:</span><span class="w"> </span><span class="err">$</span><span class="nt">color</span><span class="o">;</span>
-<span class="p">}</span>
-
-<span class="c1">// output.css</span>
-<span class="nc">.border</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">border</span><span class="nd">:</span><span class="w"> </span><span class="nt">1px</span><span class="w"> </span><span class="nt">solid</span><span class="w"> </span><span class="nt">red</span><span class="o">;</span>
-<span class="p">}</span>
-
-<span class="nc">.background</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">background</span><span class="nd">:</span><span class="w"> </span><span class="nt">red</span><span class="o">;</span>
-<span class="p">}</span>
-</code></pre></div></li>
-<li>!default 与 import 的配置关系，import 在 !default 之前走的是配置化，import 在 !default 之后走的是覆盖，因为  <code>_variables.scss</code> 中的background-color 是 red。
-<div class="highlight"><pre><span></span><code><span class="c1">//realme.scss</span>
-<span class="nv">$color</span><span class="o">:</span><span class="w"> </span><span class="ni">black</span><span class="p">;</span>
-<span class="c1">// index.scss</span>
-<span class="k">@import</span><span class="w"> </span><span class="s1">&#39;realme&#39;</span><span class="p">;</span>
-<span class="k">@import</span><span class="w"> </span><span class="s1">&#39;variables&#39;</span><span class="p">;</span>
-<span class="k">@import</span><span class="w"> </span><span class="s1">&#39;border&#39;</span><span class="p">;</span>
-<span class="k">@import</span><span class="w"> </span><span class="s1">&#39;background&#39;</span><span class="p">;</span>
-<span class="c1">// _variables.scss</span>
-<span class="nv">$color</span><span class="o">:</span><span class="w"> </span><span class="ni">red</span><span class="w"> </span><span class="nv">!default</span><span class="p">;</span>
-
-<span class="nc">.square</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">width</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
-<span class="w">  </span><span class="nt">height</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
-<span class="w">  </span><span class="nt">background-color</span><span class="nd">:</span><span class="w"> </span><span class="err">$</span><span class="nt">color</span><span class="o">;</span>
-<span class="p">}</span>
-<span class="c1">// border.scss</span>
-<span class="k">@import</span><span class="w"> </span><span class="s1">&#39;variables&#39;</span><span class="p">;</span>
-<span class="nc">.border</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">border</span><span class="nd">:</span><span class="w"> </span><span class="nt">1px</span><span class="w"> </span><span class="nt">solid</span><span class="w"> </span><span class="err">$</span><span class="nt">color</span><span class="o">;</span>
-<span class="p">}</span>
-<span class="c1">// background.scss</span>
-<span class="nc">.background</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">background</span><span class="nd">:</span><span class="w"> </span><span class="err">$</span><span class="nt">color</span><span class="o">;</span>
-<span class="p">}</span>
-<span class="k">@import</span><span class="w"> </span><span class="s1">&#39;variables&#39;</span><span class="p">;</span>
-<span class="c1">// output.scss</span>
-<span class="nc">.square</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">width</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
-<span class="w">  </span><span class="nt">height</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
-<span class="w">  </span><span class="nt">background-color</span><span class="nd">:</span><span class="w"> </span><span class="nt">black</span><span class="o">;</span>
-<span class="p">}</span>
-
-<span class="nc">.square</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">width</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
-<span class="w">  </span><span class="nt">height</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
-<span class="w">  </span><span class="nt">background-color</span><span class="nd">:</span><span class="w"> </span><span class="nt">black</span><span class="o">;</span>
-<span class="p">}</span>
-
-<span class="nc">.border</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">border</span><span class="nd">:</span><span class="w"> </span><span class="nt">1px</span><span class="w"> </span><span class="nt">solid</span><span class="w"> </span><span class="nt">black</span><span class="o">;</span>
-<span class="p">}</span>
-
-<span class="nc">.background</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">background</span><span class="nd">:</span><span class="w"> </span><span class="nt">black</span><span class="o">;</span>
-<span class="p">}</span>
-
-<span class="nc">.square</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">width</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
-<span class="w">  </span><span class="nt">height</span><span class="nd">:</span><span class="w"> </span><span class="nt">100px</span><span class="o">;</span>
-<span class="w">  </span><span class="nt">background-color</span><span class="nd">:</span><span class="w"> </span><span class="nt">black</span><span class="o">;</span>
-<span class="p">}</span>
-</code></pre></div></li>
-</ol>
-<h2>@use</h2>
-<p>@use 可以从其他 Sass 样式表加载 mixins，functions，variables，将多个样式表合并。通过 @use 加载的样式表被称为“模块”。Sass 同时提供了非常有用的内置模块。</p>
-<h2>工作过程说明</h2>
-<ol>
-<li>@use 规则必须出现在除@forward之外的任何规则之前，包括样式规则。</li>
-<li>可通过 <namespace>.<variable>,<namespace>.<function>(), 或者 @include <namespace>.<mixin>() 访问模块内的成员。</li>
-<li>用@use加载的成员(变量、函数和mixin)只在加载它们的样式表中可见。其他样式表如果也想访问@use规则，则需要编写它们自己的@use规则。这有助于很容易地找出每个成员的确切来源。如果希望一次性从多个文件中加载成员，可以使用@forward规则从一个共享文件中转发所有成员。</li>
-<li>命名空间默认为 url，可通过 as 起别名
-<div class="highlight"><pre><span></span><code><span class="k">@use</span><span class="w"> </span><span class="s2">&quot;src/corners&quot;</span><span class="w"> </span><span class="nt">as</span><span class="w"> </span><span class="nt">c</span><span class="o">;</span>
-<span class="o">@</span><span class="nt">use</span><span class="w"> </span><span class="s2">&quot;src/corners&quot;</span><span class="w"> </span><span class="nt">as</span><span class="w"> </span><span class="o">*;</span>
-</code></pre></div></li>
-<li>使用 <code>-</code> 或 <code>_</code> 指定私有成员
-<div class="highlight"><pre><span></span><code><span class="c1">// src/_corners.scss</span>
-<span class="nv">$-radius</span><span class="o">:</span><span class="w"> </span><span class="mi">3</span><span class="kt">px</span><span class="p">;</span>
-
-<span class="k">@mixin</span><span class="nf"> rounded</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">border-radius</span><span class="nd">:</span><span class="w"> </span><span class="err">$</span><span class="nt">-radius</span><span class="o">;</span>
-<span class="p">}</span>
-<span class="c1">// style.scss</span>
-<span class="k">@use</span><span class="w"> </span><span class="s2">&quot;src/corners&quot;</span><span class="o">;</span>
-
-<span class="nc">.button</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="k">@include</span><span class="nd"> corners</span><span class="o">.</span><span class="n">rounded</span><span class="p">;</span>
-
-<span class="w">  </span><span class="c1">// This is an error! $-radius isn&#39;t visible outside of `_corners.scss`.</span>
-<span class="w">  </span><span class="nt">padding</span><span class="nd">:</span><span class="w"> </span><span class="nt">5px</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nt">corners</span><span class="nc">.</span><span class="err">$</span><span class="nt">-radius</span><span class="o">;</span>
-<span class="p">}</span>
-</code></pre></div></li>
-<li>样式表可以用<code>!default</code>标志定义变量，使其可配置。使用 <code>@use &lt;url&gt; with (&lt;variable&gt;: &lt;value&gt;, &lt;variable&gt;: &lt;value&gt;)</code> 覆盖默认配置
-<div class="highlight"><pre><span></span><code><span class="c1">// _library.scss</span>
-<span class="nv">$black</span><span class="o">:</span><span class="w"> </span><span class="mh">#000</span><span class="w"> </span><span class="nv">!default</span><span class="p">;</span>
-<span class="nv">$border-radius</span><span class="o">:</span><span class="w"> </span><span class="mi">0</span><span class="mf">.25</span><span class="kt">rem</span><span class="w"> </span><span class="nv">!default</span><span class="p">;</span>
-<span class="nv">$box-shadow</span><span class="o">:</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="mi">0</span><span class="mf">.5</span><span class="kt">rem</span><span class="w"> </span><span class="mi">1</span><span class="kt">rem</span><span class="w"> </span><span class="nf">rgba</span><span class="p">(</span><span class="nv">$black</span><span class="o">,</span><span class="w"> </span><span class="mi">0</span><span class="mf">.15</span><span class="p">)</span><span class="w"> </span><span class="nv">!default</span><span class="p">;</span>
-
-<span class="nt">code</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">border-radius</span><span class="nd">:</span><span class="w"> </span><span class="err">$</span><span class="nt">border-radius</span><span class="o">;</span>
-<span class="w">  </span><span class="nt">box-shadow</span><span class="nd">:</span><span class="w"> </span><span class="err">$</span><span class="nt">box-shadow</span><span class="o">;</span>
-<span class="p">}</span>
-
-<span class="c1">// style.scss</span>
-<span class="k">@use</span><span class="w"> </span><span class="s1">&#39;library&#39;</span><span class="w"> </span><span class="nt">with</span><span class="w"> </span><span class="o">(</span>
-<span class="w">  </span><span class="err">$</span><span class="nt">black</span><span class="nd">:</span><span class="w"> </span><span class="nn">#222</span><span class="o">,</span>
-<span class="w">  </span><span class="err">$</span><span class="nt">border-radius</span><span class="nd">:</span><span class="w"> </span><span class="nt">0</span><span class="nc">.1rem</span>
-<span class="o">);</span>
-
-<span class="o">//</span><span class="w"> </span><span class="nt">output</span><span class="nc">.css</span>
-<span class="nt">code</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">border-radius</span><span class="nd">:</span><span class="w"> </span><span class="nt">0</span><span class="nc">.1rem</span><span class="o">;</span>
-<span class="w">  </span><span class="nt">box-shadow</span><span class="nd">:</span><span class="w"> </span><span class="nt">0</span><span class="w"> </span><span class="nt">0</span><span class="nc">.5rem</span><span class="w"> </span><span class="nt">1rem</span><span class="w"> </span><span class="nt">rgba</span><span class="o">(</span><span class="nt">34</span><span class="o">,</span><span class="w"> </span><span class="nt">34</span><span class="o">,</span><span class="w"> </span><span class="nt">34</span><span class="o">,</span><span class="w"> </span><span class="nt">0</span><span class="nc">.15</span><span class="o">);</span>
-<span class="p">}</span>
-</code></pre></div></li>
-<li>更灵活的配置推荐使用 mixin 配置
-<div class="highlight"><pre><span></span><code><span class="c1">// _library.scss</span>
-<span class="nv">$-black</span><span class="o">:</span><span class="w"> </span><span class="mh">#000</span><span class="p">;</span>
-<span class="nv">$-border-radius</span><span class="o">:</span><span class="w"> </span><span class="mi">0</span><span class="mf">.25</span><span class="kt">rem</span><span class="p">;</span>
-<span class="nv">$-box-shadow</span><span class="o">:</span><span class="w"> </span><span class="n">null</span><span class="p">;</span>
-
-<span class="c1">/// If the user has configured `$-box-shadow`, returns their configured value.</span>
-<span class="c1">/// Otherwise returns a value derived from `$-black`.</span>
-<span class="k">@function</span><span class="w"> </span><span class="nt">-box-shadow</span><span class="o">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="k">@return</span><span class="w"> </span><span class="err">$</span><span class="nt">-box-shadow</span><span class="w"> </span><span class="nt">or</span><span class="w"> </span><span class="o">(</span><span class="nt">0</span><span class="w"> </span><span class="nt">0</span><span class="nc">.5rem</span><span class="w"> </span><span class="nt">1rem</span><span class="w"> </span><span class="nt">rgba</span><span class="o">(</span><span class="err">$</span><span class="nt">-black</span><span class="o">,</span><span class="w"> </span><span class="nt">0</span><span class="nc">.15</span><span class="o">));</span>
-<span class="p">}</span>
-
-<span class="k">@mixin</span><span class="nf"> configure</span><span class="p">(</span><span class="nv">$black</span><span class="o">:</span><span class="w"> </span><span class="n">null</span><span class="o">,</span><span class="w"> </span><span class="nv">$border-radius</span><span class="o">:</span><span class="w"> </span><span class="n">null</span><span class="o">,</span><span class="w"> </span><span class="nv">$box-shadow</span><span class="o">:</span><span class="w"> </span><span class="n">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="k">@if</span><span class="w"> </span><span class="nv">$black</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nv">$-black</span><span class="o">:</span><span class="w"> </span><span class="nv">$black</span><span class="w"> </span><span class="nv">!global</span><span class="p">;</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="w">  </span><span class="k">@if</span><span class="w"> </span><span class="nv">$border-radius</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nv">$-border-radius</span><span class="o">:</span><span class="w"> </span><span class="nv">$border-radius</span><span class="w"> </span><span class="nv">!global</span><span class="p">;</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="w">  </span><span class="k">@if</span><span class="w"> </span><span class="nv">$box-shadow</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nv">$-box-shadow</span><span class="o">:</span><span class="w"> </span><span class="nv">$box-shadow</span><span class="w"> </span><span class="nv">!global</span><span class="p">;</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="p">}</span>
-
-<span class="k">@mixin</span><span class="nf"> styles</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">code</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">border-radius</span><span class="nd">:</span><span class="w"> </span><span class="err">$</span><span class="nt">-border-radius</span><span class="o">;</span>
-<span class="w">    </span><span class="nt">box-shadow</span><span class="nd">:</span><span class="w"> </span><span class="nt">-box-shadow</span><span class="o">();</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="p">}</span>
-
-<span class="c1">// style.scss</span>
-<span class="k">@use</span><span class="w"> </span><span class="s1">&#39;library&#39;</span><span class="o">;</span>
-
-<span class="o">@</span><span class="nt">include</span><span class="w"> </span><span class="nt">library</span><span class="nc">.configure</span><span class="o">(</span>
-<span class="w">  </span><span class="err">$</span><span class="nt">black</span><span class="nd">:</span><span class="w"> </span><span class="nn">#222</span><span class="o">,</span>
-<span class="w">  </span><span class="err">$</span><span class="nt">border-radius</span><span class="nd">:</span><span class="w"> </span><span class="nt">0</span><span class="nc">.1rem</span>
-<span class="o">);</span>
-
-<span class="o">@</span><span class="nt">include</span><span class="w"> </span><span class="nt">library</span><span class="nc">.styles</span><span class="o">;</span>
-</code></pre></div></li>
-</ol>
-        </article>
-        
-        <script src="https://giscus.app/client.js"
-                data-repo="oasis-cloud/blog-comments"
-                data-repo-id="R_kgDOKEliHA"
-                data-category="General"
-                data-category-id="DIC_kwDOKEliHM4CYb6e"
-                data-mapping="pathname"
-                data-strict="0"
-                data-reactions-enabled="1"
-                data-emit-metadata="0"
-                data-input-position="bottom"
-                data-theme="preferred_color_scheme"
-                data-lang="zh-CN"
-                crossorigin="anonymous"
-                async>
-        </script>
-    </body>
+<html lang="en-US" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Sass @use vs @import | Oasis's Cloud</title>
+    <meta name="description" content="一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。—— 《一个数学家的辩白》">
+    <meta name="generator" content="VitePress v1.6.4">
+    <link rel="preload stylesheet" href="/assets/style.BubUdk9b.css" as="style">
+    <link rel="preload stylesheet" href="/vp-icons.css" as="style">
+    
+    <script type="module" src="/assets/app.BuMT4ivz.js"></script>
+    <link rel="modulepreload" href="/assets/chunks/theme.HZhl2uCL.js">
+    <link rel="modulepreload" href="/assets/chunks/framework.86O3EbG5.js">
+    <link rel="modulepreload" href="/assets/articles_frontend_1.md.B3Ok2hY9.lean.js">
+    <script id="check-mac-os">document.documentElement.classList.toggle("mac",/Mac|iPhone|iPod|iPad/i.test(navigator.platform));</script>
+  </head>
+  <body>
+    <div id="app"><div class="graphite-page"><header class="masthead"><h1><a href="/">Oasis&#39;s Cloud</a></h1><p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p><nav class="menu"><input id="menu-check" type="checkbox"><label id="menu-label" for="menu-check" class="unselectable"><span class="icon close-icon">✕</span><span class="icon open-icon">☰</span><span class="text">Menu</span></label><ul><li><a href="/">首页</a></li></ul></nav></header><article class="main"><header class="title"><h1>Sass @use vs @import</h1><!----><p class="author">作者：oasis</p><hr></header><div style="position:relative;"><div><h2 id="import" tabindex="-1">@import</h2><p>Sass 扩展了 CSS 的 @import 规则，能够导入 Sass样式表和 CSS样式表，提供对 mixins，functions,variables 的访问，并将多个样式表的 CSS 合并。</p><p>CSS @import 指令在每次调用时，都会创建一个额外的 HTTP 请求，但 Sass @import 指令将文件包含在 CSS 中，不需要额外的 HTTP 请求。因为 Sass 的导入在编译阶段处理。</p><p>Sass @import 指令语法：</p><div class="language-scss vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">scss</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">@import</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> filename</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">@import</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> filename</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">, </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">filename</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span></code></pre></div><h2 id="工作过程说明" tabindex="-1">工作过程说明</h2><ol><li>当 Sass 导入一个文件时，文件的内容将会被放到 @import 出现的位置。导入文件以及 @import 之前定义的任何 mixin，function，variable 都是可用的</li><li>如果同一个样式表被多次导入，它会被计算相应的次数。如果被导入文件中只定义函数和 mixin，则没什么问题，因为 function、mixin、varibale会被插入到实际使用的位置。但是具体的样式规则会被多次插入。</li></ol><div class="language-scss vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">scss</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// index.scss</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">@import</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &quot;variables&quot;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">@</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">import</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &quot;border&quot;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">@</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">import</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &quot;background&quot;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// _variables.scss</span></span>
+<span class="line"><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$color</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">red</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">.square</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  width</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">100</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">px</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  height</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">100</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">px</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  background-color</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$color</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// border.scss</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">@import</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &#39;variables&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">.border</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  border</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">1</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">px</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> solid</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;"> $color</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// background.scss</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">.background</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  background</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$color</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">@import</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &#39;variables&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// output.scss</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">.square</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  width</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">100</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">px</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  height</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">100</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">px</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  background-color</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">red</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">.square</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  width</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">100</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">px</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  height</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">100</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">px</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  background-color</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">red</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">.border</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  border</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">1</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">px</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> solid</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> red</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">.background</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  background</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">red</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">.square</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  width</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">100</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">px</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  height</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">100</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">px</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  background-color</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">red</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span></code></pre></div><ol start="3"><li>Sass 查找文件通过 URL 的方式工作，而不是通过文件路径的方式，这样可以兼容 windows 系统。文件后缀名也不是必须。</li><li>以 <code>_</code> 开头的 Sass 文件本身不会被编译，而是单纯的作为被导入的文件，这些文件是片段文件，再导入片段文件时可以省略<code>_</code></li></ol><div class="language-scss vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">scss</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// index.scss</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">@import</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &quot;variables&quot;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">@</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">import</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &quot;border&quot;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">@</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">import</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &quot;background&quot;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// _variables.scss</span></span>
+<span class="line"><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$color</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">red</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">.square</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  width</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">100</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">px</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  height</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">100</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">px</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// border.scss</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">.border</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  border</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">1</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">px</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> solid</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;"> $color</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// background</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">.background</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  background</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$color</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// output.css</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">.border</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  border</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">1</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">px</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> solid</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> red</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">.background</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  background</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">red</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span></code></pre></div><ol start="5"><li>@import 导入的变量可以全局使用</li></ol><div class="language-scss vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">scss</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// index.scss</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">@import</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &quot;variables&quot;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">@</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">import</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &quot;border&quot;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">@</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">import</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &quot;background&quot;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// variables.scss</span></span>
+<span class="line"><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$color</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">red</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// border.scss</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">.border</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  border</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">1</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">px</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> solid</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;"> $color</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// background</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">.background</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  background</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$color</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// output.css</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">.border</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  border</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">1</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">px</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> solid</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> red</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">.background</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  background</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">red</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span></code></pre></div><ol start="6"><li>!default 与 import 的配置关系，import 在 !default 之前走的是配置化，import 在 !default 之后走的是覆盖，因为 <code>_variables.scss</code> 中的background-color 是 red。</li></ol><div class="language-scss vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">scss</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">//realme.scss</span></span>
+<span class="line"><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$color</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">black</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// index.scss</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">@import</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &#39;realme&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">@import</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &#39;variables&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">@import</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &#39;border&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">@import</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &#39;background&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// _variables.scss</span></span>
+<span class="line"><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$color</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">red</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> !default</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">.square</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  width</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">100</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">px</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  height</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">100</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">px</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  background-color</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$color</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// border.scss</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">@import</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &#39;variables&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">.border</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  border</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">1</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">px</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> solid</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;"> $color</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// background.scss</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">.background</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  background</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$color</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">@import</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &#39;variables&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// output.scss</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">.square</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  width</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">100</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">px</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  height</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">100</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">px</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  background-color</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">black</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">.square</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  width</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">100</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">px</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  height</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">100</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">px</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  background-color</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">black</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">.border</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  border</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">1</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">px</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> solid</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> black</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">.background</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  background</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">black</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">.square</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  width</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">100</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">px</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  height</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">100</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">px</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  background-color</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">black</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span></code></pre></div><h2 id="use" tabindex="-1">@use</h2><p>@use 可以从其他 Sass 样式表加载 mixins，functions，variables，将多个样式表合并。通过 @use 加载的样式表被称为“模块”。Sass 同时提供了非常有用的内置模块。</p><h2 id="工作过程说明-1" tabindex="-1">工作过程说明</h2><ol><li>@use 规则必须出现在除@forward之外的任何规则之前，包括样式规则。</li><li>可通过 &lt;namespace&gt;.&lt;variable&gt;,&lt;namespace&gt;.&lt;function&gt;(), 或者 @include &lt;namespace&gt;.&lt;mixin&gt;() 访问模块内的成员。</li><li>用@use加载的成员(变量、函数和mixin)只在加载它们的样式表中可见。其他样式表如果也想访问@use规则，则需要编写它们自己的@use规则。这有助于很容易地找出每个成员的确切来源。如果希望一次性从多个文件中加载成员，可以使用@forward规则从一个共享文件中转发所有成员。</li><li>命名空间默认为 url，可通过 as 起别名</li></ol><div class="language-scss vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">scss</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">@use</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &quot;src/corners&quot;</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> as</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;"> c</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">@use</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &quot;src/corners&quot;</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> as</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> *</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span></code></pre></div><ol start="5"><li>使用 <code>-</code> 或 <code>_</code> 指定私有成员</li></ol><div class="language-scss vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">scss</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// src/_corners.scss</span></span>
+<span class="line"><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$-radius</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">3</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">px</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">@mixin</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> rounded</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  border-radius</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$-radius</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// style.scss</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">@use</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &quot;src/corners&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">.button</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  @include</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;"> corners</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">rounded</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">  // This is an error! $-radius isn&#39;t visible outside of `_corners.scss`.</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  padding</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">5</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">px</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> +</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;"> corners</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$-radius</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span></code></pre></div><ol start="6"><li>样式表可以用<code>!default</code>标志定义变量，使其可配置。使用 <code>@use &lt;url&gt; with (&lt;variable&gt;: &lt;value&gt;, &lt;variable&gt;: &lt;value&gt;)</code> 覆盖默认配置</li></ol><div class="language-scss vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">scss</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// _library.scss</span></span>
+<span class="line"><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$black</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">#000</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> !default</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$border-radius</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">0.25</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">rem</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> !default</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$box-shadow</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">0</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 0.5</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">rem</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 1</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">rem</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> rgba</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$black</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">, </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">0.15</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">!default</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#22863A;">code</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  border-radius</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$border-radius</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  box-shadow</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$box-shadow</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// style.scss</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">@use</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &#39;library&#39;</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> with</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span></span>
+<span class="line"><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">  $black</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">#222</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">,</span></span>
+<span class="line"><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">  $border-radius</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">0.1</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">rem</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// output.css</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#22863A;">code</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  border-radius</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">0.1</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">rem</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  box-shadow</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">0</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 0.5</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">rem</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 1</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">rem</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> rgba</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">34</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">, </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">34</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">, </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">34</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">, </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">0.15</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span></code></pre></div><ol start="7"><li>更灵活的配置推荐使用 mixin 配置</li></ol><div class="language-scss vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">scss</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// _library.scss</span></span>
+<span class="line"><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$-black</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">#000</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$-border-radius</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">0.25</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">rem</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$-box-shadow</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: null;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">/// If the user has configured `$-box-shadow`, returns their configured value.</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">/// Otherwise returns a value derived from `$-black`.</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">@function</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> -box-shadow</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">() {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  @return</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;"> $-box-shadow</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> or (</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">0</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 0.5</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">rem</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 1</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">rem</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> rgba</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$-black</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">, </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">0.15</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">));</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">@mixin</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> configure</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$black</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: null, </span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$border-radius</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: null, </span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$box-shadow</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: null) {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  @if</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;"> $black</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">    $-black</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$black</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> !global;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  }</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  @if</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;"> $border-radius</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">    $-border-radius</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$border-radius</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> !global;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  }</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  @if</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;"> $box-shadow</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">    $-box-shadow</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$box-shadow</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> !global;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">@mixin</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> styles</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#22863A;">  code</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">    border-radius</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">$-border-radius</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">    box-shadow</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">-box-shadow</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// style.scss</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">@use</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &#39;library&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">@include</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;"> library</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">configure</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span></span>
+<span class="line"><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">  $black</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">#222</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">,</span></span>
+<span class="line"><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">  $border-radius</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">0.1</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">rem</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">@include</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;"> library</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">styles</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span></code></pre></div></div></div></article><div id="giscus-host"></div></div></div>
+    <script>window.__VP_HASH_MAP__=JSON.parse("{\"articles_1.md\":\"BcbiCNen\",\"articles_2.md\":\"BOs6JrAg\",\"articles_3.md\":\"CyolPGRT\",\"articles_4.md\":\"CQKiIuaw\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_0.md\":\"Doxdb5Ij\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_1.md\":\"wjOL1phh\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_10.md\":\"LyZJnSxs\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_11.md\":\"C2FmrDp9\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_12.md\":\"BEHmrOu0\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_13.md\":\"DiD-bHGf\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_14.md\":\"BBmdeYZf\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_15.md\":\"f2O62Iuk\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_16.md\":\"BKGADZ4j\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_17.md\":\"C5m88eYa\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_18.md\":\"DFfKG_xT\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_19.md\":\"C58qgz4I\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_2.md\":\"BfG3umGO\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_20.md\":\"royf5I3T\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_21.md\":\"CmoEuQRQ\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_22.md\":\"5Bz1s6MM\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_23.md\":\"CZho3lv8\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_24.md\":\"BPs4s-6q\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_25.md\":\"DhIkQ8QI\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_26.md\":\"DQrDDSmD\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_3.md\":\"XzEbegi1\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_4.md\":\"Blv6FVHR\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_5.md\":\"C-qPQeyL\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_6.md\":\"6Y-BWQfb\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_7.md\":\"CAzQfyMt\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_8.md\":\"CsjQZCCO\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_9.md\":\"BASgbQl4\",\"articles_artificial-intelligence_books_ai-modern-approach_1.md\":\"DDDLmf54\",\"articles_artificial-intelligence_books_ai-modern-approach_10.md\":\"DhmTh9g1\",\"articles_artificial-intelligence_books_ai-modern-approach_11.md\":\"CX8Rq9wV\",\"articles_artificial-intelligence_books_ai-modern-approach_12.md\":\"fnPMZxKE\",\"articles_artificial-intelligence_books_ai-modern-approach_13.md\":\"DelyBh0u\",\"articles_artificial-intelligence_books_ai-modern-approach_14.md\":\"CEVzmm13\",\"articles_artificial-intelligence_books_ai-modern-approach_15.md\":\"BYaoy4oU\",\"articles_artificial-intelligence_books_ai-modern-approach_16.md\":\"CJBur2Mw\",\"articles_artificial-intelligence_books_ai-modern-approach_17.md\":\"Q8pYMbdg\",\"articles_artificial-intelligence_books_ai-modern-approach_18.md\":\"BEtfJPVK\",\"articles_artificial-intelligence_books_ai-modern-approach_19.md\":\"DWkWsT-C\",\"articles_artificial-intelligence_books_ai-modern-approach_2.md\":\"Ck1Z-mEe\",\"articles_artificial-intelligence_books_ai-modern-approach_20.md\":\"CbcsJXY_\",\"articles_artificial-intelligence_books_ai-modern-approach_21.md\":\"DOHxMpLE\",\"articles_artificial-intelligence_books_ai-modern-approach_22.md\":\"BrmXqyYy\",\"articles_artificial-intelligence_books_ai-modern-approach_23.md\":\"ufr3NqX2\",\"articles_artificial-intelligence_books_ai-modern-approach_24.md\":\"CfKi8b69\",\"articles_artificial-intelligence_books_ai-modern-approach_25.md\":\"D3FZV2ha\",\"articles_artificial-intelligence_books_ai-modern-approach_26.md\":\"C9NvT34X\",\"articles_artificial-intelligence_books_ai-modern-approach_3.md\":\"5B16Mude\",\"articles_artificial-intelligence_books_ai-modern-approach_4.md\":\"CFTsLVCQ\",\"articles_artificial-intelligence_books_ai-modern-approach_5.md\":\"B6w77Qe3\",\"articles_artificial-intelligence_books_ai-modern-approach_6.md\":\"DOwdgivt\",\"articles_artificial-intelligence_books_ai-modern-approach_7.md\":\"BKl-9NUI\",\"articles_artificial-intelligence_books_ai-modern-approach_8.md\":\"Ca5nK7HY\",\"articles_artificial-intelligence_books_ai-modern-approach_9.md\":\"bjCn9mRw\",\"articles_artificial-intelligence_books_build-a-llm_1.md\":\"Cn53qMLE\",\"articles_artificial-intelligence_books_build-a-llm_2-1.md\":\"BEGkEHbf\",\"articles_artificial-intelligence_books_build-a-llm_2.md\":\"B9f-kfwa\",\"articles_artificial-intelligence_books_build-a-llm_3.md\":\"BgPDZZNE\",\"articles_artificial-intelligence_books_build-a-llm_4.md\":\"BGvCF-sm\",\"articles_artificial-intelligence_books_build-a-llm_5.md\":\"D6qs6PuA\",\"articles_artificial-intelligence_books_build-a-llm_6.md\":\"Ohih56sP\",\"articles_artificial-intelligence_books_build-a-llm_7.md\":\"HTDAcsNc\",\"articles_artificial-intelligence_books_essential-math-for-ai_1-1.md\":\"j-08bog-\",\"articles_artificial-intelligence_books_essential-math-for-ai_1.md\":\"CyeVwxe6\",\"articles_artificial-intelligence_books_essential-math-for-ai_2.md\":\"DLf3lmAl\",\"articles_artificial-intelligence_books_mathematics-for-ml-in-plain-words_11.md\":\"deaEf6CH\",\"articles_artificial-intelligence_books_shitangjijianrengongzhinengke_1.md\":\"Dspbam5X\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_1.md\":\"CsHrSBOo\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_2.md\":\"Ch4VnrDN\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_3.md\":\"DOx3ENDu\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_4.md\":\"BwTW514D\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_5.md\":\"CMT0adxO\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_6.md\":\"Da5Lo1qJ\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_7.md\":\"IVT6-nY0\",\"articles_artificial-intelligence_mcp_1.md\":\"BSwKgK20\",\"articles_artificial-intelligence_mcp_2.md\":\"BqYmOfWE\",\"articles_artificial-intelligence_mcp_3.md\":\"CRqerqdh\",\"articles_artificial-intelligence_mcp_4.md\":\"DlZf-ZBs\",\"articles_artificial-intelligence_network-source_1.md\":\"7tN07cqO\",\"articles_artificial-intelligence_python_1.md\":\"DEs7NHra\",\"articles_artificial-intelligence_research_1.md\":\"BRYxkx9w\",\"articles_artificial-intelligence_research_2.md\":\"D1S9y95L\",\"articles_artificial-intelligence_research_3.md\":\"CDPKFpDS\",\"articles_artificial-intelligence_research_4.md\":\"gcdEnQ27\",\"articles_artificial-intelligence_research_5.md\":\"BWuimyaG\",\"articles_artificial-intelligence_research_6.md\":\"ChDVsr6P\",\"articles_artificial-intelligence_skills_1.md\":\"CE_3tidO\",\"articles_artificial-intelligence_skills_2.md\":\"Dw-LqypE\",\"articles_artificial-intelligence_vibe-coding_1.md\":\"CIaQQuRU\",\"articles_artificial-intelligence_vibe-coding_2.md\":\"BYp_N-la\",\"articles_books_0-10000_1.md\":\"CqfzqHFB\",\"articles_books_burn-the-boats_1.md\":\"DQW5Dj64\",\"articles_books_dontmakemethink_1.md\":\"FcQgzyiC\",\"articles_books_gaoxiaonengrenshideqigexiguan_1.md\":\"Di8W2D55\",\"articles_books_head-start_1.md\":\"DSEU1Nd4\",\"articles_books_honghuanghouxiaoying_1.md\":\"DsEwgoHE\",\"articles_books_how-program-works_1.md\":\"In6CRTPC\",\"articles_books_how-program-works_2.md\":\"C__yRHZZ\",\"articles_books_kebiansikao_1.md\":\"ZpZj4VBL\",\"articles_books_lixingdebianjie_1.md\":\"C2i5IU4p\",\"articles_books_match_1.md\":\"DQuyyF-w\",\"articles_books_next-age-of-uncertainty_1.md\":\"B3kXpIOT\",\"articles_books_piancha_1.md\":\"DUp5o2L7\",\"articles_books_programingwithtypes_1.md\":\"DPf6sVtD\",\"articles_books_ruhexuexi_1.md\":\"BiBkTqFk\",\"articles_books_ruozhedewuqi_1.md\":\"CJI0TUtU\",\"articles_books_shendugongzuo_1.md\":\"BAdThtq3\",\"articles_books_shishituichu_1.md\":\"DSMpw3Mj\",\"articles_books_siweideqiutu_1.md\":\"D9N51GZd\",\"articles_books_xingweichuanranxiaoying_1.md\":\"D8YfH3E9\",\"articles_books_yingxianglidebadazhangai_1.md\":\"BkSkh0ib\",\"articles_books_zenyanglongluorenxin_1.md\":\"DyaoIWo4\",\"articles_books_zhegezhexuejiajiulewo_1.md\":\"EBCGPBD1\",\"articles_daily-thoughts_1.md\":\"rLmpFK7a\",\"articles_frontend_1.md\":\"B3Ok2hY9\",\"articles_frontend_10.md\":\"uK6wPfMr\",\"articles_frontend_11.md\":\"B8q93MGs\",\"articles_frontend_12.md\":\"D2lc-Jbc\",\"articles_frontend_13.md\":\"D5nGGZ29\",\"articles_frontend_14.md\":\"67MvYpiC\",\"articles_frontend_15.md\":\"Bonqr1JH\",\"articles_frontend_16.md\":\"BIcIqlrh\",\"articles_frontend_17.md\":\"DT2OnR9t\",\"articles_frontend_18.md\":\"C2UgM1rp\",\"articles_frontend_19.md\":\"Cm_l10Pp\",\"articles_frontend_2.md\":\"BH6obgzX\",\"articles_frontend_20.md\":\"DYOd_Ygi\",\"articles_frontend_21.md\":\"BGvMohX8\",\"articles_frontend_22.md\":\"C9-4PiZs\",\"articles_frontend_23.md\":\"LFQ7EJby\",\"articles_frontend_24.md\":\"CxV3Qmff\",\"articles_frontend_25.md\":\"KDaPWGvE\",\"articles_frontend_3.md\":\"Ocf5SV2e\",\"articles_frontend_4.md\":\"8oQMBnVM\",\"articles_frontend_6.md\":\"DLjPQ4H2\",\"articles_frontend_7.md\":\"C3_rdklM\",\"articles_frontend_8.md\":\"DmoQqnzq\",\"articles_frontend_9.md\":\"BIp4wdMq\",\"articles_frontend_fluent-react_1.md\":\"BsLnBF9_\",\"articles_frontend_immerjs_1.md\":\"cAKCGuJw\",\"articles_frontend_immerjs_2.md\":\"DhP_sCjK\",\"articles_frontend_micro-frontends_1.md\":\"CTPkX7P4\",\"articles_frontend_micro-frontends_2.md\":\"BhiyXnsA\",\"articles_frontend_next-intl_1.md\":\"CHLJLMhT\",\"articles_frontend_nextjs_1.md\":\"FcBi0n4F\",\"articles_frontend_nextjs_2.md\":\"IMXOyUyo\",\"articles_frontend_nextjs_3.md\":\"sMqC4VLv\",\"articles_frontend_nextjs_4.md\":\"YErQgQac\",\"articles_frontend_nextjs_5.md\":\"BSvkBEDC\",\"articles_frontend_nextjs_6.md\":\"C3vMZWNU\",\"articles_frontend_programming-with-types_1.md\":\"BZDTAiUn\",\"articles_frontend_programming-with-types_2.md\":\"DvF69qyh\",\"articles_frontend_programming-with-types_3.md\":\"D5ySUS2k\",\"articles_frontend_programming-with-types_4-1.md\":\"DgmuJ2FE\",\"articles_frontend_programming-with-types_4.md\":\"DCyvJyTt\",\"articles_frontend_programming-with-types_5.md\":\"D5s4hW6n\",\"articles_frontend_programming-with-types_6.md\":\"0TkUZXWK\",\"articles_frontend_programming-with-types_7.md\":\"ChvDQygU\",\"articles_frontend_react-hooks_1.md\":\"Da9rnukC\",\"articles_frontend_react_1-1.md\":\"DTtIXyO7\",\"articles_frontend_react_1.md\":\"B5UJRAnh\",\"articles_frontend_react_2-1.md\":\"BbIbpqlZ\",\"articles_frontend_react_2.md\":\"CFuzM5My\",\"articles_frontend_react_3-1.md\":\"CB6esavT\",\"articles_frontend_react_3-2.md\":\"Ddn-EfA3\",\"articles_frontend_react_3.md\":\"COI_9hCd\",\"articles_frontend_react_4.md\":\"DmDsL2Q0\",\"articles_frontend_zustand_1-1.md\":\"Bq6-0ZBv\",\"articles_frontend_zustand_1.md\":\"CXYFgHGX\",\"articles_github_1.md\":\"CAskap8A\",\"articles_github_2.md\":\"BV3nkWQp\",\"articles_github_3.md\":\"CMzJSJkE\",\"articles_github_4.md\":\"DJP9VajY\",\"articles_github_5.md\":\"Bn3oSnIk\",\"articles_javascript_1.md\":\"3nNbgAfV\",\"articles_javascript_2.md\":\"CjZc98RL\",\"articles_javascript_3.md\":\"CL42n_iU\",\"articles_learn-js-design-pattern_1.md\":\"CZTgpT5Z\",\"articles_morden-browser_1.md\":\"CFKiS64y\",\"articles_morden-browser_2.md\":\"BXaAupn0\",\"articles_network_1.md\":\"C0I3csFQ\",\"articles_network_2.md\":\"DDLuT2tq\",\"articles_network_3.md\":\"CWo0kz2B\",\"articles_nodejs_1.md\":\"Db65q0P1\",\"articles_nodejs_2.md\":\"CQAqiGBk\",\"articles_nodejs_3.md\":\"4FAcAo6A\",\"articles_philosophy-of-software-design_1.md\":\"B9EW4TRr\",\"articles_philosophy-of-software-design_2.md\":\"Lhpe0bAQ\",\"articles_philosophy-of-software-design_3.md\":\"CJxtSZDL\",\"articles_plan_1.md\":\"uSPmD0KW\",\"articles_plan_动手学大模型智能体.md\":\"BSQ4xbeQ\",\"articles_plan_动手学强化学习.md\":\"Bvnyy0ei\",\"articles_plan_动手学机器学习.md\":\"BJQt5tTu\",\"articles_plan_动手学深度学习.md\":\"BXMo25LP\",\"articles_plan_动手学自然语言处理.md\":\"BeVLNyzS\",\"articles_read_1.md\":\"DNGJ03Om\",\"articles_self_1.md\":\"zoUg7f4K\",\"articles_self_2.md\":\"BfDDBfsY\",\"articles_self_3.md\":\"fP1FAGSq\",\"articles_self_4.md\":\"B9_3N0SV\",\"articles_self_5.md\":\"BwBA7c2t\",\"articles_self_6.md\":\"BBHEUU_t\",\"articles_self_7.md\":\"DWHrJTvQ\",\"articles_self_8.md\":\"CqKpQtPR\",\"articles_self_9.md\":\"45INF02j\",\"articles_sicp_1.md\":\"BO4gTEQ3\",\"articles_sicp_2.md\":\"DG_VPyb9\",\"articles_software-design_1.md\":\"BKCWLXN0\",\"articles_software-design_2.md\":\"fRR0rO3E\",\"articles_software-design_3.md\":\"DgNX2j82\",\"articles_software-design_4.md\":\"7DoTTce3\",\"articles_software-design_5.md\":\"BcfmIT7R\",\"articles_software-design_6.md\":\"CNGJwx2j\",\"articles_typescript_1.md\":\"B_Q8hMP7\",\"articles_work_project-log-and-summary.md\":\"B5joyKE6\",\"index.md\":\"ofGALGuw\"}");window.__VP_SITE_DATA__=JSON.parse("{\"lang\":\"en-US\",\"dir\":\"ltr\",\"title\":\"Oasis's Cloud\",\"description\":\"一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。—— 《一个数学家的辩白》\",\"base\":\"/\",\"head\":[],\"router\":{\"prefetchLinks\":true},\"appearance\":false,\"themeConfig\":{},\"locales\":{},\"scrollOffset\":134,\"cleanUrls\":false}");</script>
+    
+  </body>
 </html>

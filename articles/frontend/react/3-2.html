@@ -1,536 +1,396 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Untitled</title>
-        <link rel="stylesheet" href="../../../assets/fonts.css">
-        <link rel="stylesheet" href="../../../assets/graphite.css">
-        <link rel="stylesheet" href="../../../assets/pygments.css">
-        <script src="../../../assets/image-zoom.js" defer></script>
-        
-        
-    </head>
-    <body class="node-articles-frontend-react-3-2 node-articles-frontend-react node-articles-frontend node-articles node">
-        <header class="masthead">
-            <h1><a href="../../../index.html">Oasis's Cloud</a></h1>
-            
-                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
-            
-            
-            <nav class="menu">
-                <input id="menu-check" type="checkbox"/>
-                <label id="menu-label" for="menu-check" class="unselectable">
-                    <span class="icon close-icon">✕</span>
-                    <span class="icon open-icon">☰</span>
-                    <span class="text">Menu</span>
-                </label>
-                <ul>
-<li><a href="../../../index.html">首页</a></li>
-</ul>
-            </nav>
-        </header>
-        <article class="main">
-            <header class="title">
-                <h1>Untitled</h1>
-                
-                
-                    <p class="author">作者：oasis</p>
-                
-                <hr>
-            </header>
-            <h1>React Scheduler 执行入口和执行流程详解</h1>
-<h2>一、执行入口</h2>
-<h3>1.1 主要入口函数</h3>
-<p>React Scheduler 的核心入口函数是 <strong><code>unstable_scheduleCallback</code></strong>，这是外部（主要是 React Reconciler）调度任务的主要接口。</p>
-<p>```327:416:packages/scheduler/src/forks/Scheduler.js
-function unstable_scheduleCallback(
-  priorityLevel: PriorityLevel,
-  callback: Callback,
-  options?: {delay: number},
-): Task {
-  var currentTime = getCurrentTime();</p>
-<p>var startTime;
-  if (typeof options === &lsquo;object&rsquo; &amp;&amp; options !== null) {
-    var delay = options.delay;
-    if (typeof delay === &lsquo;number&rsquo; &amp;&amp; delay &gt; 0) {
-      startTime = currentTime + delay;
-    } else {
-      startTime = currentTime;
-    }
-  } else {
-    startTime = currentTime;
-  }</p>
-<p>var timeout;
-  switch (priorityLevel) {
-    case ImmediatePriority:
-      // Times out immediately
-      timeout = -1;
-      break;
-    case UserBlockingPriority:
-      // Eventually times out
-      timeout = userBlockingPriorityTimeout;
-      break;
-    case IdlePriority:
-      // Never times out
-      timeout = maxSigned31BitInt;
-      break;
-    case LowPriority:
-      // Eventually times out
-      timeout = lowPriorityTimeout;
-      break;
-    case NormalPriority:
-    default:
-      // Eventually times out
-      timeout = normalPriorityTimeout;
-      break;
-  }</p>
-<p>var expirationTime = startTime + timeout;</p>
-<p>var newTask: Task = {
-    id: taskIdCounter++,
-    callback,
-    priorityLevel,
-    startTime,
-    expirationTime,
-    sortIndex: -1,
-  };
-  if (enableProfiling) {
-    newTask.isQueued = false;
-  }</p>
-<p>if (startTime &gt; currentTime) {
-    // This is a delayed task.
-    newTask.sortIndex = startTime;
-    push(timerQueue, newTask);
-    if (peek(taskQueue) === null &amp;&amp; newTask === peek(timerQueue)) {
-      // All tasks are delayed, and this is the task with the earliest delay.
-      if (isHostTimeoutScheduled) {
-        // Cancel an existing timeout.
-        cancelHostTimeout();
-      } else {
-        isHostTimeoutScheduled = true;
-      }
-      // Schedule a timeout.
-      requestHostTimeout(handleTimeout, startTime - currentTime);
-    }
-  } else {
-    newTask.sortIndex = expirationTime;
-    push(taskQueue, newTask);
-    if (enableProfiling) {
-      markTaskStart(newTask, currentTime);
-      newTask.isQueued = true;
-    }
-    // Schedule a host callback, if needed. If we&rsquo;re already performing work,
-    // wait until the next time we yield.
-    if (!isHostCallbackScheduled &amp;&amp; !isPerformingWork) {
-      isHostCallbackScheduled = true;
-      requestHostCallback();
-    }
-  }</p>
-<p>return newTask;
-}
-<div class="highlight"><pre><span></span><code>### 1.2 调用链入口
-
-从 React Reconciler 的调用链：
-</code></pre></div>
-React Reconciler (ReactFiberRootScheduler.js)
-  ↓
-scheduleCallback() 
-  ↓
-Scheduler.unstable_scheduleCallback()
-  ↓
-unstable_scheduleCallback() [Scheduler.js]
-<div class="highlight"><pre><span></span><code>## 二、完整执行流程
-
-### 2.1 流程图
-</code></pre></div>
-┌─────────────────────────────────────────────────────────────┐
-│  1. React Reconciler 调用 scheduleCallback()                │
-│     - 传入优先级和回调函数                                   │
-└────────────────────┬────────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────────┐
-│  2. unstable_scheduleCallback()                            │
-│     - 创建 Task 对象                                        │
-│     - 计算 expirationTime（过期时间）                       │
-│     - 根据 startTime 决定放入哪个队列：                      │
-│       • startTime &gt; currentTime → timerQueue（延迟任务）    │
-│       • startTime &lt;= currentTime → taskQueue（立即任务）   │
-└────────────────────┬────────────────────────────────────────┘
-                     │
-         ┌───────────┴───────────┐
-         │                       │
-         ▼                       ▼
-┌──────────────────┐   ┌──────────────────────┐
-│ 延迟任务          │   │ 立即任务              │
-│ timerQueue       │   │ taskQueue            │
-│                  │   │                      │
-│ requestHostTimeout│   │ requestHostCallback()│
-│ (handleTimeout)  │   │                      │
-└────────┬─────────┘   └──────────┬───────────┘
-         │                        │
-         │                        │
-         └───────────┬────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────────┐
-│  3. requestHostCallback()                                  │
-│     - 设置 isMessageLoopRunning = true                     │
-│     - 调用 schedulePerformWorkUntilDeadline()              │
-│       • Node.js: setImmediate()                            │
-│       • 浏览器: MessageChannel.postMessage()              │
-│       • 回退: setTimeout()                                 │
-└────────────────────┬────────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────────┐
-│  4. performWorkUntilDeadline() [异步执行]                   │
-│     - 记录开始时间 startTime                                │
-│     - 调用 flushWork(currentTime)                          │
-└────────────────────┬────────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────────┐
-│  5. flushWork(initialTime)                                 │
-│     - 设置 isPerformingWork = true                         │
-│     - 调用 workLoop(initialTime)                           │
-│     - 清理状态和标记                                        │
-└────────────────────┬────────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────────┐
-│  6. workLoop(currentTime) [核心工作循环]                     │
-│     - advanceTimers(): 将到期的延迟任务移到 taskQueue       │
-│     - 循环处理 taskQueue 中的任务：                        │
-│       ① peek(taskQueue) 获取最高优先级任务                  │
-│       ② 检查是否应该让出控制权 (shouldYieldToHost)         │
-│       ③ 执行任务的 callback                                │
-│       ④ 如果 callback 返回 continuation，继续调度         │
-│       ⑤ 任务完成后从队列移除                               │
-│     - 返回是否有更多工作 (hasMoreWork)                     │
-└────────────────────┬────────────────────────────────────────┘
-                     │
-         ┌───────────┴───────────┐
-         │                       │
-    hasMoreWork=true      hasMoreWork=false
-         │                       │
-         ▼                       ▼
-┌──────────────────┐   ┌──────────────────────┐
-│ 继续调度          │   │ 停止工作循环          │
-│ schedulePerform  │   │ isMessageLoopRunning │
-│ WorkUntilDeadline│   │ = false              │
-└──────────────────┘   └──────────────────────┘
-<div class="highlight"><pre><span></span><code>### 2.2 关键函数详解
-
-#### 2.2.1 `requestHostCallback()` - 请求主机回调
-
-```544:549:packages/scheduler/src/forks/Scheduler.js
-function requestHostCallback() {
-  if (!isMessageLoopRunning) {
-    isMessageLoopRunning = true;
-    schedulePerformWorkUntilDeadline();
-  }
-}
-</code></pre></div></p>
-<p><strong>作用</strong>：启动消息循环，通过平台 API（setImmediate/MessageChannel/setTimeout）异步执行工作。</p>
-<h4>2.2.2 <code>performWorkUntilDeadline()</code> - 执行工作直到截止时间</h4>
-<p>```485:510:packages/scheduler/src/forks/Scheduler.js
-const performWorkUntilDeadline = () =&gt; {
-  if (enableRequestPaint) {
-    needsPaint = false;
-  }
-  if (isMessageLoopRunning) {
-    const currentTime = getCurrentTime();
-    // 记录开始时间，以便我们可以测量主线程被阻塞了多长时间。
-    startTime = currentTime;</p>
-<pre><code>// 如果调度器任务抛出错误，退出当前浏览器任务，以便可以观察到错误。
-//
-// 故意不使用 try-catch，因为这会使某些调试技术变得更困难。
-// 相反，如果 `flushWork` 出错，那么 `hasMoreWork` 将保持为 true，我们会继续工作循环。
-let hasMoreWork = true;
-try {
-  hasMoreWork = flushWork(currentTime);
-} finally {
-  if (hasMoreWork) {
-    // 如果还有更多工作，在前一个消息事件的末尾调度下一个消息事件。
-    schedulePerformWorkUntilDeadline();
-  } else {
-    isMessageLoopRunning = false;
-  }
-}
-</code></pre>
-<p>}
-};
-<code>``
-
-**作用**：
-- 记录开始时间
-- 调用</code>flushWork` 执行实际工作
-- 根据返回值决定是否继续调度
-</p>
-<h4>2.2.3 <code>flushWork()</code> - 刷新工作</h4>
-<p><code>144:186:packages/scheduler/src/forks/Scheduler.js
-function flushWork(initialTime: number) {
-  if (enableProfiling) {
-    markSchedulerUnsuspended(initialTime);
-  }
-
-  // We'll need a host callback the next time work is scheduled.
-  isHostCallbackScheduled = false;
-  if (isHostTimeoutScheduled) {
-    // We scheduled a timeout but it's no longer needed. Cancel it.
-    isHostTimeoutScheduled = false;
-    cancelHostTimeout();
-  }
-
-  isPerformingWork = true;
-  const previousPriorityLevel = currentPriorityLevel;
-  try {
-    if (enableProfiling) {
-      try {
-        return workLoop(initialTime);
-      } catch (error) {
-        if (currentTask !== null) {
-          const currentTime = getCurrentTime();
-          // $FlowFixMe[incompatible-call] found when upgrading Flow
-          markTaskErrored(currentTask, currentTime);
-          // $FlowFixMe[incompatible-use] found when upgrading Flow
-          currentTask.isQueued = false;
-        }
-        throw error;
-      }
-    } else {
-      // No catch in prod code path.
-      return workLoop(initialTime);
-    }
-  } finally {
-    currentTask = null;
-    currentPriorityLevel = previousPriorityLevel;
-    isPerformingWork = false;
-    if (enableProfiling) {
-      const currentTime = getCurrentTime();
-      markSchedulerSuspended(currentTime);
-    }
-  }
-}</code></p>
-<p><strong>作用</strong>：
-- 设置工作状态标志
-- 调用 <code>workLoop</code> 执行工作循环
-- 清理状态和错误处理</p>
-<h4>2.2.4 <code>workLoop()</code> - 核心工作循环</h4>
-<p>```188:258:packages/scheduler/src/forks/Scheduler.js
-function workLoop(initialTime: number) {
-  let currentTime = initialTime;
-  advanceTimers(currentTime);
-  currentTask = peek(taskQueue);
-  while (currentTask !== null) {
-    if (!enableAlwaysYieldScheduler) {
-      if (currentTask.expirationTime &gt; currentTime &amp;&amp; shouldYieldToHost()) {
-        // This currentTask hasn&rsquo;t expired, and we&rsquo;ve reached the deadline.
-        break;
-      }
-    }
-    // $FlowFixMe[incompatible-use] found when upgrading Flow
-    const callback = currentTask.callback;
-    if (typeof callback === &lsquo;function&rsquo;) {
-      // $FlowFixMe[incompatible-use] found when upgrading Flow
-      currentTask.callback = null;
-      // $FlowFixMe[incompatible-use] found when upgrading Flow
-      currentPriorityLevel = currentTask.priorityLevel;
-      // $FlowFixMe[incompatible-use] found when upgrading Flow
-      const didUserCallbackTimeout = currentTask.expirationTime &lt;= currentTime;
-      if (enableProfiling) {
-        // $FlowFixMe[incompatible-call] found when upgrading Flow
-        markTaskRun(currentTask, currentTime);
-      }
-      const continuationCallback = callback(didUserCallbackTimeout);
-      currentTime = getCurrentTime();
-      if (typeof continuationCallback === &lsquo;function&rsquo;) {
-        // If a continuation is returned, immediately yield to the main thread
-        // regardless of how much time is left in the current time slice.
-        // $FlowFixMe[incompatible-use] found when upgrading Flow
-        currentTask.callback = continuationCallback;
-        if (enableProfiling) {
-          // $FlowFixMe[incompatible-call] found when upgrading Flow
-          markTaskYield(currentTask, currentTime);
-        }
-        advanceTimers(currentTime);
-        return true;
-      } else {
-        if (enableProfiling) {
-          // $FlowFixMe[incompatible-call] found when upgrading Flow
-          markTaskCompleted(currentTask, currentTime);
-          // $FlowFixMe[incompatible-use] found when upgrading Flow
-          currentTask.isQueued = false;
-        }
-        if (currentTask === peek(taskQueue)) {
-          pop(taskQueue);
-        }
-        advanceTimers(currentTime);
-      }
-    } else {
-      pop(taskQueue);
-    }
-    currentTask = peek(taskQueue);
-    if (enableAlwaysYieldScheduler) {
-      if (currentTask === null || currentTask.expirationTime &gt; currentTime) {
-        // This currentTask hasn&rsquo;t expired we yield to the browser task.
-        break;
-      }
-    }
-  }
-  // Return whether there&rsquo;s additional work
-  if (currentTask !== null) {
-    return true;
-  } else {
-    const firstTimer = peek(timerQueue);
-    if (firstTimer !== null) {
-      requestHostTimeout(handleTimeout, firstTimer.startTime - currentTime);
-    }
-    return false;
-  }
-}
-<div class="highlight"><pre><span></span><code>**核心逻辑**：
-1. **advanceTimers()**: 将到期的延迟任务从 `timerQueue` 移到 `taskQueue`
-2. **循环处理任务**：
-    - 从 `taskQueue` 获取最高优先级任务（最小堆的根节点）
-    - 检查是否应该让出控制权（`shouldYieldToHost()`）
-    - 执行任务的 `callback`
-    - 如果返回 `continuation`，继续调度
-    - 任务完成后从队列移除
-3. **返回状态**：是否有更多工作需要处理
-
-#### 2.2.5 `advanceTimers()` - 推进定时器
-
-```103:125:packages/scheduler/src/forks/Scheduler.js
-function advanceTimers(currentTime: number) {
-  // Check for tasks that are no longer delayed and add them to the queue.
-  let timer = peek(timerQueue);
-  while (timer !== null) {
-    if (timer.callback === null) {
-      // Timer was cancelled.
-      pop(timerQueue);
-    } else if (timer.startTime &lt;= currentTime) {
-      // Timer fired. Transfer to the task queue.
-      pop(timerQueue);
-      timer.sortIndex = timer.expirationTime;
-      push(taskQueue, timer);
-      if (enableProfiling) {
-        markTaskStart(timer, currentTime);
-        timer.isQueued = true;
-      }
-    } else {
-      // Remaining timers are pending.
-      return;
-    }
-    timer = peek(timerQueue);
-  }
-}
-</code></pre></div></p>
-<p><strong>作用</strong>：将到期的延迟任务从 <code>timerQueue</code> 转移到 <code>taskQueue</code>，使其可以被执行。</p>
-<h4>2.2.6 <code>shouldYieldToHost()</code> - 是否应该让出控制权</h4>
-<p>```447:460:packages/scheduler/src/forks/Scheduler.js
-function shouldYieldToHost(): boolean {
-  if (!enableAlwaysYieldScheduler &amp;&amp; enableRequestPaint &amp;&amp; needsPaint) {
-    // Yield now.
-    return true;
-  }
-  const timeElapsed = getCurrentTime() - startTime;
-  if (timeElapsed &lt; frameInterval) {
-    // The main thread has only been blocked for a really short amount of time;
-    // smaller than a single frame. Don&rsquo;t yield yet.
-    return false;
-  }
-  // Yield now.
-  return true;
-}
-<div class="highlight"><pre><span></span><code>**作用**：检查是否应该让出控制权给浏览器，避免长时间阻塞主线程。
-
-## 三、数据结构
-
-### 3.1 两个优先级队列
-
-1. **`taskQueue`** - 立即执行的任务队列（最小堆）
-    - 按 `expirationTime` 排序
-    - 使用最小堆快速获取最高优先级任务
-
-2. **`timerQueue`** - 延迟任务队列（最小堆）
-    - 按 `startTime` 排序
-    - 到期后转移到 `taskQueue`
-
-### 3.2 Task 对象结构
-
-```47:57:packages/scheduler/src/forks/Scheduler.js
-export opaque type Task = {
-  id: number,
-  callback: Callback | null,
-  priorityLevel: PriorityLevel,
-  startTime: number,
-  expirationTime: number,
-  sortIndex: number,
-  isQueued?: boolean,
-};
-</code></pre></div></p>
-<h2>四、执行示例</h2>
-<h3>4.1 典型执行流程示例</h3>
-<div class="highlight"><pre><span></span><code><span class="c1">// 1. React Reconciler 调度任务</span>
-<span class="nx">scheduleCallback</span><span class="p">(</span><span class="nx">NormalPriority</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nx">performWorkOnRoot</span><span class="p">(</span><span class="nx">root</span><span class="p">);</span>
-<span class="p">});</span>
-
-<span class="c1">// 2. Scheduler 内部流程</span>
-<span class="c1">// - unstable_scheduleCallback() 创建 Task</span>
-<span class="c1">// - push(taskQueue, task)</span>
-<span class="c1">// - requestHostCallback()</span>
-<span class="c1">// - schedulePerformWorkUntilDeadline() (使用 MessageChannel)</span>
-<span class="c1">// - performWorkUntilDeadline() 异步执行</span>
-<span class="c1">// - flushWork()</span>
-<span class="c1">// - workLoop()</span>
-<span class="c1">//   - advanceTimers()</span>
-<span class="c1">//   - 循环执行 taskQueue 中的任务</span>
-<span class="c1">//   - 执行 callback: performWorkOnRoot()</span>
-<span class="c1">//   - 检查 shouldYieldToHost()</span>
-<span class="c1">//   - 返回 hasMoreWork</span>
-</code></pre></div>
-<h3>4.2 时间切片（Time Slicing）</h3>
-<p>Scheduler 通过 <code>shouldYieldToHost()</code> 实现时间切片：
-- 每次执行任务前检查是否超过时间限制（<code>frameInterval</code>）
-- 如果超过，让出控制权，让浏览器处理其他任务
-- 下次通过 <code>schedulePerformWorkUntilDeadline()</code> 继续执行</p>
-<h2>五、关键设计点</h2>
-<ol>
-<li><strong>异步执行</strong>：使用 MessageChannel/setImmediate/setTimeout 实现异步调度</li>
-<li><strong>优先级队列</strong>：使用最小堆快速获取最高优先级任务</li>
-<li><strong>时间切片</strong>：通过 <code>shouldYieldToHost()</code> 避免长时间阻塞主线程</li>
-<li><strong>延迟任务</strong>：支持延迟执行的任务（<code>timerQueue</code>）</li>
-<li><strong>任务延续</strong>：支持任务返回 continuation callback 继续执行</li>
-</ol>
-<h2>六、总结</h2>
-<p>React Scheduler 的执行流程是一个<strong>事件驱动的异步任务调度系统</strong>：</p>
-<ol>
-<li><strong>入口</strong>：<code>unstable_scheduleCallback()</code> 接收任务并加入队列</li>
-<li><strong>调度</strong>：<code>requestHostCallback()</code> 启动异步执行</li>
-<li><strong>执行</strong>：<code>performWorkUntilDeadline()</code> → <code>flushWork()</code> → <code>workLoop()</code></li>
-<li><strong>循环</strong>：<code>workLoop()</code> 循环处理任务，直到队列为空或需要让出控制权</li>
-<li><strong>让出</strong>：通过 <code>shouldYieldToHost()</code> 检查，必要时让出控制权给浏览器</li>
-</ol>
-<p>这个设计使得 React 能够高效地调度和执行任务，同时保持应用的响应性。</p>
-        </article>
-        
-        <script src="https://giscus.app/client.js"
-                data-repo="oasis-cloud/blog-comments"
-                data-repo-id="R_kgDOKEliHA"
-                data-category="General"
-                data-category-id="DIC_kwDOKEliHM4CYb6e"
-                data-mapping="pathname"
-                data-strict="0"
-                data-reactions-enabled="1"
-                data-emit-metadata="0"
-                data-input-position="bottom"
-                data-theme="preferred_color_scheme"
-                data-lang="zh-CN"
-                crossorigin="anonymous"
-                async>
-        </script>
-    </body>
+<html lang="en-US" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Untitled | Oasis's Cloud</title>
+    <meta name="description" content="一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。—— 《一个数学家的辩白》">
+    <meta name="generator" content="VitePress v1.6.4">
+    <link rel="preload stylesheet" href="/assets/style.BubUdk9b.css" as="style">
+    <link rel="preload stylesheet" href="/vp-icons.css" as="style">
+    
+    <script type="module" src="/assets/app.BuMT4ivz.js"></script>
+    <link rel="modulepreload" href="/assets/chunks/theme.HZhl2uCL.js">
+    <link rel="modulepreload" href="/assets/chunks/framework.86O3EbG5.js">
+    <link rel="modulepreload" href="/assets/articles_frontend_react_3-2.md.Ddn-EfA3.lean.js">
+    <script id="check-mac-os">document.documentElement.classList.toggle("mac",/Mac|iPhone|iPod|iPad/i.test(navigator.platform));</script>
+  </head>
+  <body>
+    <div id="app"><div class="graphite-page"><header class="masthead"><h1><a href="/">Oasis&#39;s Cloud</a></h1><p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p><nav class="menu"><input id="menu-check" type="checkbox"><label id="menu-label" for="menu-check" class="unselectable"><span class="icon close-icon">✕</span><span class="icon open-icon">☰</span><span class="text">Menu</span></label><ul><li><a href="/">首页</a></li></ul></nav></header><article class="main"><header class="title"><h1>Untitled</h1><!----><p class="author">作者：oasis</p><hr></header><div style="position:relative;"><div><h1 id="react-scheduler-执行入口和执行流程详解" tabindex="-1">React Scheduler 执行入口和执行流程详解</h1><h2 id="一、执行入口" tabindex="-1">一、执行入口</h2><h3 id="_1-1-主要入口函数" tabindex="-1">1.1 主要入口函数</h3><p>React Scheduler 的核心入口函数是 <strong><code>unstable_scheduleCallback</code></strong>，这是外部（主要是 React Reconciler）调度任务的主要接口。</p><div class="language-txt vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">txt</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span>function unstable_scheduleCallback(</span></span>
+<span class="line"><span>  priorityLevel: PriorityLevel,</span></span>
+<span class="line"><span>  callback: Callback,</span></span>
+<span class="line"><span>  options?: {delay: number},</span></span>
+<span class="line"><span>): Task {</span></span>
+<span class="line"><span>  var currentTime = getCurrentTime();</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>  var startTime;</span></span>
+<span class="line"><span>  if (typeof options === &#39;object&#39; &amp;&amp; options !== null) {</span></span>
+<span class="line"><span>    var delay = options.delay;</span></span>
+<span class="line"><span>    if (typeof delay === &#39;number&#39; &amp;&amp; delay &gt; 0) {</span></span>
+<span class="line"><span>      startTime = currentTime + delay;</span></span>
+<span class="line"><span>    } else {</span></span>
+<span class="line"><span>      startTime = currentTime;</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>  } else {</span></span>
+<span class="line"><span>    startTime = currentTime;</span></span>
+<span class="line"><span>  }</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>  var timeout;</span></span>
+<span class="line"><span>  switch (priorityLevel) {</span></span>
+<span class="line"><span>    case ImmediatePriority:</span></span>
+<span class="line"><span>      // Times out immediately</span></span>
+<span class="line"><span>      timeout = -1;</span></span>
+<span class="line"><span>      break;</span></span>
+<span class="line"><span>    case UserBlockingPriority:</span></span>
+<span class="line"><span>      // Eventually times out</span></span>
+<span class="line"><span>      timeout = userBlockingPriorityTimeout;</span></span>
+<span class="line"><span>      break;</span></span>
+<span class="line"><span>    case IdlePriority:</span></span>
+<span class="line"><span>      // Never times out</span></span>
+<span class="line"><span>      timeout = maxSigned31BitInt;</span></span>
+<span class="line"><span>      break;</span></span>
+<span class="line"><span>    case LowPriority:</span></span>
+<span class="line"><span>      // Eventually times out</span></span>
+<span class="line"><span>      timeout = lowPriorityTimeout;</span></span>
+<span class="line"><span>      break;</span></span>
+<span class="line"><span>    case NormalPriority:</span></span>
+<span class="line"><span>    default:</span></span>
+<span class="line"><span>      // Eventually times out</span></span>
+<span class="line"><span>      timeout = normalPriorityTimeout;</span></span>
+<span class="line"><span>      break;</span></span>
+<span class="line"><span>  }</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>  var expirationTime = startTime + timeout;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>  var newTask: Task = {</span></span>
+<span class="line"><span>    id: taskIdCounter++,</span></span>
+<span class="line"><span>    callback,</span></span>
+<span class="line"><span>    priorityLevel,</span></span>
+<span class="line"><span>    startTime,</span></span>
+<span class="line"><span>    expirationTime,</span></span>
+<span class="line"><span>    sortIndex: -1,</span></span>
+<span class="line"><span>  };</span></span>
+<span class="line"><span>  if (enableProfiling) {</span></span>
+<span class="line"><span>    newTask.isQueued = false;</span></span>
+<span class="line"><span>  }</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>  if (startTime &gt; currentTime) {</span></span>
+<span class="line"><span>    // This is a delayed task.</span></span>
+<span class="line"><span>    newTask.sortIndex = startTime;</span></span>
+<span class="line"><span>    push(timerQueue, newTask);</span></span>
+<span class="line"><span>    if (peek(taskQueue) === null &amp;&amp; newTask === peek(timerQueue)) {</span></span>
+<span class="line"><span>      // All tasks are delayed, and this is the task with the earliest delay.</span></span>
+<span class="line"><span>      if (isHostTimeoutScheduled) {</span></span>
+<span class="line"><span>        // Cancel an existing timeout.</span></span>
+<span class="line"><span>        cancelHostTimeout();</span></span>
+<span class="line"><span>      } else {</span></span>
+<span class="line"><span>        isHostTimeoutScheduled = true;</span></span>
+<span class="line"><span>      }</span></span>
+<span class="line"><span>      // Schedule a timeout.</span></span>
+<span class="line"><span>      requestHostTimeout(handleTimeout, startTime - currentTime);</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>  } else {</span></span>
+<span class="line"><span>    newTask.sortIndex = expirationTime;</span></span>
+<span class="line"><span>    push(taskQueue, newTask);</span></span>
+<span class="line"><span>    if (enableProfiling) {</span></span>
+<span class="line"><span>      markTaskStart(newTask, currentTime);</span></span>
+<span class="line"><span>      newTask.isQueued = true;</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>    // Schedule a host callback, if needed. If we&#39;re already performing work,</span></span>
+<span class="line"><span>    // wait until the next time we yield.</span></span>
+<span class="line"><span>    if (!isHostCallbackScheduled &amp;&amp; !isPerformingWork) {</span></span>
+<span class="line"><span>      isHostCallbackScheduled = true;</span></span>
+<span class="line"><span>      requestHostCallback();</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>  }</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>  return newTask;</span></span>
+<span class="line"><span>}</span></span></code></pre></div><h3 id="_1-2-调用链入口" tabindex="-1">1.2 调用链入口</h3><p>从 React Reconciler 的调用链：</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span>React Reconciler (ReactFiberRootScheduler.js)</span></span>
+<span class="line"><span>  ↓</span></span>
+<span class="line"><span>scheduleCallback() </span></span>
+<span class="line"><span>  ↓</span></span>
+<span class="line"><span>Scheduler.unstable_scheduleCallback()</span></span>
+<span class="line"><span>  ↓</span></span>
+<span class="line"><span>unstable_scheduleCallback() [Scheduler.js]</span></span></code></pre></div><h2 id="二、完整执行流程" tabindex="-1">二、完整执行流程</h2><h3 id="_2-1-流程图" tabindex="-1">2.1 流程图</h3><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span>┌─────────────────────────────────────────────────────────────┐</span></span>
+<span class="line"><span>│  1. React Reconciler 调用 scheduleCallback()                │</span></span>
+<span class="line"><span>│     - 传入优先级和回调函数                                   │</span></span>
+<span class="line"><span>└────────────────────┬────────────────────────────────────────┘</span></span>
+<span class="line"><span>                     │</span></span>
+<span class="line"><span>                     ▼</span></span>
+<span class="line"><span>┌─────────────────────────────────────────────────────────────┐</span></span>
+<span class="line"><span>│  2. unstable_scheduleCallback()                            │</span></span>
+<span class="line"><span>│     - 创建 Task 对象                                        │</span></span>
+<span class="line"><span>│     - 计算 expirationTime（过期时间）                       │</span></span>
+<span class="line"><span>│     - 根据 startTime 决定放入哪个队列：                      │</span></span>
+<span class="line"><span>│       • startTime &gt; currentTime → timerQueue（延迟任务）    │</span></span>
+<span class="line"><span>│       • startTime &lt;= currentTime → taskQueue（立即任务）   │</span></span>
+<span class="line"><span>└────────────────────┬────────────────────────────────────────┘</span></span>
+<span class="line"><span>                     │</span></span>
+<span class="line"><span>         ┌───────────┴───────────┐</span></span>
+<span class="line"><span>         │                       │</span></span>
+<span class="line"><span>         ▼                       ▼</span></span>
+<span class="line"><span>┌──────────────────┐   ┌──────────────────────┐</span></span>
+<span class="line"><span>│ 延迟任务          │   │ 立即任务              │</span></span>
+<span class="line"><span>│ timerQueue       │   │ taskQueue            │</span></span>
+<span class="line"><span>│                  │   │                      │</span></span>
+<span class="line"><span>│ requestHostTimeout│   │ requestHostCallback()│</span></span>
+<span class="line"><span>│ (handleTimeout)  │   │                      │</span></span>
+<span class="line"><span>└────────┬─────────┘   └──────────┬───────────┘</span></span>
+<span class="line"><span>         │                        │</span></span>
+<span class="line"><span>         │                        │</span></span>
+<span class="line"><span>         └───────────┬────────────┘</span></span>
+<span class="line"><span>                     │</span></span>
+<span class="line"><span>                     ▼</span></span>
+<span class="line"><span>┌─────────────────────────────────────────────────────────────┐</span></span>
+<span class="line"><span>│  3. requestHostCallback()                                  │</span></span>
+<span class="line"><span>│     - 设置 isMessageLoopRunning = true                     │</span></span>
+<span class="line"><span>│     - 调用 schedulePerformWorkUntilDeadline()              │</span></span>
+<span class="line"><span>│       • Node.js: setImmediate()                            │</span></span>
+<span class="line"><span>│       • 浏览器: MessageChannel.postMessage()              │</span></span>
+<span class="line"><span>│       • 回退: setTimeout()                                 │</span></span>
+<span class="line"><span>└────────────────────┬────────────────────────────────────────┘</span></span>
+<span class="line"><span>                     │</span></span>
+<span class="line"><span>                     ▼</span></span>
+<span class="line"><span>┌─────────────────────────────────────────────────────────────┐</span></span>
+<span class="line"><span>│  4. performWorkUntilDeadline() [异步执行]                   │</span></span>
+<span class="line"><span>│     - 记录开始时间 startTime                                │</span></span>
+<span class="line"><span>│     - 调用 flushWork(currentTime)                          │</span></span>
+<span class="line"><span>└────────────────────┬────────────────────────────────────────┘</span></span>
+<span class="line"><span>                     │</span></span>
+<span class="line"><span>                     ▼</span></span>
+<span class="line"><span>┌─────────────────────────────────────────────────────────────┐</span></span>
+<span class="line"><span>│  5. flushWork(initialTime)                                 │</span></span>
+<span class="line"><span>│     - 设置 isPerformingWork = true                         │</span></span>
+<span class="line"><span>│     - 调用 workLoop(initialTime)                           │</span></span>
+<span class="line"><span>│     - 清理状态和标记                                        │</span></span>
+<span class="line"><span>└────────────────────┬────────────────────────────────────────┘</span></span>
+<span class="line"><span>                     │</span></span>
+<span class="line"><span>                     ▼</span></span>
+<span class="line"><span>┌─────────────────────────────────────────────────────────────┐</span></span>
+<span class="line"><span>│  6. workLoop(currentTime) [核心工作循环]                     │</span></span>
+<span class="line"><span>│     - advanceTimers(): 将到期的延迟任务移到 taskQueue       │</span></span>
+<span class="line"><span>│     - 循环处理 taskQueue 中的任务：                        │</span></span>
+<span class="line"><span>│       ① peek(taskQueue) 获取最高优先级任务                  │</span></span>
+<span class="line"><span>│       ② 检查是否应该让出控制权 (shouldYieldToHost)         │</span></span>
+<span class="line"><span>│       ③ 执行任务的 callback                                │</span></span>
+<span class="line"><span>│       ④ 如果 callback 返回 continuation，继续调度         │</span></span>
+<span class="line"><span>│       ⑤ 任务完成后从队列移除                               │</span></span>
+<span class="line"><span>│     - 返回是否有更多工作 (hasMoreWork)                     │</span></span>
+<span class="line"><span>└────────────────────┬────────────────────────────────────────┘</span></span>
+<span class="line"><span>                     │</span></span>
+<span class="line"><span>         ┌───────────┴───────────┐</span></span>
+<span class="line"><span>         │                       │</span></span>
+<span class="line"><span>    hasMoreWork=true      hasMoreWork=false</span></span>
+<span class="line"><span>         │                       │</span></span>
+<span class="line"><span>         ▼                       ▼</span></span>
+<span class="line"><span>┌──────────────────┐   ┌──────────────────────┐</span></span>
+<span class="line"><span>│ 继续调度          │   │ 停止工作循环          │</span></span>
+<span class="line"><span>│ schedulePerform  │   │ isMessageLoopRunning │</span></span>
+<span class="line"><span>│ WorkUntilDeadline│   │ = false              │</span></span>
+<span class="line"><span>└──────────────────┘   └──────────────────────┘</span></span></code></pre></div><h3 id="_2-2-关键函数详解" tabindex="-1">2.2 关键函数详解</h3><h4 id="_2-2-1-requesthostcallback-请求主机回调" tabindex="-1">2.2.1 <code>requestHostCallback()</code> - 请求主机回调</h4><div class="language-txt vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">txt</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span>function requestHostCallback() {</span></span>
+<span class="line"><span>  if (!isMessageLoopRunning) {</span></span>
+<span class="line"><span>    isMessageLoopRunning = true;</span></span>
+<span class="line"><span>    schedulePerformWorkUntilDeadline();</span></span>
+<span class="line"><span>  }</span></span>
+<span class="line"><span>}</span></span></code></pre></div><p><strong>作用</strong>：启动消息循环，通过平台 API（setImmediate/MessageChannel/setTimeout）异步执行工作。</p><h4 id="_2-2-2-performworkuntildeadline-执行工作直到截止时间" tabindex="-1">2.2.2 <code>performWorkUntilDeadline()</code> - 执行工作直到截止时间</h4><div class="language-txt vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">txt</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span>const performWorkUntilDeadline = () =&gt; {</span></span>
+<span class="line"><span>  if (enableRequestPaint) {</span></span>
+<span class="line"><span>    needsPaint = false;</span></span>
+<span class="line"><span>  }</span></span>
+<span class="line"><span>  if (isMessageLoopRunning) {</span></span>
+<span class="line"><span>    const currentTime = getCurrentTime();</span></span>
+<span class="line"><span>    // 记录开始时间，以便我们可以测量主线程被阻塞了多长时间。</span></span>
+<span class="line"><span>    startTime = currentTime;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>    // 如果调度器任务抛出错误，退出当前浏览器任务，以便可以观察到错误。</span></span>
+<span class="line"><span>    //</span></span>
+<span class="line"><span>    // 故意不使用 try-catch，因为这会使某些调试技术变得更困难。</span></span>
+<span class="line"><span>    // 相反，如果 `flushWork` 出错，那么 `hasMoreWork` 将保持为 true，我们会继续工作循环。</span></span>
+<span class="line"><span>    let hasMoreWork = true;</span></span>
+<span class="line"><span>    try {</span></span>
+<span class="line"><span>      hasMoreWork = flushWork(currentTime);</span></span>
+<span class="line"><span>    } finally {</span></span>
+<span class="line"><span>      if (hasMoreWork) {</span></span>
+<span class="line"><span>        // 如果还有更多工作，在前一个消息事件的末尾调度下一个消息事件。</span></span>
+<span class="line"><span>        schedulePerformWorkUntilDeadline();</span></span>
+<span class="line"><span>      } else {</span></span>
+<span class="line"><span>        isMessageLoopRunning = false;</span></span>
+<span class="line"><span>      }</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>  }</span></span>
+<span class="line"><span>};</span></span></code></pre></div><p><strong>作用</strong>：</p><ul><li>记录开始时间</li><li>调用 <code>flushWork</code> 执行实际工作</li><li>根据返回值决定是否继续调度</li></ul><h4 id="_2-2-3-flushwork-刷新工作" tabindex="-1">2.2.3 <code>flushWork()</code> - 刷新工作</h4><div class="language-txt vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">txt</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span>function flushWork(initialTime: number) {</span></span>
+<span class="line"><span>  if (enableProfiling) {</span></span>
+<span class="line"><span>    markSchedulerUnsuspended(initialTime);</span></span>
+<span class="line"><span>  }</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>  // We&#39;ll need a host callback the next time work is scheduled.</span></span>
+<span class="line"><span>  isHostCallbackScheduled = false;</span></span>
+<span class="line"><span>  if (isHostTimeoutScheduled) {</span></span>
+<span class="line"><span>    // We scheduled a timeout but it&#39;s no longer needed. Cancel it.</span></span>
+<span class="line"><span>    isHostTimeoutScheduled = false;</span></span>
+<span class="line"><span>    cancelHostTimeout();</span></span>
+<span class="line"><span>  }</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>  isPerformingWork = true;</span></span>
+<span class="line"><span>  const previousPriorityLevel = currentPriorityLevel;</span></span>
+<span class="line"><span>  try {</span></span>
+<span class="line"><span>    if (enableProfiling) {</span></span>
+<span class="line"><span>      try {</span></span>
+<span class="line"><span>        return workLoop(initialTime);</span></span>
+<span class="line"><span>      } catch (error) {</span></span>
+<span class="line"><span>        if (currentTask !== null) {</span></span>
+<span class="line"><span>          const currentTime = getCurrentTime();</span></span>
+<span class="line"><span>          // $FlowFixMe[incompatible-call] found when upgrading Flow</span></span>
+<span class="line"><span>          markTaskErrored(currentTask, currentTime);</span></span>
+<span class="line"><span>          // $FlowFixMe[incompatible-use] found when upgrading Flow</span></span>
+<span class="line"><span>          currentTask.isQueued = false;</span></span>
+<span class="line"><span>        }</span></span>
+<span class="line"><span>        throw error;</span></span>
+<span class="line"><span>      }</span></span>
+<span class="line"><span>    } else {</span></span>
+<span class="line"><span>      // No catch in prod code path.</span></span>
+<span class="line"><span>      return workLoop(initialTime);</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>  } finally {</span></span>
+<span class="line"><span>    currentTask = null;</span></span>
+<span class="line"><span>    currentPriorityLevel = previousPriorityLevel;</span></span>
+<span class="line"><span>    isPerformingWork = false;</span></span>
+<span class="line"><span>    if (enableProfiling) {</span></span>
+<span class="line"><span>      const currentTime = getCurrentTime();</span></span>
+<span class="line"><span>      markSchedulerSuspended(currentTime);</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>  }</span></span>
+<span class="line"><span>}</span></span></code></pre></div><p><strong>作用</strong>：</p><ul><li>设置工作状态标志</li><li>调用 <code>workLoop</code> 执行工作循环</li><li>清理状态和错误处理</li></ul><h4 id="_2-2-4-workloop-核心工作循环" tabindex="-1">2.2.4 <code>workLoop()</code> - 核心工作循环</h4><div class="language-txt vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">txt</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span>function workLoop(initialTime: number) {</span></span>
+<span class="line"><span>  let currentTime = initialTime;</span></span>
+<span class="line"><span>  advanceTimers(currentTime);</span></span>
+<span class="line"><span>  currentTask = peek(taskQueue);</span></span>
+<span class="line"><span>  while (currentTask !== null) {</span></span>
+<span class="line"><span>    if (!enableAlwaysYieldScheduler) {</span></span>
+<span class="line"><span>      if (currentTask.expirationTime &gt; currentTime &amp;&amp; shouldYieldToHost()) {</span></span>
+<span class="line"><span>        // This currentTask hasn&#39;t expired, and we&#39;ve reached the deadline.</span></span>
+<span class="line"><span>        break;</span></span>
+<span class="line"><span>      }</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>    // $FlowFixMe[incompatible-use] found when upgrading Flow</span></span>
+<span class="line"><span>    const callback = currentTask.callback;</span></span>
+<span class="line"><span>    if (typeof callback === &#39;function&#39;) {</span></span>
+<span class="line"><span>      // $FlowFixMe[incompatible-use] found when upgrading Flow</span></span>
+<span class="line"><span>      currentTask.callback = null;</span></span>
+<span class="line"><span>      // $FlowFixMe[incompatible-use] found when upgrading Flow</span></span>
+<span class="line"><span>      currentPriorityLevel = currentTask.priorityLevel;</span></span>
+<span class="line"><span>      // $FlowFixMe[incompatible-use] found when upgrading Flow</span></span>
+<span class="line"><span>      const didUserCallbackTimeout = currentTask.expirationTime &lt;= currentTime;</span></span>
+<span class="line"><span>      if (enableProfiling) {</span></span>
+<span class="line"><span>        // $FlowFixMe[incompatible-call] found when upgrading Flow</span></span>
+<span class="line"><span>        markTaskRun(currentTask, currentTime);</span></span>
+<span class="line"><span>      }</span></span>
+<span class="line"><span>      const continuationCallback = callback(didUserCallbackTimeout);</span></span>
+<span class="line"><span>      currentTime = getCurrentTime();</span></span>
+<span class="line"><span>      if (typeof continuationCallback === &#39;function&#39;) {</span></span>
+<span class="line"><span>        // If a continuation is returned, immediately yield to the main thread</span></span>
+<span class="line"><span>        // regardless of how much time is left in the current time slice.</span></span>
+<span class="line"><span>        // $FlowFixMe[incompatible-use] found when upgrading Flow</span></span>
+<span class="line"><span>        currentTask.callback = continuationCallback;</span></span>
+<span class="line"><span>        if (enableProfiling) {</span></span>
+<span class="line"><span>          // $FlowFixMe[incompatible-call] found when upgrading Flow</span></span>
+<span class="line"><span>          markTaskYield(currentTask, currentTime);</span></span>
+<span class="line"><span>        }</span></span>
+<span class="line"><span>        advanceTimers(currentTime);</span></span>
+<span class="line"><span>        return true;</span></span>
+<span class="line"><span>      } else {</span></span>
+<span class="line"><span>        if (enableProfiling) {</span></span>
+<span class="line"><span>          // $FlowFixMe[incompatible-call] found when upgrading Flow</span></span>
+<span class="line"><span>          markTaskCompleted(currentTask, currentTime);</span></span>
+<span class="line"><span>          // $FlowFixMe[incompatible-use] found when upgrading Flow</span></span>
+<span class="line"><span>          currentTask.isQueued = false;</span></span>
+<span class="line"><span>        }</span></span>
+<span class="line"><span>        if (currentTask === peek(taskQueue)) {</span></span>
+<span class="line"><span>          pop(taskQueue);</span></span>
+<span class="line"><span>        }</span></span>
+<span class="line"><span>        advanceTimers(currentTime);</span></span>
+<span class="line"><span>      }</span></span>
+<span class="line"><span>    } else {</span></span>
+<span class="line"><span>      pop(taskQueue);</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>    currentTask = peek(taskQueue);</span></span>
+<span class="line"><span>    if (enableAlwaysYieldScheduler) {</span></span>
+<span class="line"><span>      if (currentTask === null || currentTask.expirationTime &gt; currentTime) {</span></span>
+<span class="line"><span>        // This currentTask hasn&#39;t expired we yield to the browser task.</span></span>
+<span class="line"><span>        break;</span></span>
+<span class="line"><span>      }</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>  }</span></span>
+<span class="line"><span>  // Return whether there&#39;s additional work</span></span>
+<span class="line"><span>  if (currentTask !== null) {</span></span>
+<span class="line"><span>    return true;</span></span>
+<span class="line"><span>  } else {</span></span>
+<span class="line"><span>    const firstTimer = peek(timerQueue);</span></span>
+<span class="line"><span>    if (firstTimer !== null) {</span></span>
+<span class="line"><span>      requestHostTimeout(handleTimeout, firstTimer.startTime - currentTime);</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>    return false;</span></span>
+<span class="line"><span>  }</span></span>
+<span class="line"><span>}</span></span></code></pre></div><p><strong>核心逻辑</strong>：</p><ol><li><strong>advanceTimers()</strong>: 将到期的延迟任务从 <code>timerQueue</code> 移到 <code>taskQueue</code></li><li><strong>循环处理任务</strong>： <ul><li>从 <code>taskQueue</code> 获取最高优先级任务（最小堆的根节点）</li><li>检查是否应该让出控制权（<code>shouldYieldToHost()</code>）</li><li>执行任务的 <code>callback</code></li><li>如果返回 <code>continuation</code>，继续调度</li><li>任务完成后从队列移除</li></ul></li><li><strong>返回状态</strong>：是否有更多工作需要处理</li></ol><h4 id="_2-2-5-advancetimers-推进定时器" tabindex="-1">2.2.5 <code>advanceTimers()</code> - 推进定时器</h4><div class="language-txt vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">txt</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span>function advanceTimers(currentTime: number) {</span></span>
+<span class="line"><span>  // Check for tasks that are no longer delayed and add them to the queue.</span></span>
+<span class="line"><span>  let timer = peek(timerQueue);</span></span>
+<span class="line"><span>  while (timer !== null) {</span></span>
+<span class="line"><span>    if (timer.callback === null) {</span></span>
+<span class="line"><span>      // Timer was cancelled.</span></span>
+<span class="line"><span>      pop(timerQueue);</span></span>
+<span class="line"><span>    } else if (timer.startTime &lt;= currentTime) {</span></span>
+<span class="line"><span>      // Timer fired. Transfer to the task queue.</span></span>
+<span class="line"><span>      pop(timerQueue);</span></span>
+<span class="line"><span>      timer.sortIndex = timer.expirationTime;</span></span>
+<span class="line"><span>      push(taskQueue, timer);</span></span>
+<span class="line"><span>      if (enableProfiling) {</span></span>
+<span class="line"><span>        markTaskStart(timer, currentTime);</span></span>
+<span class="line"><span>        timer.isQueued = true;</span></span>
+<span class="line"><span>      }</span></span>
+<span class="line"><span>    } else {</span></span>
+<span class="line"><span>      // Remaining timers are pending.</span></span>
+<span class="line"><span>      return;</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>    timer = peek(timerQueue);</span></span>
+<span class="line"><span>  }</span></span>
+<span class="line"><span>}</span></span></code></pre></div><p><strong>作用</strong>：将到期的延迟任务从 <code>timerQueue</code> 转移到 <code>taskQueue</code>，使其可以被执行。</p><h4 id="_2-2-6-shouldyieldtohost-是否应该让出控制权" tabindex="-1">2.2.6 <code>shouldYieldToHost()</code> - 是否应该让出控制权</h4><div class="language-txt vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">txt</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span>function shouldYieldToHost(): boolean {</span></span>
+<span class="line"><span>  if (!enableAlwaysYieldScheduler &amp;&amp; enableRequestPaint &amp;&amp; needsPaint) {</span></span>
+<span class="line"><span>    // Yield now.</span></span>
+<span class="line"><span>    return true;</span></span>
+<span class="line"><span>  }</span></span>
+<span class="line"><span>  const timeElapsed = getCurrentTime() - startTime;</span></span>
+<span class="line"><span>  if (timeElapsed &lt; frameInterval) {</span></span>
+<span class="line"><span>    // The main thread has only been blocked for a really short amount of time;</span></span>
+<span class="line"><span>    // smaller than a single frame. Don&#39;t yield yet.</span></span>
+<span class="line"><span>    return false;</span></span>
+<span class="line"><span>  }</span></span>
+<span class="line"><span>  // Yield now.</span></span>
+<span class="line"><span>  return true;</span></span>
+<span class="line"><span>}</span></span></code></pre></div><p><strong>作用</strong>：检查是否应该让出控制权给浏览器，避免长时间阻塞主线程。</p><h2 id="三、数据结构" tabindex="-1">三、数据结构</h2><h3 id="_3-1-两个优先级队列" tabindex="-1">3.1 两个优先级队列</h3><ol><li><p><strong><code>taskQueue</code></strong> - 立即执行的任务队列（最小堆）</p><ul><li>按 <code>expirationTime</code> 排序</li><li>使用最小堆快速获取最高优先级任务</li></ul></li><li><p><strong><code>timerQueue</code></strong> - 延迟任务队列（最小堆）</p><ul><li>按 <code>startTime</code> 排序</li><li>到期后转移到 <code>taskQueue</code></li></ul></li></ol><h3 id="_3-2-task-对象结构" tabindex="-1">3.2 Task 对象结构</h3><div class="language-txt vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">txt</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span>export opaque type Task = {</span></span>
+<span class="line"><span>  id: number,</span></span>
+<span class="line"><span>  callback: Callback | null,</span></span>
+<span class="line"><span>  priorityLevel: PriorityLevel,</span></span>
+<span class="line"><span>  startTime: number,</span></span>
+<span class="line"><span>  expirationTime: number,</span></span>
+<span class="line"><span>  sortIndex: number,</span></span>
+<span class="line"><span>  isQueued?: boolean,</span></span>
+<span class="line"><span>};</span></span></code></pre></div><h2 id="四、执行示例" tabindex="-1">四、执行示例</h2><h3 id="_4-1-典型执行流程示例" tabindex="-1">4.1 典型执行流程示例</h3><div class="language-javascript vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">javascript</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 1. React Reconciler 调度任务</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">scheduleCallback</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(NormalPriority, () </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">  performWorkOnRoot</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(root);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">});</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 2. Scheduler 内部流程</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// - unstable_scheduleCallback() 创建 Task</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// - push(taskQueue, task)</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// - requestHostCallback()</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// - schedulePerformWorkUntilDeadline() (使用 MessageChannel)</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// - performWorkUntilDeadline() 异步执行</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// - flushWork()</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// - workLoop()</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">//   - advanceTimers()</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">//   - 循环执行 taskQueue 中的任务</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">//   - 执行 callback: performWorkOnRoot()</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">//   - 检查 shouldYieldToHost()</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">//   - 返回 hasMoreWork</span></span></code></pre></div><h3 id="_4-2-时间切片-time-slicing" tabindex="-1">4.2 时间切片（Time Slicing）</h3><p>Scheduler 通过 <code>shouldYieldToHost()</code> 实现时间切片：</p><ul><li>每次执行任务前检查是否超过时间限制（<code>frameInterval</code>）</li><li>如果超过，让出控制权，让浏览器处理其他任务</li><li>下次通过 <code>schedulePerformWorkUntilDeadline()</code> 继续执行</li></ul><h2 id="五、关键设计点" tabindex="-1">五、关键设计点</h2><ol><li><strong>异步执行</strong>：使用 MessageChannel/setImmediate/setTimeout 实现异步调度</li><li><strong>优先级队列</strong>：使用最小堆快速获取最高优先级任务</li><li><strong>时间切片</strong>：通过 <code>shouldYieldToHost()</code> 避免长时间阻塞主线程</li><li><strong>延迟任务</strong>：支持延迟执行的任务（<code>timerQueue</code>）</li><li><strong>任务延续</strong>：支持任务返回 continuation callback 继续执行</li></ol><h2 id="六、总结" tabindex="-1">六、总结</h2><p>React Scheduler 的执行流程是一个<strong>事件驱动的异步任务调度系统</strong>：</p><ol><li><strong>入口</strong>：<code>unstable_scheduleCallback()</code> 接收任务并加入队列</li><li><strong>调度</strong>：<code>requestHostCallback()</code> 启动异步执行</li><li><strong>执行</strong>：<code>performWorkUntilDeadline()</code> → <code>flushWork()</code> → <code>workLoop()</code></li><li><strong>循环</strong>：<code>workLoop()</code> 循环处理任务，直到队列为空或需要让出控制权</li><li><strong>让出</strong>：通过 <code>shouldYieldToHost()</code> 检查，必要时让出控制权给浏览器</li></ol><p>这个设计使得 React 能够高效地调度和执行任务，同时保持应用的响应性。</p></div></div></article><div id="giscus-host"></div></div></div>
+    <script>window.__VP_HASH_MAP__=JSON.parse("{\"articles_1.md\":\"BcbiCNen\",\"articles_2.md\":\"BOs6JrAg\",\"articles_3.md\":\"CyolPGRT\",\"articles_4.md\":\"CQKiIuaw\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_0.md\":\"Doxdb5Ij\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_1.md\":\"wjOL1phh\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_10.md\":\"LyZJnSxs\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_11.md\":\"C2FmrDp9\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_12.md\":\"BEHmrOu0\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_13.md\":\"DiD-bHGf\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_14.md\":\"BBmdeYZf\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_15.md\":\"f2O62Iuk\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_16.md\":\"BKGADZ4j\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_17.md\":\"C5m88eYa\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_18.md\":\"DFfKG_xT\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_19.md\":\"C58qgz4I\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_2.md\":\"BfG3umGO\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_20.md\":\"royf5I3T\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_21.md\":\"CmoEuQRQ\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_22.md\":\"5Bz1s6MM\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_23.md\":\"CZho3lv8\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_24.md\":\"BPs4s-6q\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_25.md\":\"DhIkQ8QI\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_26.md\":\"DQrDDSmD\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_3.md\":\"XzEbegi1\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_4.md\":\"Blv6FVHR\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_5.md\":\"C-qPQeyL\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_6.md\":\"6Y-BWQfb\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_7.md\":\"CAzQfyMt\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_8.md\":\"CsjQZCCO\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_9.md\":\"BASgbQl4\",\"articles_artificial-intelligence_books_ai-modern-approach_1.md\":\"DDDLmf54\",\"articles_artificial-intelligence_books_ai-modern-approach_10.md\":\"DhmTh9g1\",\"articles_artificial-intelligence_books_ai-modern-approach_11.md\":\"CX8Rq9wV\",\"articles_artificial-intelligence_books_ai-modern-approach_12.md\":\"fnPMZxKE\",\"articles_artificial-intelligence_books_ai-modern-approach_13.md\":\"DelyBh0u\",\"articles_artificial-intelligence_books_ai-modern-approach_14.md\":\"CEVzmm13\",\"articles_artificial-intelligence_books_ai-modern-approach_15.md\":\"BYaoy4oU\",\"articles_artificial-intelligence_books_ai-modern-approach_16.md\":\"CJBur2Mw\",\"articles_artificial-intelligence_books_ai-modern-approach_17.md\":\"Q8pYMbdg\",\"articles_artificial-intelligence_books_ai-modern-approach_18.md\":\"BEtfJPVK\",\"articles_artificial-intelligence_books_ai-modern-approach_19.md\":\"DWkWsT-C\",\"articles_artificial-intelligence_books_ai-modern-approach_2.md\":\"Ck1Z-mEe\",\"articles_artificial-intelligence_books_ai-modern-approach_20.md\":\"CbcsJXY_\",\"articles_artificial-intelligence_books_ai-modern-approach_21.md\":\"DOHxMpLE\",\"articles_artificial-intelligence_books_ai-modern-approach_22.md\":\"BrmXqyYy\",\"articles_artificial-intelligence_books_ai-modern-approach_23.md\":\"ufr3NqX2\",\"articles_artificial-intelligence_books_ai-modern-approach_24.md\":\"CfKi8b69\",\"articles_artificial-intelligence_books_ai-modern-approach_25.md\":\"D3FZV2ha\",\"articles_artificial-intelligence_books_ai-modern-approach_26.md\":\"C9NvT34X\",\"articles_artificial-intelligence_books_ai-modern-approach_3.md\":\"5B16Mude\",\"articles_artificial-intelligence_books_ai-modern-approach_4.md\":\"CFTsLVCQ\",\"articles_artificial-intelligence_books_ai-modern-approach_5.md\":\"B6w77Qe3\",\"articles_artificial-intelligence_books_ai-modern-approach_6.md\":\"DOwdgivt\",\"articles_artificial-intelligence_books_ai-modern-approach_7.md\":\"BKl-9NUI\",\"articles_artificial-intelligence_books_ai-modern-approach_8.md\":\"Ca5nK7HY\",\"articles_artificial-intelligence_books_ai-modern-approach_9.md\":\"bjCn9mRw\",\"articles_artificial-intelligence_books_build-a-llm_1.md\":\"Cn53qMLE\",\"articles_artificial-intelligence_books_build-a-llm_2-1.md\":\"BEGkEHbf\",\"articles_artificial-intelligence_books_build-a-llm_2.md\":\"B9f-kfwa\",\"articles_artificial-intelligence_books_build-a-llm_3.md\":\"BgPDZZNE\",\"articles_artificial-intelligence_books_build-a-llm_4.md\":\"BGvCF-sm\",\"articles_artificial-intelligence_books_build-a-llm_5.md\":\"D6qs6PuA\",\"articles_artificial-intelligence_books_build-a-llm_6.md\":\"Ohih56sP\",\"articles_artificial-intelligence_books_build-a-llm_7.md\":\"HTDAcsNc\",\"articles_artificial-intelligence_books_essential-math-for-ai_1-1.md\":\"j-08bog-\",\"articles_artificial-intelligence_books_essential-math-for-ai_1.md\":\"CyeVwxe6\",\"articles_artificial-intelligence_books_essential-math-for-ai_2.md\":\"DLf3lmAl\",\"articles_artificial-intelligence_books_mathematics-for-ml-in-plain-words_11.md\":\"deaEf6CH\",\"articles_artificial-intelligence_books_shitangjijianrengongzhinengke_1.md\":\"Dspbam5X\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_1.md\":\"CsHrSBOo\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_2.md\":\"Ch4VnrDN\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_3.md\":\"DOx3ENDu\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_4.md\":\"BwTW514D\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_5.md\":\"CMT0adxO\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_6.md\":\"Da5Lo1qJ\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_7.md\":\"IVT6-nY0\",\"articles_artificial-intelligence_mcp_1.md\":\"BSwKgK20\",\"articles_artificial-intelligence_mcp_2.md\":\"BqYmOfWE\",\"articles_artificial-intelligence_mcp_3.md\":\"CRqerqdh\",\"articles_artificial-intelligence_mcp_4.md\":\"DlZf-ZBs\",\"articles_artificial-intelligence_network-source_1.md\":\"7tN07cqO\",\"articles_artificial-intelligence_python_1.md\":\"DEs7NHra\",\"articles_artificial-intelligence_research_1.md\":\"BRYxkx9w\",\"articles_artificial-intelligence_research_2.md\":\"D1S9y95L\",\"articles_artificial-intelligence_research_3.md\":\"CDPKFpDS\",\"articles_artificial-intelligence_research_4.md\":\"gcdEnQ27\",\"articles_artificial-intelligence_research_5.md\":\"BWuimyaG\",\"articles_artificial-intelligence_research_6.md\":\"ChDVsr6P\",\"articles_artificial-intelligence_skills_1.md\":\"CE_3tidO\",\"articles_artificial-intelligence_skills_2.md\":\"Dw-LqypE\",\"articles_artificial-intelligence_vibe-coding_1.md\":\"CIaQQuRU\",\"articles_artificial-intelligence_vibe-coding_2.md\":\"BYp_N-la\",\"articles_books_0-10000_1.md\":\"CqfzqHFB\",\"articles_books_burn-the-boats_1.md\":\"DQW5Dj64\",\"articles_books_dontmakemethink_1.md\":\"FcQgzyiC\",\"articles_books_gaoxiaonengrenshideqigexiguan_1.md\":\"Di8W2D55\",\"articles_books_head-start_1.md\":\"DSEU1Nd4\",\"articles_books_honghuanghouxiaoying_1.md\":\"DsEwgoHE\",\"articles_books_how-program-works_1.md\":\"In6CRTPC\",\"articles_books_how-program-works_2.md\":\"C__yRHZZ\",\"articles_books_kebiansikao_1.md\":\"ZpZj4VBL\",\"articles_books_lixingdebianjie_1.md\":\"C2i5IU4p\",\"articles_books_match_1.md\":\"DQuyyF-w\",\"articles_books_next-age-of-uncertainty_1.md\":\"B3kXpIOT\",\"articles_books_piancha_1.md\":\"DUp5o2L7\",\"articles_books_programingwithtypes_1.md\":\"DPf6sVtD\",\"articles_books_ruhexuexi_1.md\":\"BiBkTqFk\",\"articles_books_ruozhedewuqi_1.md\":\"CJI0TUtU\",\"articles_books_shendugongzuo_1.md\":\"BAdThtq3\",\"articles_books_shishituichu_1.md\":\"DSMpw3Mj\",\"articles_books_siweideqiutu_1.md\":\"D9N51GZd\",\"articles_books_xingweichuanranxiaoying_1.md\":\"D8YfH3E9\",\"articles_books_yingxianglidebadazhangai_1.md\":\"BkSkh0ib\",\"articles_books_zenyanglongluorenxin_1.md\":\"DyaoIWo4\",\"articles_books_zhegezhexuejiajiulewo_1.md\":\"EBCGPBD1\",\"articles_daily-thoughts_1.md\":\"rLmpFK7a\",\"articles_frontend_1.md\":\"B3Ok2hY9\",\"articles_frontend_10.md\":\"uK6wPfMr\",\"articles_frontend_11.md\":\"B8q93MGs\",\"articles_frontend_12.md\":\"D2lc-Jbc\",\"articles_frontend_13.md\":\"D5nGGZ29\",\"articles_frontend_14.md\":\"67MvYpiC\",\"articles_frontend_15.md\":\"Bonqr1JH\",\"articles_frontend_16.md\":\"BIcIqlrh\",\"articles_frontend_17.md\":\"DT2OnR9t\",\"articles_frontend_18.md\":\"C2UgM1rp\",\"articles_frontend_19.md\":\"Cm_l10Pp\",\"articles_frontend_2.md\":\"BH6obgzX\",\"articles_frontend_20.md\":\"DYOd_Ygi\",\"articles_frontend_21.md\":\"BGvMohX8\",\"articles_frontend_22.md\":\"C9-4PiZs\",\"articles_frontend_23.md\":\"LFQ7EJby\",\"articles_frontend_24.md\":\"CxV3Qmff\",\"articles_frontend_25.md\":\"KDaPWGvE\",\"articles_frontend_3.md\":\"Ocf5SV2e\",\"articles_frontend_4.md\":\"8oQMBnVM\",\"articles_frontend_6.md\":\"DLjPQ4H2\",\"articles_frontend_7.md\":\"C3_rdklM\",\"articles_frontend_8.md\":\"DmoQqnzq\",\"articles_frontend_9.md\":\"BIp4wdMq\",\"articles_frontend_fluent-react_1.md\":\"BsLnBF9_\",\"articles_frontend_immerjs_1.md\":\"cAKCGuJw\",\"articles_frontend_immerjs_2.md\":\"DhP_sCjK\",\"articles_frontend_micro-frontends_1.md\":\"CTPkX7P4\",\"articles_frontend_micro-frontends_2.md\":\"BhiyXnsA\",\"articles_frontend_next-intl_1.md\":\"CHLJLMhT\",\"articles_frontend_nextjs_1.md\":\"FcBi0n4F\",\"articles_frontend_nextjs_2.md\":\"IMXOyUyo\",\"articles_frontend_nextjs_3.md\":\"sMqC4VLv\",\"articles_frontend_nextjs_4.md\":\"YErQgQac\",\"articles_frontend_nextjs_5.md\":\"BSvkBEDC\",\"articles_frontend_nextjs_6.md\":\"C3vMZWNU\",\"articles_frontend_programming-with-types_1.md\":\"BZDTAiUn\",\"articles_frontend_programming-with-types_2.md\":\"DvF69qyh\",\"articles_frontend_programming-with-types_3.md\":\"D5ySUS2k\",\"articles_frontend_programming-with-types_4-1.md\":\"DgmuJ2FE\",\"articles_frontend_programming-with-types_4.md\":\"DCyvJyTt\",\"articles_frontend_programming-with-types_5.md\":\"D5s4hW6n\",\"articles_frontend_programming-with-types_6.md\":\"0TkUZXWK\",\"articles_frontend_programming-with-types_7.md\":\"ChvDQygU\",\"articles_frontend_react-hooks_1.md\":\"Da9rnukC\",\"articles_frontend_react_1-1.md\":\"DTtIXyO7\",\"articles_frontend_react_1.md\":\"B5UJRAnh\",\"articles_frontend_react_2-1.md\":\"BbIbpqlZ\",\"articles_frontend_react_2.md\":\"CFuzM5My\",\"articles_frontend_react_3-1.md\":\"CB6esavT\",\"articles_frontend_react_3-2.md\":\"Ddn-EfA3\",\"articles_frontend_react_3.md\":\"COI_9hCd\",\"articles_frontend_react_4.md\":\"DmDsL2Q0\",\"articles_frontend_zustand_1-1.md\":\"Bq6-0ZBv\",\"articles_frontend_zustand_1.md\":\"CXYFgHGX\",\"articles_github_1.md\":\"CAskap8A\",\"articles_github_2.md\":\"BV3nkWQp\",\"articles_github_3.md\":\"CMzJSJkE\",\"articles_github_4.md\":\"DJP9VajY\",\"articles_github_5.md\":\"Bn3oSnIk\",\"articles_javascript_1.md\":\"3nNbgAfV\",\"articles_javascript_2.md\":\"CjZc98RL\",\"articles_javascript_3.md\":\"CL42n_iU\",\"articles_learn-js-design-pattern_1.md\":\"CZTgpT5Z\",\"articles_morden-browser_1.md\":\"CFKiS64y\",\"articles_morden-browser_2.md\":\"BXaAupn0\",\"articles_network_1.md\":\"C0I3csFQ\",\"articles_network_2.md\":\"DDLuT2tq\",\"articles_network_3.md\":\"CWo0kz2B\",\"articles_nodejs_1.md\":\"Db65q0P1\",\"articles_nodejs_2.md\":\"CQAqiGBk\",\"articles_nodejs_3.md\":\"4FAcAo6A\",\"articles_philosophy-of-software-design_1.md\":\"B9EW4TRr\",\"articles_philosophy-of-software-design_2.md\":\"Lhpe0bAQ\",\"articles_philosophy-of-software-design_3.md\":\"CJxtSZDL\",\"articles_plan_1.md\":\"uSPmD0KW\",\"articles_plan_动手学大模型智能体.md\":\"BSQ4xbeQ\",\"articles_plan_动手学强化学习.md\":\"Bvnyy0ei\",\"articles_plan_动手学机器学习.md\":\"BJQt5tTu\",\"articles_plan_动手学深度学习.md\":\"BXMo25LP\",\"articles_plan_动手学自然语言处理.md\":\"BeVLNyzS\",\"articles_read_1.md\":\"DNGJ03Om\",\"articles_self_1.md\":\"zoUg7f4K\",\"articles_self_2.md\":\"BfDDBfsY\",\"articles_self_3.md\":\"fP1FAGSq\",\"articles_self_4.md\":\"B9_3N0SV\",\"articles_self_5.md\":\"BwBA7c2t\",\"articles_self_6.md\":\"BBHEUU_t\",\"articles_self_7.md\":\"DWHrJTvQ\",\"articles_self_8.md\":\"CqKpQtPR\",\"articles_self_9.md\":\"45INF02j\",\"articles_sicp_1.md\":\"BO4gTEQ3\",\"articles_sicp_2.md\":\"DG_VPyb9\",\"articles_software-design_1.md\":\"BKCWLXN0\",\"articles_software-design_2.md\":\"fRR0rO3E\",\"articles_software-design_3.md\":\"DgNX2j82\",\"articles_software-design_4.md\":\"7DoTTce3\",\"articles_software-design_5.md\":\"BcfmIT7R\",\"articles_software-design_6.md\":\"CNGJwx2j\",\"articles_typescript_1.md\":\"B_Q8hMP7\",\"articles_work_project-log-and-summary.md\":\"B5joyKE6\",\"index.md\":\"ofGALGuw\"}");window.__VP_SITE_DATA__=JSON.parse("{\"lang\":\"en-US\",\"dir\":\"ltr\",\"title\":\"Oasis's Cloud\",\"description\":\"一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。—— 《一个数学家的辩白》\",\"base\":\"/\",\"head\":[],\"router\":{\"prefetchLinks\":true},\"appearance\":false,\"themeConfig\":{},\"locales\":{},\"scrollOffset\":134,\"cleanUrls\":false}");</script>
+    
+  </body>
 </html>

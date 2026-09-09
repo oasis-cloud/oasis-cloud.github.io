@@ -1,453 +1,304 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>[mini-next.js] 热重载：开发体验优化</title>
-        <link rel="stylesheet" href="../../../assets/fonts.css">
-        <link rel="stylesheet" href="../../../assets/graphite.css">
-        <link rel="stylesheet" href="../../../assets/pygments.css">
-        <script src="../../../assets/image-zoom.js" defer></script>
-        
-        
-    </head>
-    <body class="node-articles-frontend-nextjs-6 node-articles-frontend-nextjs node-articles-frontend node-articles node">
-        <header class="masthead">
-            <h1><a href="../../../index.html">Oasis's Cloud</a></h1>
-            
-                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
-            
-            
-            <nav class="menu">
-                <input id="menu-check" type="checkbox"/>
-                <label id="menu-label" for="menu-check" class="unselectable">
-                    <span class="icon close-icon">✕</span>
-                    <span class="icon open-icon">☰</span>
-                    <span class="text">Menu</span>
-                </label>
-                <ul>
-<li><a href="../../../index.html">首页</a></li>
-</ul>
-            </nav>
-        </header>
-        <article class="main">
-            <header class="title">
-                <h1>[mini-next.js] 热重载：开发体验优化</h1>
-                
-                
-                    <p class="author">作者：oasis</p>
-                
-                <hr>
-            </header>
-            <h2>概述</h2>
-<p>热重载（Hot Reload）是现代前端开发工具的核心功能之一。它允许开发者在修改代码后，浏览器自动刷新页面，无需手动刷新。本文将深入分析并实现热重载功能。</p>
-<h2>核心概念</h2>
-<h3>什么是热重载？</h3>
-<p><strong>传统开发流程</strong>：
-<div class="highlight"><pre><span></span><code>1. 修改代码
-2. 手动刷新浏览器
-3. 查看效果
-</code></pre></div></p>
-<p><strong>热重载流程</strong>：
-<div class="highlight"><pre><span></span><code>1. 修改代码
-2. 文件监听器检测到变化
-3. 自动重新加载
-4. 浏览器自动刷新（或通过 WebSocket 通知）
-</code></pre></div></p>
-<h3>热重载的优势</h3>
-<ol>
-<li><strong>提高开发效率</strong>：无需手动刷新</li>
-<li><strong>保持状态</strong>：某些情况下可以保持应用状态</li>
-<li><strong>即时反馈</strong>：立即看到代码变化的效果</li>
-</ol>
-<h2>功能分析</h2>
-<h3>1. 文件系统监听</h3>
-<p><strong>职责</strong>：
-- 监听 <code>pages</code> 和 <code>app</code> 目录的变化
-- 检测文件创建、修改、删除</p>
-<p><strong>技术选择</strong>：
-- 使用 <code>chokidar</code> 库（跨平台文件监听）</p>
-<h3>2. 模块缓存管理</h3>
-<p><strong>职责</strong>：
-- 缓存已加载的模块
-- 文件变化时清除相关缓存
-- 重新加载模块</p>
-<h3>3. 路由重新扫描</h3>
-<p><strong>职责</strong>：
-- 文件变化时重新扫描路由
-- 更新路由映射表</p>
-<h3>4. 浏览器通知（简化版）</h3>
-<p><strong>职责</strong>：
-- 通知浏览器刷新（简化实现：仅日志输出）
-- 真实 Next.js 使用 WebSocket</p>
-<h2>逐步实现</h2>
-<h3>步骤 1：实现模块加载器</h3>
-<div class="highlight"><pre><span></span><code><span class="c1">// src/utils/module-loader.js</span>
-
-<span class="k">export</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nx">ModuleLoader</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="kr">constructor</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">cache</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Map</span><span class="p">();</span>
-<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">watchFiles</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Set</span><span class="p">();</span>
-<span class="w">  </span><span class="p">}</span>
-
-<span class="w">  </span><span class="k">async</span><span class="w"> </span><span class="nx">loadModule</span><span class="p">(</span><span class="nx">filePath</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="c1">// 检查缓存</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">cache</span><span class="p">.</span><span class="nx">has</span><span class="p">(</span><span class="nx">filePath</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">cache</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">filePath</span><span class="p">);</span>
-<span class="w">    </span><span class="p">}</span>
-
-<span class="w">    </span><span class="c1">// 检查文件是否存在</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">fs</span><span class="p">.</span><span class="nx">existsSync</span><span class="p">(</span><span class="nx">filePath</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="sb">`Module not found: </span><span class="si">${</span><span class="nx">filePath</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
-<span class="w">    </span><span class="p">}</span>
-
-<span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="c1">// 动态导入模块</span>
-<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">module</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="k">import</span><span class="p">(</span><span class="sb">`file://</span><span class="si">${</span><span class="nx">filePath</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
-
-<span class="w">      </span><span class="c1">// 获取默认导出或命名导出</span>
-<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">component</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">module</span><span class="p">.</span><span class="k">default</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">module</span><span class="p">;</span>
-
-<span class="w">      </span><span class="c1">// 缓存模块</span>
-<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">cache</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="nx">filePath</span><span class="p">,</span><span class="w"> </span><span class="nx">component</span><span class="p">);</span>
-<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">watchFiles</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">filePath</span><span class="p">);</span>
-
-<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="nx">component</span><span class="p">;</span>
-<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="sb">`Error loading module </span><span class="si">${</span><span class="nx">filePath</span><span class="si">}</span><span class="sb">:`</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
-<span class="w">      </span><span class="k">throw</span><span class="w"> </span><span class="nx">error</span><span class="p">;</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">  </span><span class="p">}</span>
-
-<span class="w">  </span><span class="nx">clearCache</span><span class="p">(</span><span class="nx">filePath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">filePath</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">cache</span><span class="p">.</span><span class="ow">delete</span><span class="p">(</span><span class="nx">filePath</span><span class="p">);</span>
-<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">watchFiles</span><span class="p">.</span><span class="ow">delete</span><span class="p">(</span><span class="nx">filePath</span><span class="p">);</span>
-<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">cache</span><span class="p">.</span><span class="nx">clear</span><span class="p">();</span>
-<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">watchFiles</span><span class="p">.</span><span class="nx">clear</span><span class="p">();</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">  </span><span class="p">}</span>
-
-<span class="w">  </span><span class="nx">getWatchedFiles</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">Array</span><span class="p">.</span><span class="kr">from</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">watchFiles</span><span class="p">);</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="p">}</span>
-</code></pre></div>
-<p><strong>关键点</strong>：
-- 使用 <code>Map</code> 缓存模块
-- 动态导入使用 <code>file://</code> 协议
-- 支持清除单个或全部缓存</p>
-<h3>步骤 2：实现文件监听器</h3>
-<div class="highlight"><pre><span></span><code><span class="c1">// src/server/dev-server.js</span>
-
-<span class="k">import</span><span class="w"> </span><span class="nx">chokidar</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;chokidar&#39;</span><span class="p">;</span>
-
-<span class="nx">_startWatcher</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">watchDirs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[];</span>
-<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">useAppRouter</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">fs</span><span class="p">.</span><span class="nx">existsSync</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">appDir</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">watchDirs</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">appDir</span><span class="p">);</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">usePagesRouter</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">fs</span><span class="p">.</span><span class="nx">existsSync</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">pagesDir</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">watchDirs</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">pagesDir</span><span class="p">);</span>
-<span class="w">  </span><span class="p">}</span>
-
-<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">watchDirs</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="mf">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">return</span><span class="p">;</span>
-<span class="w">  </span><span class="p">}</span>
-
-<span class="w">  </span><span class="k">this</span><span class="p">.</span><span class="nx">watcher</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">chokidar</span><span class="p">.</span><span class="nx">watch</span><span class="p">(</span><span class="nx">watchDirs</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">ignored</span><span class="o">:</span><span class="w"> </span><span class="sr">/node_modules/</span><span class="p">,</span>
-<span class="w">    </span><span class="nx">persistent</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-<span class="w">  </span><span class="p">});</span>
-
-<span class="w">  </span><span class="k">this</span><span class="p">.</span><span class="nx">watcher</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;change&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">filePath</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`\n🔄 文件变化: </span><span class="si">${</span><span class="nx">filePath</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
-
-<span class="w">    </span><span class="c1">// 清除相关模块缓存</span>
-<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">moduleLoader</span><span class="p">.</span><span class="nx">clearCache</span><span class="p">(</span><span class="nx">filePath</span><span class="p">);</span>
-
-<span class="w">    </span><span class="c1">// 重新扫描路由</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">useAppRouter</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">filePath</span><span class="p">.</span><span class="nx">startsWith</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">appDir</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">appRouter</span><span class="p">.</span><span class="nx">scanRoutes</span><span class="p">();</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">usePagesRouter</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">filePath</span><span class="p">.</span><span class="nx">startsWith</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">pagesDir</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">pagesRouter</span><span class="p">.</span><span class="nx">scanRoutes</span><span class="p">();</span>
-<span class="w">    </span><span class="p">}</span>
-
-<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`✅ 已重新加载\n`</span><span class="p">);</span>
-<span class="w">  </span><span class="p">});</span>
-
-<span class="w">  </span><span class="k">this</span><span class="p">.</span><span class="nx">watcher</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;add&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">filePath</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`\n➕ 新增文件: </span><span class="si">${</span><span class="nx">filePath</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">useAppRouter</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">filePath</span><span class="p">.</span><span class="nx">startsWith</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">appDir</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">appRouter</span><span class="p">.</span><span class="nx">scanRoutes</span><span class="p">();</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">usePagesRouter</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">filePath</span><span class="p">.</span><span class="nx">startsWith</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">pagesDir</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">pagesRouter</span><span class="p">.</span><span class="nx">scanRoutes</span><span class="p">();</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`✅ 路由已更新\n`</span><span class="p">);</span>
-<span class="w">  </span><span class="p">});</span>
-
-<span class="w">  </span><span class="k">this</span><span class="p">.</span><span class="nx">watcher</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;unlink&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">filePath</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`\n➖ 删除文件: </span><span class="si">${</span><span class="nx">filePath</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
-<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">moduleLoader</span><span class="p">.</span><span class="nx">clearCache</span><span class="p">(</span><span class="nx">filePath</span><span class="p">);</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">useAppRouter</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">filePath</span><span class="p">.</span><span class="nx">startsWith</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">appDir</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">appRouter</span><span class="p">.</span><span class="nx">scanRoutes</span><span class="p">();</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">usePagesRouter</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">filePath</span><span class="p">.</span><span class="nx">startsWith</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">pagesDir</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">pagesRouter</span><span class="p">.</span><span class="nx">scanRoutes</span><span class="p">();</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`✅ 路由已更新\n`</span><span class="p">);</span>
-<span class="w">  </span><span class="p">});</span>
-<span class="p">}</span>
-</code></pre></div>
-<p><strong>关键点</strong>：
-- 监听多个目录（<code>app</code> 和 <code>pages</code>）
-- 忽略 <code>node_modules</code>
-- 处理三种事件：<code>change</code>、<code>add</code>、<code>unlink</code>
-- 清除缓存并重新扫描路由</p>
-<h3>步骤 3：在服务器启动时启动监听</h3>
-<div class="highlight"><pre><span></span><code><span class="k">async</span><span class="w"> </span><span class="nx">start</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="c1">// ... 其他初始化代码 ...</span>
-
-<span class="w">  </span><span class="c1">// 启动文件监听</span>
-<span class="w">  </span><span class="k">this</span><span class="p">.</span><span class="nx">_startWatcher</span><span class="p">();</span>
-
-<span class="w">  </span><span class="c1">// ... 启动 HTTP 服务器 ...</span>
-<span class="p">}</span>
-</code></pre></div>
-<h2>完整实现</h2>
-<h3>模块加载器</h3>
-<div class="highlight"><pre><span></span><code><span class="c1">// src/utils/module-loader.js</span>
-
-<span class="k">import</span><span class="w"> </span><span class="nx">fs</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;fs&#39;</span><span class="p">;</span>
-
-<span class="k">export</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nx">ModuleLoader</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="kr">constructor</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">cache</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Map</span><span class="p">();</span>
-<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">watchFiles</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Set</span><span class="p">();</span>
-<span class="w">  </span><span class="p">}</span>
-
-<span class="w">  </span><span class="k">async</span><span class="w"> </span><span class="nx">loadModule</span><span class="p">(</span><span class="nx">filePath</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">cache</span><span class="p">.</span><span class="nx">has</span><span class="p">(</span><span class="nx">filePath</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">cache</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">filePath</span><span class="p">);</span>
-<span class="w">    </span><span class="p">}</span>
-
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">fs</span><span class="p">.</span><span class="nx">existsSync</span><span class="p">(</span><span class="nx">filePath</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="sb">`Module not found: </span><span class="si">${</span><span class="nx">filePath</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
-<span class="w">    </span><span class="p">}</span>
-
-<span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">module</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="k">import</span><span class="p">(</span><span class="sb">`file://</span><span class="si">${</span><span class="nx">filePath</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
-<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">component</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">module</span><span class="p">.</span><span class="k">default</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">module</span><span class="p">;</span>
-
-<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">cache</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="nx">filePath</span><span class="p">,</span><span class="w"> </span><span class="nx">component</span><span class="p">);</span>
-<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">watchFiles</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">filePath</span><span class="p">);</span>
-
-<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="nx">component</span><span class="p">;</span>
-<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="sb">`Error loading module </span><span class="si">${</span><span class="nx">filePath</span><span class="si">}</span><span class="sb">:`</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
-<span class="w">      </span><span class="k">throw</span><span class="w"> </span><span class="nx">error</span><span class="p">;</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">  </span><span class="p">}</span>
-
-<span class="w">  </span><span class="nx">clearCache</span><span class="p">(</span><span class="nx">filePath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">filePath</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">cache</span><span class="p">.</span><span class="ow">delete</span><span class="p">(</span><span class="nx">filePath</span><span class="p">);</span>
-<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">watchFiles</span><span class="p">.</span><span class="ow">delete</span><span class="p">(</span><span class="nx">filePath</span><span class="p">);</span>
-<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">cache</span><span class="p">.</span><span class="nx">clear</span><span class="p">();</span>
-<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">watchFiles</span><span class="p">.</span><span class="nx">clear</span><span class="p">();</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">  </span><span class="p">}</span>
-
-<span class="w">  </span><span class="nx">getWatchedFiles</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">Array</span><span class="p">.</span><span class="kr">from</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">watchFiles</span><span class="p">);</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="p">}</span>
-</code></pre></div>
-<h3>文件监听器集成</h3>
-<div class="highlight"><pre><span></span><code><span class="c1">// src/server/dev-server.js</span>
-
-<span class="k">import</span><span class="w"> </span><span class="nx">chokidar</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;chokidar&#39;</span><span class="p">;</span>
-
-<span class="k">export</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nx">DevServer</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="c1">// ... 其他代码 ...</span>
-
-<span class="w">  </span><span class="k">async</span><span class="w"> </span><span class="nx">start</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="c1">// ... 初始化代码 ...</span>
-
-<span class="w">    </span><span class="c1">// 启动文件监听</span>
-<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">_startWatcher</span><span class="p">();</span>
-
-<span class="w">    </span><span class="c1">// ... 启动服务器 ...</span>
-<span class="w">  </span><span class="p">}</span>
-
-<span class="w">  </span><span class="nx">_startWatcher</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">watchDirs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[];</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">useAppRouter</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">fs</span><span class="p">.</span><span class="nx">existsSync</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">appDir</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nx">watchDirs</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">appDir</span><span class="p">);</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">usePagesRouter</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">fs</span><span class="p">.</span><span class="nx">existsSync</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">pagesDir</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nx">watchDirs</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">pagesDir</span><span class="p">);</span>
-<span class="w">    </span><span class="p">}</span>
-
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">watchDirs</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="mf">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="k">return</span><span class="p">;</span>
-<span class="w">    </span><span class="p">}</span>
-
-<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">watcher</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">chokidar</span><span class="p">.</span><span class="nx">watch</span><span class="p">(</span><span class="nx">watchDirs</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nx">ignored</span><span class="o">:</span><span class="w"> </span><span class="sr">/node_modules/</span><span class="p">,</span>
-<span class="w">      </span><span class="nx">persistent</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-<span class="w">    </span><span class="p">});</span>
-
-<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">watcher</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;change&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">filePath</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`\n🔄 文件变化: </span><span class="si">${</span><span class="nx">filePath</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
-<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">moduleLoader</span><span class="p">.</span><span class="nx">clearCache</span><span class="p">(</span><span class="nx">filePath</span><span class="p">);</span>
-
-<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">useAppRouter</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">filePath</span><span class="p">.</span><span class="nx">startsWith</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">appDir</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">appRouter</span><span class="p">.</span><span class="nx">scanRoutes</span><span class="p">();</span>
-<span class="w">      </span><span class="p">}</span>
-<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">usePagesRouter</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">filePath</span><span class="p">.</span><span class="nx">startsWith</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">pagesDir</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">pagesRouter</span><span class="p">.</span><span class="nx">scanRoutes</span><span class="p">();</span>
-<span class="w">      </span><span class="p">}</span>
-
-<span class="w">      </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`✅ 已重新加载\n`</span><span class="p">);</span>
-<span class="w">    </span><span class="p">});</span>
-
-<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">watcher</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;add&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">filePath</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`\n➕ 新增文件: </span><span class="si">${</span><span class="nx">filePath</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
-<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">useAppRouter</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">filePath</span><span class="p">.</span><span class="nx">startsWith</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">appDir</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">appRouter</span><span class="p">.</span><span class="nx">scanRoutes</span><span class="p">();</span>
-<span class="w">      </span><span class="p">}</span>
-<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">usePagesRouter</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">filePath</span><span class="p">.</span><span class="nx">startsWith</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">pagesDir</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">pagesRouter</span><span class="p">.</span><span class="nx">scanRoutes</span><span class="p">();</span>
-<span class="w">      </span><span class="p">}</span>
-<span class="w">      </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`✅ 路由已更新\n`</span><span class="p">);</span>
-<span class="w">    </span><span class="p">});</span>
-
-<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">watcher</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;unlink&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">filePath</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`\n➖ 删除文件: </span><span class="si">${</span><span class="nx">filePath</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
-<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">moduleLoader</span><span class="p">.</span><span class="nx">clearCache</span><span class="p">(</span><span class="nx">filePath</span><span class="p">);</span>
-<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">useAppRouter</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">filePath</span><span class="p">.</span><span class="nx">startsWith</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">appDir</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">appRouter</span><span class="p">.</span><span class="nx">scanRoutes</span><span class="p">();</span>
-<span class="w">      </span><span class="p">}</span>
-<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">usePagesRouter</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">filePath</span><span class="p">.</span><span class="nx">startsWith</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">pagesDir</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="nx">pagesRouter</span><span class="p">.</span><span class="nx">scanRoutes</span><span class="p">();</span>
-<span class="w">      </span><span class="p">}</span>
-<span class="w">      </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`✅ 路由已更新\n`</span><span class="p">);</span>
-<span class="w">    </span><span class="p">});</span>
-<span class="w">  </span><span class="p">}</span>
-
-<span class="w">  </span><span class="nx">stop</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">watcher</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">watcher</span><span class="p">.</span><span class="nx">close</span><span class="p">();</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">server</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="k">this</span><span class="p">.</span><span class="nx">server</span><span class="p">.</span><span class="nx">close</span><span class="p">();</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="p">}</span>
-</code></pre></div>
-<h2>工作流程</h2>
-<h3>文件修改流程</h3>
-<div class="highlight"><pre><span></span><code>1. 开发者修改 pages/about.js
-   ↓
-2. chokidar 检测到文件变化
-   ↓
-3. 触发 &#39;change&#39; 事件
-   ↓
-4. 清除模块缓存（about.js）
-   ↓
-5. 重新扫描路由（如果有结构变化）
-   ↓
-6. 下次请求时重新加载模块
-</code></pre></div>
-<h3>新增文件流程</h3>
-<div class="highlight"><pre><span></span><code>1. 开发者创建 pages/new-page.js
-   ↓
-2. chokidar 检测到新文件
-   ↓
-3. 触发 &#39;add&#39; 事件
-   ↓
-4. 重新扫描路由
-   ↓
-5. 新路由立即可用
-</code></pre></div>
-<h3>删除文件流程</h3>
-<div class="highlight"><pre><span></span><code>1. 开发者删除 pages/old-page.js
-   ↓
-2. chokidar 检测到文件删除
-   ↓
-3. 触发 &#39;unlink&#39; 事件
-   ↓
-4. 清除模块缓存
-   ↓
-5. 重新扫描路由
-   ↓
-6. 路由从映射表中移除
-</code></pre></div>
-<h2>与真实 Next.js 的差异</h2>
-<h3>已实现</h3>
-<ul>
-<li>✅ 文件系统监听</li>
-<li>✅ 模块缓存清除</li>
-<li>✅ 路由重新扫描</li>
-</ul>
-<h3>未实现（简化）</h3>
-<ul>
-<li>❌ <strong>WebSocket 通知</strong>：真实 Next.js 通过 WebSocket 通知浏览器刷新</li>
-<li>❌ <strong>增量更新</strong>：只更新变化的部分</li>
-<li>❌ <strong>状态保持</strong>：某些情况下保持应用状态</li>
-<li>❌ <strong>错误恢复</strong>：自动恢复编译错误</li>
-</ul>
-<h2>使用示例</h2>
-<h3>启动开发服务器</h3>
-<div class="highlight"><pre><span></span><code>npm<span class="w"> </span>run<span class="w"> </span>dev
-</code></pre></div>
-<h3>修改文件</h3>
-<div class="highlight"><pre><span></span><code><span class="c1">// pages/about.js</span>
-<span class="k">export</span><span class="w"> </span><span class="k">default</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">About</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="o">&lt;</span><span class="nx">h1</span><span class="o">&gt;</span><span class="nx">About</span><span class="w"> </span><span class="nx">Page</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nx">Updated</span><span class="o">!&lt;</span><span class="err">/h1&gt;;</span>
-<span class="p">}</span>
-</code></pre></div>
-<p><strong>控制台输出</strong>：
-<div class="highlight"><pre><span></span><code>🔄 文件变化: /path/to/pages/about.js
-✅ 已重新加载
-</code></pre></div></p>
-<h3>刷新浏览器</h3>
-<p>访问页面时，会使用新加载的模块，显示更新后的内容。</p>
-<h2>总结</h2>
-<p>热重载的核心是<strong>文件监听和模块缓存管理</strong>：</p>
-<ol>
-<li><strong>文件监听</strong>：使用 <code>chokidar</code> 监听文件系统变化</li>
-<li><strong>缓存清除</strong>：文件变化时清除相关模块缓存</li>
-<li><strong>路由更新</strong>：重新扫描路由以反映文件结构变化</li>
-<li><strong>自动重载</strong>：下次请求时使用新代码</li>
-</ol>
-<p>这个实现虽然简化，但包含了热重载的核心逻辑。在实际开发中，开发者修改代码后，服务器会自动检测变化并重新加载，大大提高了开发效率。</p>
-<hr />
-<p><strong>相关文件</strong>：
-- <code>src/utils/module-loader.js</code> - 模块加载器实现
-- <code>src/server/dev-server.js</code> - 文件监听器集成
-- <code>package.json</code> - chokidar 依赖</p>
-        </article>
-        
-        <script src="https://giscus.app/client.js"
-                data-repo="oasis-cloud/blog-comments"
-                data-repo-id="R_kgDOKEliHA"
-                data-category="General"
-                data-category-id="DIC_kwDOKEliHM4CYb6e"
-                data-mapping="pathname"
-                data-strict="0"
-                data-reactions-enabled="1"
-                data-emit-metadata="0"
-                data-input-position="bottom"
-                data-theme="preferred_color_scheme"
-                data-lang="zh-CN"
-                crossorigin="anonymous"
-                async>
-        </script>
-    </body>
+<html lang="en-US" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>[mini-next.js] 热重载：开发体验优化 | Oasis's Cloud</title>
+    <meta name="description" content="一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。—— 《一个数学家的辩白》">
+    <meta name="generator" content="VitePress v1.6.4">
+    <link rel="preload stylesheet" href="/assets/style.BubUdk9b.css" as="style">
+    <link rel="preload stylesheet" href="/vp-icons.css" as="style">
+    
+    <script type="module" src="/assets/app.BuMT4ivz.js"></script>
+    <link rel="modulepreload" href="/assets/chunks/theme.HZhl2uCL.js">
+    <link rel="modulepreload" href="/assets/chunks/framework.86O3EbG5.js">
+    <link rel="modulepreload" href="/assets/articles_frontend_nextjs_6.md.C3vMZWNU.lean.js">
+    <script id="check-mac-os">document.documentElement.classList.toggle("mac",/Mac|iPhone|iPod|iPad/i.test(navigator.platform));</script>
+  </head>
+  <body>
+    <div id="app"><div class="graphite-page"><header class="masthead"><h1><a href="/">Oasis&#39;s Cloud</a></h1><p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p><nav class="menu"><input id="menu-check" type="checkbox"><label id="menu-label" for="menu-check" class="unselectable"><span class="icon close-icon">✕</span><span class="icon open-icon">☰</span><span class="text">Menu</span></label><ul><li><a href="/">首页</a></li></ul></nav></header><article class="main"><header class="title"><h1>[mini-next.js] 热重载：开发体验优化</h1><!----><p class="author">作者：oasis</p><hr></header><div style="position:relative;"><div><h2 id="概述" tabindex="-1">概述</h2><p>热重载（Hot Reload）是现代前端开发工具的核心功能之一。它允许开发者在修改代码后，浏览器自动刷新页面，无需手动刷新。本文将深入分析并实现热重载功能。</p><h2 id="核心概念" tabindex="-1">核心概念</h2><h3 id="什么是热重载" tabindex="-1">什么是热重载？</h3><p><strong>传统开发流程</strong>：</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span>1. 修改代码</span></span>
+<span class="line"><span>2. 手动刷新浏览器</span></span>
+<span class="line"><span>3. 查看效果</span></span></code></pre></div><p><strong>热重载流程</strong>：</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span>1. 修改代码</span></span>
+<span class="line"><span>2. 文件监听器检测到变化</span></span>
+<span class="line"><span>3. 自动重新加载</span></span>
+<span class="line"><span>4. 浏览器自动刷新（或通过 WebSocket 通知）</span></span></code></pre></div><h3 id="热重载的优势" tabindex="-1">热重载的优势</h3><ol><li><strong>提高开发效率</strong>：无需手动刷新</li><li><strong>保持状态</strong>：某些情况下可以保持应用状态</li><li><strong>即时反馈</strong>：立即看到代码变化的效果</li></ol><h2 id="功能分析" tabindex="-1">功能分析</h2><h3 id="_1-文件系统监听" tabindex="-1">1. 文件系统监听</h3><p><strong>职责</strong>：</p><ul><li>监听 <code>pages</code> 和 <code>app</code> 目录的变化</li><li>检测文件创建、修改、删除</li></ul><p><strong>技术选择</strong>：</p><ul><li>使用 <code>chokidar</code> 库（跨平台文件监听）</li></ul><h3 id="_2-模块缓存管理" tabindex="-1">2. 模块缓存管理</h3><p><strong>职责</strong>：</p><ul><li>缓存已加载的模块</li><li>文件变化时清除相关缓存</li><li>重新加载模块</li></ul><h3 id="_3-路由重新扫描" tabindex="-1">3. 路由重新扫描</h3><p><strong>职责</strong>：</p><ul><li>文件变化时重新扫描路由</li><li>更新路由映射表</li></ul><h3 id="_4-浏览器通知-简化版" tabindex="-1">4. 浏览器通知（简化版）</h3><p><strong>职责</strong>：</p><ul><li>通知浏览器刷新（简化实现：仅日志输出）</li><li>真实 Next.js 使用 WebSocket</li></ul><h2 id="逐步实现" tabindex="-1">逐步实现</h2><h3 id="步骤-1-实现模块加载器" tabindex="-1">步骤 1：实现模块加载器</h3><div class="language-javascript vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">javascript</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// src/utils/module-loader.js</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">export</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> class</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> ModuleLoader</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  constructor</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">() {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">    this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.cache </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> new</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> Map</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">    this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.watchFiles </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> new</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> Set</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  async</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> loadModule</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">filePath</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) {</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    // 检查缓存</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.cache.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">has</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(filePath)) {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">      return</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.cache.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">get</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(filePath);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    // 检查文件是否存在</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">!</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">fs.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">existsSync</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(filePath)) {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">      throw</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> new</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> Error</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">`Module not found: ${</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">filePath</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">}`</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    try</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">      // 动态导入模块</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">      const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> module</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> await</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> import</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">`file://${</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">filePath</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">}`</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      </span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">      // 获取默认导出或命名导出</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">      const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> component</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> module</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.default </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">||</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> module</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      </span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">      // 缓存模块</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">      this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.cache.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">set</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(filePath, component);</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">      this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.watchFiles.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">add</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(filePath);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      </span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">      return</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> component;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    } </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">catch</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (error) {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">error</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">`Error loading module ${</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">filePath</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">}:`</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">, error);</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">      throw</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> error;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">  clearCache</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">filePath</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> null</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (filePath) {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">      this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.cache.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">delete</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(filePath);</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">      this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.watchFiles.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">delete</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(filePath);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    } </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">else</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">      this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.cache.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">clear</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">      this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.watchFiles.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">clear</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">  getWatchedFiles</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">() {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    return</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> Array.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">from</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.watchFiles);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span></code></pre></div><p><strong>关键点</strong>：</p><ul><li>使用 <code>Map</code> 缓存模块</li><li>动态导入使用 <code>file://</code> 协议</li><li>支持清除单个或全部缓存</li></ul><h3 id="步骤-2-实现文件监听器" tabindex="-1">步骤 2：实现文件监听器</h3><div class="language-javascript vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">javascript</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// src/server/dev-server.js</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">import</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> chokidar </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">from</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &#39;chokidar&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">_startWatcher</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">() {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> watchDirs</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> [];</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.useAppRouter </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">&amp;&amp;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> fs.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">existsSync</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.appDir)) {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    watchDirs.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">push</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.appDir);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  }</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.usePagesRouter </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">&amp;&amp;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> fs.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">existsSync</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.pagesDir)) {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    watchDirs.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">push</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.pagesDir);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (watchDirs.</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">length</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> ===</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 0</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    return</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.watcher </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> chokidar.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">watch</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(watchDirs, {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    ignored:</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> /node_modules/</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">,</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    persistent: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">true</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">,</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  });</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.watcher.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">on</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&#39;change&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">, (</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">filePath</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">`</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">\n</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">🔄 文件变化: ${</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">filePath</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">}`</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    </span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    // 清除相关模块缓存</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">    this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.moduleLoader.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">clearCache</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(filePath);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    </span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    // 重新扫描路由</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.useAppRouter </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">&amp;&amp;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> filePath.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">startsWith</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.appDir)) {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">      this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.appRouter.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">scanRoutes</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    }</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.usePagesRouter </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">&amp;&amp;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> filePath.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">startsWith</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.pagesDir)) {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">      this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.pagesRouter.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">scanRoutes</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    </span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">`✅ 已重新加载</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">\n</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">`</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  });</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.watcher.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">on</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&#39;add&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">, (</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">filePath</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">`</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">\n</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">➕ 新增文件: ${</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">filePath</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">}`</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">);</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.useAppRouter </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">&amp;&amp;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> filePath.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">startsWith</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.appDir)) {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">      this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.appRouter.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">scanRoutes</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    }</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.usePagesRouter </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">&amp;&amp;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> filePath.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">startsWith</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.pagesDir)) {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">      this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.pagesRouter.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">scanRoutes</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">`✅ 路由已更新</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">\n</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">`</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  });</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.watcher.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">on</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&#39;unlink&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">, (</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">filePath</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">`</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">\n</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">➖ 删除文件: ${</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">filePath</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">}`</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">);</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">    this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.moduleLoader.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">clearCache</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(filePath);</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.useAppRouter </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">&amp;&amp;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> filePath.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">startsWith</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.appDir)) {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">      this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.appRouter.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">scanRoutes</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    }</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.usePagesRouter </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">&amp;&amp;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> filePath.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">startsWith</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.pagesDir)) {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">      this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.pagesRouter.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">scanRoutes</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">`✅ 路由已更新</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">\n</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">`</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  });</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span></code></pre></div><p><strong>关键点</strong>：</p><ul><li>监听多个目录（<code>app</code> 和 <code>pages</code>）</li><li>忽略 <code>node_modules</code></li><li>处理三种事件：<code>change</code>、<code>add</code>、<code>unlink</code></li><li>清除缓存并重新扫描路由</li></ul><h3 id="步骤-3-在服务器启动时启动监听" tabindex="-1">步骤 3：在服务器启动时启动监听</h3><div class="language-javascript vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">javascript</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">async </span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">start</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">() {</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">  // ... 其他初始化代码 ...</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  </span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">  // 启动文件监听</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">  this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">_startWatcher</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  </span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">  // ... 启动 HTTP 服务器 ...</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span></code></pre></div><h2 id="完整实现" tabindex="-1">完整实现</h2><h3 id="模块加载器" tabindex="-1">模块加载器</h3><div class="language-javascript vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">javascript</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// src/utils/module-loader.js</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">import</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> fs </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">from</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &#39;fs&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">export</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> class</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> ModuleLoader</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  constructor</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">() {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">    this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.cache </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> new</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> Map</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">    this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.watchFiles </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> new</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> Set</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  async</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> loadModule</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">filePath</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.cache.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">has</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(filePath)) {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">      return</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.cache.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">get</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(filePath);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">!</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">fs.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">existsSync</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(filePath)) {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">      throw</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> new</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> Error</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">`Module not found: ${</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">filePath</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">}`</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    try</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">      const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> module</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> await</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> import</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">`file://${</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">filePath</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">}`</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">);</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">      const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> component</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> module</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.default </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">||</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> module</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      </span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">      this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.cache.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">set</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(filePath, component);</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">      this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.watchFiles.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">add</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(filePath);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      </span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">      return</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> component;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    } </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">catch</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (error) {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">error</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">`Error loading module ${</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">filePath</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">}:`</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">, error);</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">      throw</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> error;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">  clearCache</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">filePath</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> null</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (filePath) {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">      this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.cache.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">delete</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(filePath);</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">      this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.watchFiles.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">delete</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(filePath);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    } </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">else</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">      this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.cache.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">clear</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">      this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.watchFiles.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">clear</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">  getWatchedFiles</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">() {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    return</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> Array.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">from</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.watchFiles);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span></code></pre></div><h3 id="文件监听器集成" tabindex="-1">文件监听器集成</h3><div class="language-javascript vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">javascript</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// src/server/dev-server.js</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">import</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> chokidar </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">from</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &#39;chokidar&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">export</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> class</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> DevServer</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">  // ... 其他代码 ...</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  async</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> start</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">() {</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    // ... 初始化代码 ...</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    </span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    // 启动文件监听</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">    this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">_startWatcher</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    </span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    // ... 启动服务器 ...</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">  _startWatcher</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">() {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> watchDirs</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> [];</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.useAppRouter </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">&amp;&amp;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> fs.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">existsSync</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.appDir)) {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      watchDirs.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">push</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.appDir);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    }</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.usePagesRouter </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">&amp;&amp;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> fs.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">existsSync</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.pagesDir)) {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      watchDirs.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">push</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.pagesDir);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (watchDirs.</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">length</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> ===</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 0</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">      return</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">    this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.watcher </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> chokidar.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">watch</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(watchDirs, {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      ignored:</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> /node_modules/</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">,</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      persistent: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">true</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">,</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    });</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">    this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.watcher.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">on</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&#39;change&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">, (</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">filePath</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">`</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">\n</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">🔄 文件变化: ${</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">filePath</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">}`</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">);</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">      this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.moduleLoader.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">clearCache</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(filePath);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      </span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">      if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.useAppRouter </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">&amp;&amp;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> filePath.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">startsWith</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.appDir)) {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">        this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.appRouter.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">scanRoutes</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      }</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">      if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.usePagesRouter </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">&amp;&amp;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> filePath.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">startsWith</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.pagesDir)) {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">        this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.pagesRouter.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">scanRoutes</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      </span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">`✅ 已重新加载</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">\n</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">`</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    });</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">    this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.watcher.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">on</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&#39;add&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">, (</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">filePath</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">`</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">\n</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">➕ 新增文件: ${</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">filePath</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">}`</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">);</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">      if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.useAppRouter </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">&amp;&amp;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> filePath.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">startsWith</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.appDir)) {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">        this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.appRouter.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">scanRoutes</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      }</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">      if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.usePagesRouter </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">&amp;&amp;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> filePath.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">startsWith</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.pagesDir)) {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">        this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.pagesRouter.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">scanRoutes</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">`✅ 路由已更新</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">\n</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">`</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    });</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">    this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.watcher.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">on</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&#39;unlink&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">, (</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">filePath</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">`</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">\n</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">➖ 删除文件: ${</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">filePath</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">}`</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">);</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">      this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.moduleLoader.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">clearCache</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(filePath);</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">      if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.useAppRouter </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">&amp;&amp;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> filePath.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">startsWith</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.appDir)) {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">        this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.appRouter.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">scanRoutes</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      }</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">      if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.usePagesRouter </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">&amp;&amp;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> filePath.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">startsWith</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.pagesDir)) {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">        this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.pagesRouter.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">scanRoutes</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">`✅ 路由已更新</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">\n</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">`</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    });</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">  stop</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">() {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.watcher) {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">      this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.watcher.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">close</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    }</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.server) {</span></span>
+<span class="line"><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">      this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">.server.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">close</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span></code></pre></div><h2 id="工作流程" tabindex="-1">工作流程</h2><h3 id="文件修改流程" tabindex="-1">文件修改流程</h3><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span>1. 开发者修改 pages/about.js</span></span>
+<span class="line"><span>   ↓</span></span>
+<span class="line"><span>2. chokidar 检测到文件变化</span></span>
+<span class="line"><span>   ↓</span></span>
+<span class="line"><span>3. 触发 &#39;change&#39; 事件</span></span>
+<span class="line"><span>   ↓</span></span>
+<span class="line"><span>4. 清除模块缓存（about.js）</span></span>
+<span class="line"><span>   ↓</span></span>
+<span class="line"><span>5. 重新扫描路由（如果有结构变化）</span></span>
+<span class="line"><span>   ↓</span></span>
+<span class="line"><span>6. 下次请求时重新加载模块</span></span></code></pre></div><h3 id="新增文件流程" tabindex="-1">新增文件流程</h3><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span>1. 开发者创建 pages/new-page.js</span></span>
+<span class="line"><span>   ↓</span></span>
+<span class="line"><span>2. chokidar 检测到新文件</span></span>
+<span class="line"><span>   ↓</span></span>
+<span class="line"><span>3. 触发 &#39;add&#39; 事件</span></span>
+<span class="line"><span>   ↓</span></span>
+<span class="line"><span>4. 重新扫描路由</span></span>
+<span class="line"><span>   ↓</span></span>
+<span class="line"><span>5. 新路由立即可用</span></span></code></pre></div><h3 id="删除文件流程" tabindex="-1">删除文件流程</h3><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span>1. 开发者删除 pages/old-page.js</span></span>
+<span class="line"><span>   ↓</span></span>
+<span class="line"><span>2. chokidar 检测到文件删除</span></span>
+<span class="line"><span>   ↓</span></span>
+<span class="line"><span>3. 触发 &#39;unlink&#39; 事件</span></span>
+<span class="line"><span>   ↓</span></span>
+<span class="line"><span>4. 清除模块缓存</span></span>
+<span class="line"><span>   ↓</span></span>
+<span class="line"><span>5. 重新扫描路由</span></span>
+<span class="line"><span>   ↓</span></span>
+<span class="line"><span>6. 路由从映射表中移除</span></span></code></pre></div><h2 id="与真实-next-js-的差异" tabindex="-1">与真实 Next.js 的差异</h2><h3 id="已实现" tabindex="-1">已实现</h3><ul><li>✅ 文件系统监听</li><li>✅ 模块缓存清除</li><li>✅ 路由重新扫描</li></ul><h3 id="未实现-简化" tabindex="-1">未实现（简化）</h3><ul><li>❌ <strong>WebSocket 通知</strong>：真实 Next.js 通过 WebSocket 通知浏览器刷新</li><li>❌ <strong>增量更新</strong>：只更新变化的部分</li><li>❌ <strong>状态保持</strong>：某些情况下保持应用状态</li><li>❌ <strong>错误恢复</strong>：自动恢复编译错误</li></ul><h2 id="使用示例" tabindex="-1">使用示例</h2><h3 id="启动开发服务器" tabindex="-1">启动开发服务器</h3><div class="language-bash vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">bash</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">npm</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> run</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> dev</span></span></code></pre></div><h3 id="修改文件" tabindex="-1">修改文件</h3><div class="language-javascript vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">javascript</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// pages/about.js</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">export</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> default</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> function</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> About</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">() {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  return</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> &lt;</span><span style="--shiki-light:#22863A;--shiki-dark:#22863A;">h1</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">&gt;About Page - Updated!&lt;/</span><span style="--shiki-light:#22863A;--shiki-dark:#22863A;">h1</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">&gt;;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span></code></pre></div><p><strong>控制台输出</strong>：</p><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span>🔄 文件变化: /path/to/pages/about.js</span></span>
+<span class="line"><span>✅ 已重新加载</span></span></code></pre></div><h3 id="刷新浏览器" tabindex="-1">刷新浏览器</h3><p>访问页面时，会使用新加载的模块，显示更新后的内容。</p><h2 id="总结" tabindex="-1">总结</h2><p>热重载的核心是<strong>文件监听和模块缓存管理</strong>：</p><ol><li><strong>文件监听</strong>：使用 <code>chokidar</code> 监听文件系统变化</li><li><strong>缓存清除</strong>：文件变化时清除相关模块缓存</li><li><strong>路由更新</strong>：重新扫描路由以反映文件结构变化</li><li><strong>自动重载</strong>：下次请求时使用新代码</li></ol><p>这个实现虽然简化，但包含了热重载的核心逻辑。在实际开发中，开发者修改代码后，服务器会自动检测变化并重新加载，大大提高了开发效率。</p><hr><p><strong>相关文件</strong>：</p><ul><li><code>src/utils/module-loader.js</code> - 模块加载器实现</li><li><code>src/server/dev-server.js</code> - 文件监听器集成</li><li><code>package.json</code> - chokidar 依赖</li></ul></div></div></article><div id="giscus-host"></div></div></div>
+    <script>window.__VP_HASH_MAP__=JSON.parse("{\"articles_1.md\":\"BcbiCNen\",\"articles_2.md\":\"BOs6JrAg\",\"articles_3.md\":\"CyolPGRT\",\"articles_4.md\":\"CQKiIuaw\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_0.md\":\"Doxdb5Ij\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_1.md\":\"wjOL1phh\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_10.md\":\"LyZJnSxs\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_11.md\":\"C2FmrDp9\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_12.md\":\"BEHmrOu0\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_13.md\":\"DiD-bHGf\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_14.md\":\"BBmdeYZf\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_15.md\":\"f2O62Iuk\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_16.md\":\"BKGADZ4j\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_17.md\":\"C5m88eYa\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_18.md\":\"DFfKG_xT\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_19.md\":\"C58qgz4I\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_2.md\":\"BfG3umGO\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_20.md\":\"royf5I3T\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_21.md\":\"CmoEuQRQ\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_22.md\":\"5Bz1s6MM\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_23.md\":\"CZho3lv8\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_24.md\":\"BPs4s-6q\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_25.md\":\"DhIkQ8QI\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_26.md\":\"DQrDDSmD\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_3.md\":\"XzEbegi1\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_4.md\":\"Blv6FVHR\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_5.md\":\"C-qPQeyL\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_6.md\":\"6Y-BWQfb\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_7.md\":\"CAzQfyMt\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_8.md\":\"CsjQZCCO\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_9.md\":\"BASgbQl4\",\"articles_artificial-intelligence_books_ai-modern-approach_1.md\":\"DDDLmf54\",\"articles_artificial-intelligence_books_ai-modern-approach_10.md\":\"DhmTh9g1\",\"articles_artificial-intelligence_books_ai-modern-approach_11.md\":\"CX8Rq9wV\",\"articles_artificial-intelligence_books_ai-modern-approach_12.md\":\"fnPMZxKE\",\"articles_artificial-intelligence_books_ai-modern-approach_13.md\":\"DelyBh0u\",\"articles_artificial-intelligence_books_ai-modern-approach_14.md\":\"CEVzmm13\",\"articles_artificial-intelligence_books_ai-modern-approach_15.md\":\"BYaoy4oU\",\"articles_artificial-intelligence_books_ai-modern-approach_16.md\":\"CJBur2Mw\",\"articles_artificial-intelligence_books_ai-modern-approach_17.md\":\"Q8pYMbdg\",\"articles_artificial-intelligence_books_ai-modern-approach_18.md\":\"BEtfJPVK\",\"articles_artificial-intelligence_books_ai-modern-approach_19.md\":\"DWkWsT-C\",\"articles_artificial-intelligence_books_ai-modern-approach_2.md\":\"Ck1Z-mEe\",\"articles_artificial-intelligence_books_ai-modern-approach_20.md\":\"CbcsJXY_\",\"articles_artificial-intelligence_books_ai-modern-approach_21.md\":\"DOHxMpLE\",\"articles_artificial-intelligence_books_ai-modern-approach_22.md\":\"BrmXqyYy\",\"articles_artificial-intelligence_books_ai-modern-approach_23.md\":\"ufr3NqX2\",\"articles_artificial-intelligence_books_ai-modern-approach_24.md\":\"CfKi8b69\",\"articles_artificial-intelligence_books_ai-modern-approach_25.md\":\"D3FZV2ha\",\"articles_artificial-intelligence_books_ai-modern-approach_26.md\":\"C9NvT34X\",\"articles_artificial-intelligence_books_ai-modern-approach_3.md\":\"5B16Mude\",\"articles_artificial-intelligence_books_ai-modern-approach_4.md\":\"CFTsLVCQ\",\"articles_artificial-intelligence_books_ai-modern-approach_5.md\":\"B6w77Qe3\",\"articles_artificial-intelligence_books_ai-modern-approach_6.md\":\"DOwdgivt\",\"articles_artificial-intelligence_books_ai-modern-approach_7.md\":\"BKl-9NUI\",\"articles_artificial-intelligence_books_ai-modern-approach_8.md\":\"Ca5nK7HY\",\"articles_artificial-intelligence_books_ai-modern-approach_9.md\":\"bjCn9mRw\",\"articles_artificial-intelligence_books_build-a-llm_1.md\":\"Cn53qMLE\",\"articles_artificial-intelligence_books_build-a-llm_2-1.md\":\"BEGkEHbf\",\"articles_artificial-intelligence_books_build-a-llm_2.md\":\"B9f-kfwa\",\"articles_artificial-intelligence_books_build-a-llm_3.md\":\"BgPDZZNE\",\"articles_artificial-intelligence_books_build-a-llm_4.md\":\"BGvCF-sm\",\"articles_artificial-intelligence_books_build-a-llm_5.md\":\"D6qs6PuA\",\"articles_artificial-intelligence_books_build-a-llm_6.md\":\"Ohih56sP\",\"articles_artificial-intelligence_books_build-a-llm_7.md\":\"HTDAcsNc\",\"articles_artificial-intelligence_books_essential-math-for-ai_1-1.md\":\"j-08bog-\",\"articles_artificial-intelligence_books_essential-math-for-ai_1.md\":\"CyeVwxe6\",\"articles_artificial-intelligence_books_essential-math-for-ai_2.md\":\"DLf3lmAl\",\"articles_artificial-intelligence_books_mathematics-for-ml-in-plain-words_11.md\":\"deaEf6CH\",\"articles_artificial-intelligence_books_shitangjijianrengongzhinengke_1.md\":\"Dspbam5X\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_1.md\":\"CsHrSBOo\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_2.md\":\"Ch4VnrDN\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_3.md\":\"DOx3ENDu\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_4.md\":\"BwTW514D\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_5.md\":\"CMT0adxO\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_6.md\":\"Da5Lo1qJ\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_7.md\":\"IVT6-nY0\",\"articles_artificial-intelligence_mcp_1.md\":\"BSwKgK20\",\"articles_artificial-intelligence_mcp_2.md\":\"BqYmOfWE\",\"articles_artificial-intelligence_mcp_3.md\":\"CRqerqdh\",\"articles_artificial-intelligence_mcp_4.md\":\"DlZf-ZBs\",\"articles_artificial-intelligence_network-source_1.md\":\"7tN07cqO\",\"articles_artificial-intelligence_python_1.md\":\"DEs7NHra\",\"articles_artificial-intelligence_research_1.md\":\"BRYxkx9w\",\"articles_artificial-intelligence_research_2.md\":\"D1S9y95L\",\"articles_artificial-intelligence_research_3.md\":\"CDPKFpDS\",\"articles_artificial-intelligence_research_4.md\":\"gcdEnQ27\",\"articles_artificial-intelligence_research_5.md\":\"BWuimyaG\",\"articles_artificial-intelligence_research_6.md\":\"ChDVsr6P\",\"articles_artificial-intelligence_skills_1.md\":\"CE_3tidO\",\"articles_artificial-intelligence_skills_2.md\":\"Dw-LqypE\",\"articles_artificial-intelligence_vibe-coding_1.md\":\"CIaQQuRU\",\"articles_artificial-intelligence_vibe-coding_2.md\":\"BYp_N-la\",\"articles_books_0-10000_1.md\":\"CqfzqHFB\",\"articles_books_burn-the-boats_1.md\":\"DQW5Dj64\",\"articles_books_dontmakemethink_1.md\":\"FcQgzyiC\",\"articles_books_gaoxiaonengrenshideqigexiguan_1.md\":\"Di8W2D55\",\"articles_books_head-start_1.md\":\"DSEU1Nd4\",\"articles_books_honghuanghouxiaoying_1.md\":\"DsEwgoHE\",\"articles_books_how-program-works_1.md\":\"In6CRTPC\",\"articles_books_how-program-works_2.md\":\"C__yRHZZ\",\"articles_books_kebiansikao_1.md\":\"ZpZj4VBL\",\"articles_books_lixingdebianjie_1.md\":\"C2i5IU4p\",\"articles_books_match_1.md\":\"DQuyyF-w\",\"articles_books_next-age-of-uncertainty_1.md\":\"B3kXpIOT\",\"articles_books_piancha_1.md\":\"DUp5o2L7\",\"articles_books_programingwithtypes_1.md\":\"DPf6sVtD\",\"articles_books_ruhexuexi_1.md\":\"BiBkTqFk\",\"articles_books_ruozhedewuqi_1.md\":\"CJI0TUtU\",\"articles_books_shendugongzuo_1.md\":\"BAdThtq3\",\"articles_books_shishituichu_1.md\":\"DSMpw3Mj\",\"articles_books_siweideqiutu_1.md\":\"D9N51GZd\",\"articles_books_xingweichuanranxiaoying_1.md\":\"D8YfH3E9\",\"articles_books_yingxianglidebadazhangai_1.md\":\"BkSkh0ib\",\"articles_books_zenyanglongluorenxin_1.md\":\"DyaoIWo4\",\"articles_books_zhegezhexuejiajiulewo_1.md\":\"EBCGPBD1\",\"articles_daily-thoughts_1.md\":\"rLmpFK7a\",\"articles_frontend_1.md\":\"B3Ok2hY9\",\"articles_frontend_10.md\":\"uK6wPfMr\",\"articles_frontend_11.md\":\"B8q93MGs\",\"articles_frontend_12.md\":\"D2lc-Jbc\",\"articles_frontend_13.md\":\"D5nGGZ29\",\"articles_frontend_14.md\":\"67MvYpiC\",\"articles_frontend_15.md\":\"Bonqr1JH\",\"articles_frontend_16.md\":\"BIcIqlrh\",\"articles_frontend_17.md\":\"DT2OnR9t\",\"articles_frontend_18.md\":\"C2UgM1rp\",\"articles_frontend_19.md\":\"Cm_l10Pp\",\"articles_frontend_2.md\":\"BH6obgzX\",\"articles_frontend_20.md\":\"DYOd_Ygi\",\"articles_frontend_21.md\":\"BGvMohX8\",\"articles_frontend_22.md\":\"C9-4PiZs\",\"articles_frontend_23.md\":\"LFQ7EJby\",\"articles_frontend_24.md\":\"CxV3Qmff\",\"articles_frontend_25.md\":\"KDaPWGvE\",\"articles_frontend_3.md\":\"Ocf5SV2e\",\"articles_frontend_4.md\":\"8oQMBnVM\",\"articles_frontend_6.md\":\"DLjPQ4H2\",\"articles_frontend_7.md\":\"C3_rdklM\",\"articles_frontend_8.md\":\"DmoQqnzq\",\"articles_frontend_9.md\":\"BIp4wdMq\",\"articles_frontend_fluent-react_1.md\":\"BsLnBF9_\",\"articles_frontend_immerjs_1.md\":\"cAKCGuJw\",\"articles_frontend_immerjs_2.md\":\"DhP_sCjK\",\"articles_frontend_micro-frontends_1.md\":\"CTPkX7P4\",\"articles_frontend_micro-frontends_2.md\":\"BhiyXnsA\",\"articles_frontend_next-intl_1.md\":\"CHLJLMhT\",\"articles_frontend_nextjs_1.md\":\"FcBi0n4F\",\"articles_frontend_nextjs_2.md\":\"IMXOyUyo\",\"articles_frontend_nextjs_3.md\":\"sMqC4VLv\",\"articles_frontend_nextjs_4.md\":\"YErQgQac\",\"articles_frontend_nextjs_5.md\":\"BSvkBEDC\",\"articles_frontend_nextjs_6.md\":\"C3vMZWNU\",\"articles_frontend_programming-with-types_1.md\":\"BZDTAiUn\",\"articles_frontend_programming-with-types_2.md\":\"DvF69qyh\",\"articles_frontend_programming-with-types_3.md\":\"D5ySUS2k\",\"articles_frontend_programming-with-types_4-1.md\":\"DgmuJ2FE\",\"articles_frontend_programming-with-types_4.md\":\"DCyvJyTt\",\"articles_frontend_programming-with-types_5.md\":\"D5s4hW6n\",\"articles_frontend_programming-with-types_6.md\":\"0TkUZXWK\",\"articles_frontend_programming-with-types_7.md\":\"ChvDQygU\",\"articles_frontend_react-hooks_1.md\":\"Da9rnukC\",\"articles_frontend_react_1-1.md\":\"DTtIXyO7\",\"articles_frontend_react_1.md\":\"B5UJRAnh\",\"articles_frontend_react_2-1.md\":\"BbIbpqlZ\",\"articles_frontend_react_2.md\":\"CFuzM5My\",\"articles_frontend_react_3-1.md\":\"CB6esavT\",\"articles_frontend_react_3-2.md\":\"Ddn-EfA3\",\"articles_frontend_react_3.md\":\"COI_9hCd\",\"articles_frontend_react_4.md\":\"DmDsL2Q0\",\"articles_frontend_zustand_1-1.md\":\"Bq6-0ZBv\",\"articles_frontend_zustand_1.md\":\"CXYFgHGX\",\"articles_github_1.md\":\"CAskap8A\",\"articles_github_2.md\":\"BV3nkWQp\",\"articles_github_3.md\":\"CMzJSJkE\",\"articles_github_4.md\":\"DJP9VajY\",\"articles_github_5.md\":\"Bn3oSnIk\",\"articles_javascript_1.md\":\"3nNbgAfV\",\"articles_javascript_2.md\":\"CjZc98RL\",\"articles_javascript_3.md\":\"CL42n_iU\",\"articles_learn-js-design-pattern_1.md\":\"CZTgpT5Z\",\"articles_morden-browser_1.md\":\"CFKiS64y\",\"articles_morden-browser_2.md\":\"BXaAupn0\",\"articles_network_1.md\":\"C0I3csFQ\",\"articles_network_2.md\":\"DDLuT2tq\",\"articles_network_3.md\":\"CWo0kz2B\",\"articles_nodejs_1.md\":\"Db65q0P1\",\"articles_nodejs_2.md\":\"CQAqiGBk\",\"articles_nodejs_3.md\":\"4FAcAo6A\",\"articles_philosophy-of-software-design_1.md\":\"B9EW4TRr\",\"articles_philosophy-of-software-design_2.md\":\"Lhpe0bAQ\",\"articles_philosophy-of-software-design_3.md\":\"CJxtSZDL\",\"articles_plan_1.md\":\"uSPmD0KW\",\"articles_plan_动手学大模型智能体.md\":\"BSQ4xbeQ\",\"articles_plan_动手学强化学习.md\":\"Bvnyy0ei\",\"articles_plan_动手学机器学习.md\":\"BJQt5tTu\",\"articles_plan_动手学深度学习.md\":\"BXMo25LP\",\"articles_plan_动手学自然语言处理.md\":\"BeVLNyzS\",\"articles_read_1.md\":\"DNGJ03Om\",\"articles_self_1.md\":\"zoUg7f4K\",\"articles_self_2.md\":\"BfDDBfsY\",\"articles_self_3.md\":\"fP1FAGSq\",\"articles_self_4.md\":\"B9_3N0SV\",\"articles_self_5.md\":\"BwBA7c2t\",\"articles_self_6.md\":\"BBHEUU_t\",\"articles_self_7.md\":\"DWHrJTvQ\",\"articles_self_8.md\":\"CqKpQtPR\",\"articles_self_9.md\":\"45INF02j\",\"articles_sicp_1.md\":\"BO4gTEQ3\",\"articles_sicp_2.md\":\"DG_VPyb9\",\"articles_software-design_1.md\":\"BKCWLXN0\",\"articles_software-design_2.md\":\"fRR0rO3E\",\"articles_software-design_3.md\":\"DgNX2j82\",\"articles_software-design_4.md\":\"7DoTTce3\",\"articles_software-design_5.md\":\"BcfmIT7R\",\"articles_software-design_6.md\":\"CNGJwx2j\",\"articles_typescript_1.md\":\"B_Q8hMP7\",\"articles_work_project-log-and-summary.md\":\"B5joyKE6\",\"index.md\":\"ofGALGuw\"}");window.__VP_SITE_DATA__=JSON.parse("{\"lang\":\"en-US\",\"dir\":\"ltr\",\"title\":\"Oasis's Cloud\",\"description\":\"一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。—— 《一个数学家的辩白》\",\"base\":\"/\",\"head\":[],\"router\":{\"prefetchLinks\":true},\"appearance\":false,\"themeConfig\":{},\"locales\":{},\"scrollOffset\":134,\"cleanUrls\":false}");</script>
+    
+  </body>
 </html>

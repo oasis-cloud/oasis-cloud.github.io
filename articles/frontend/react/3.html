@@ -1,254 +1,144 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>React scheduler</title>
-        <link rel="stylesheet" href="../../../assets/fonts.css">
-        <link rel="stylesheet" href="../../../assets/graphite.css">
-        <link rel="stylesheet" href="../../../assets/pygments.css">
-        <script src="../../../assets/image-zoom.js" defer></script>
-        
-        
-    </head>
-    <body class="node-articles-frontend-react-3 node-articles-frontend-react node-articles-frontend node-articles node">
-        <header class="masthead">
-            <h1><a href="../../../index.html">Oasis's Cloud</a></h1>
-            
-                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
-            
-            
-            <nav class="menu">
-                <input id="menu-check" type="checkbox"/>
-                <label id="menu-label" for="menu-check" class="unselectable">
-                    <span class="icon close-icon">✕</span>
-                    <span class="icon open-icon">☰</span>
-                    <span class="text">Menu</span>
-                </label>
-                <ul>
-<li><a href="../../../index.html">首页</a></li>
-</ul>
-            </nav>
-        </header>
-        <article class="main">
-            <header class="title">
-                <h1>React scheduler</h1>
-                
-                    <p class="subtitle">基于 v19.2.0 版本</p>
-                
-                
-                    <p class="author">作者：oasis</p>
-                
-                <hr>
-            </header>
-            <p>调度器的源码位于 React 代码仓库 <code>packages/scheduler</code> 目录。其结构如下：</p>
-<div class="highlight"><pre><span></span><code>scheduler
-|-src
-    |-forks
-|-index.js
-</code></pre></div>
-<p>index.js 作为入口文件，导出了 forks 下 <code>Scheduler.js</code> 的方法和变量。 在 <code>Scheduler.js</code> 的第一行导入了调度器优先级的定义：</p>
-<div class="highlight"><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">NoPriority</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0</span><span class="p">;</span><span class="w"> </span><span class="c1">// 无优先级：默认状态，通常表示任务尚未分配优先级</span>
-<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">ImmediatePriority</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1</span><span class="p">;</span><span class="w"> </span><span class="c1">// 立即优先级：最高优先级</span>
-<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">UserBlockingPriority</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">2</span><span class="p">;</span><span class="w"> </span><span class="c1">// 用户阻塞优先级：高优先级;用于用户交互相关的任务。例如：按钮点击、表单提交等用户直接触发的操作。</span>
-<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">NormalPriority</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">3</span><span class="p">;</span><span class="w"> </span><span class="c1">// 普通优先级：默认优先级，例如：数据获取、状态更新等</span>
-<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">LowPriority</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">4</span><span class="p">;</span><span class="w"> </span><span class="c1">// 低优先级：可延迟执行的任务。例如：预加载、分析数据上报等</span>
-<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">IdlePriority</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">5</span><span class="p">;</span><span class="w"> </span><span class="c1">// 空闲优先级：最低优先级。仅在浏览器空闲时执行</span>
-</code></pre></div>
-<h2>优先级控制算法</h2>
-<p><code>Scheduler</code> 的优先级通过 <code>packages/scheduler/src/SchedulerMinHeap.js</code> 实现的最小堆进行管理。最小堆是基于完全二叉树实现的。因为完全二叉树具有如下特点：</p>
-<ol>
-<li>可以用数组存储顺序存储</li>
-</ol>
-<div class="highlight"><pre><span></span><code>完全二叉树：
-          1[0]
-        /     \
-      2[1]    3[2]
-     /   \   /
-   4[3] 5[4] 6[5]
-
-对应的数组：[1, 2, 3, 4, 5, 6]
-索引：     [0, 1, 2, 3, 4, 5]
-</code></pre></div>
-<ol>
-<li>父子节点索引关系固定</li>
-</ol>
-<p>对于索引为 i 的节点： 
-- 父节点索引：(i - 1) &gt;&gt;&gt; 1 或 Math.floor((i - 1) / 2)
-在 <code>siftUp</code> 方法中对应的代码：<code>const parentIndex = (index - 1) &gt;&gt;&gt; 1;</code>
-- 左子节点索引：i * 2 + 1
-- 右子节点索引：i * 2 + 2</p>
-<ol>
-<li>数组长度等于节点个数</li>
-</ol>
-<p>执行示例可参看：<a href="../../../articles/frontend/react/3-1.html">最小堆执行过程</a></p>
-<h2>调度器的工作流程</h2>
-<p><code>Scheduler.js</code> 中的初始化代码如下：</p>
-<div class="highlight"><pre><span></span><code><span class="kd">let</span><span class="w"> </span><span class="nx">schedulePerformWorkUntilDeadline</span><span class="p">;</span>
-<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="ow">typeof</span><span class="w"> </span><span class="nx">localSetImmediate</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;function&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="c1">// Node.js 和旧版 IE。</span>
-<span class="w">    </span><span class="c1">// 我们更倾向于使用 setImmediate 有几个原因。</span>
-<span class="w">    </span><span class="c1">//</span>
-<span class="w">    </span><span class="c1">// 与 MessageChannel 不同，它不会阻止 Node.js 进程退出。</span>
-<span class="w">    </span><span class="c1">// （尽管这是 Scheduler 的 DOM 分支，但在 Node.js 15+（它有 MessageChannel）和 jsdom 的混合环境中，你可能会来到这里。）</span>
-<span class="w">    </span><span class="c1">// https://github.com/facebook/react/issues/20756</span>
-<span class="w">    </span><span class="c1">//</span>
-<span class="w">    </span><span class="c1">// 另外，它运行得更早，这正是我们想要的语义。</span>
-<span class="w">    </span><span class="c1">// 如果其他浏览器实现了它，最好使用它。</span>
-<span class="w">    </span><span class="c1">// 尽管这两种方式都不如原生调度。</span>
-<span class="w">    </span><span class="nx">schedulePerformWorkUntilDeadline</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="nx">localSetImmediate</span><span class="p">(</span><span class="nx">performWorkUntilDeadline</span><span class="p">);</span>
-<span class="w">    </span><span class="p">};</span>
-<span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="ow">typeof</span><span class="w"> </span><span class="nx">MessageChannel</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="s1">&#39;undefined&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="c1">// DOM 和 Worker 环境。</span>
-<span class="w">    </span><span class="c1">// 我们更倾向于使用 MessageChannel，因为它避免了 setTimeout 的 4ms 限制。</span>
-<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">channel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">MessageChannel</span><span class="p">();</span>
-<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">channel</span><span class="p">.</span><span class="nx">port2</span><span class="p">;</span>
-<span class="w">    </span><span class="nx">channel</span><span class="p">.</span><span class="nx">port1</span><span class="p">.</span><span class="nx">onmessage</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">performWorkUntilDeadline</span><span class="p">;</span>
-<span class="w">    </span><span class="nx">schedulePerformWorkUntilDeadline</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="nx">port</span><span class="p">.</span><span class="nx">postMessage</span><span class="p">(</span><span class="kc">null</span><span class="p">);</span>
-<span class="w">    </span><span class="p">};</span>
-<span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="c1">// 我们应该只在非浏览器环境中回退到这里。</span>
-<span class="w">    </span><span class="nx">schedulePerformWorkUntilDeadline</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="nx">localSetTimeout</span><span class="p">(</span><span class="nx">performWorkUntilDeadline</span><span class="p">,</span><span class="w"> </span><span class="mf">0</span><span class="p">);</span>
-<span class="w">    </span><span class="p">};</span>
-<span class="p">}</span>
-</code></pre></div>
-<p>在这段代码中会根据不同的环境进入不同的实现中。
-因为本文的实验在Chrome 中运行，所以只关注 MessageChannel 的流程。</p>
-<p>在 MessageChannel 的逻辑中初始化了 <code>schedulePerformWorkUnitlDeadline</code> 方法，所以这里需要有方法调用它，MessageChannel 才能工作。</p>
-<p>调用<code>schedulePerformWorkUnitlDeadline</code> 的关键是 <code>unstable_scheduleCallback</code>。</p>
-<p>react-reconciler 包中的 <code>scheduleTaskForRootDuringMicrotask()</code> 会调用 <code>scheduleCallback</code>，给 schedule 增加待处理的任务。</p>
-<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">newCallbackNode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">scheduleCallback</span><span class="p">(</span>
-<span class="w">      </span><span class="nx">schedulerPriorityLevel</span><span class="p">,</span>
-<span class="w">      </span><span class="nx">performWorkOnRootViaSchedulerTask</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span><span class="w"> </span><span class="nx">root</span><span class="p">),</span>
-<span class="w">    </span><span class="p">);</span>
-</code></pre></div>
-<p>这样 react-reconciler 和 scheduler 就协同起来了。</p>
-<p>除了 <code>scheduleTaskForRootDuringMicrotask</code>外，还有其他地方会调用 <code>scheduleCallback</code>，例如：<code>commitRoot</code>、<code>flushPassiveEffectsImpl</code>等。</p>
-<p><code>unstable_scheduleCallback()</code> 会创建 Task 对象，计算过期时间，根据 startTime 决定放入哪个队列：
-- startTime &gt; currentTime → timerQueue（延迟任务）
-- startTime &lt;= currentTime → taskQueue（立即任务）</p>
-<p>之后调用 <code>requestHostCallback()</code></p>
-<p>调用 <code>schedulePerformWorkUntilDeadline()</code> 
-- Node.js: <code>setImmediate()</code>
-- 浏览器: <code>MessageChannel.postMessage()</code>
-- 回退: <code>setTimeout()</code>  </p>
-<p><code>performWorkUntilDeadline()</code> [异步执行]</p>
-<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">performWorkUntilDeadline</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">enableRequestPaint</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">needsPaint</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">isMessageLoopRunning</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">currentTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">getCurrentTime</span><span class="p">();</span>
-<span class="w">    </span><span class="c1">// 记录开始时间，以便我们可以测量主线程被阻塞了多长时间。</span>
-<span class="w">    </span><span class="nx">startTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">currentTime</span><span class="p">;</span>
-
-<span class="w">    </span><span class="c1">// 如果调度器任务抛出错误，退出当前浏览器任务，以便可以观察到错误。</span>
-<span class="w">    </span><span class="c1">//</span>
-<span class="w">    </span><span class="c1">// 故意不使用 try-catch，因为这会使某些调试技术变得更困难。</span>
-<span class="w">    </span><span class="c1">// 相反，如果 `flushWork` 出错，那么 `hasMoreWork` 将保持为 true，我们会继续工作循环。</span>
-<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nx">hasMoreWork</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span>
-<span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nx">hasMoreWork</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">flushWork</span><span class="p">(</span><span class="nx">currentTime</span><span class="p">);</span>
-<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">finally</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">hasMoreWork</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="c1">// 如果还有更多工作，在前一个消息事件的末尾调度下一个消息事件。</span>
-<span class="w">        </span><span class="nx">schedulePerformWorkUntilDeadline</span><span class="p">();</span>
-<span class="w">      </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="nx">isMessageLoopRunning</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span>
-<span class="w">      </span><span class="p">}</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="p">};</span>
-</code></pre></div>
-<ul>
-<li>记录开始时间 startTime</li>
-<li>调用 flushWork(currentTime)</li>
-</ul>
-<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">flushWork</span><span class="p">(</span><span class="nx">initialTime</span><span class="o">:</span><span class="w"> </span><span class="nx">number</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">workLoop</span><span class="p">(</span><span class="nx">initialTime</span><span class="p">);</span>
-<span class="p">}</span>
-</code></pre></div>
-<p><code>flushWork(initialTime)</code>
-- 设置 isPerformingWork = true
-- 调用 workLoop(initialTime)
-- 清理状态和标记</p>
-<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">workLoop</span><span class="p">(</span><span class="nx">initialTime</span><span class="o">:</span><span class="w"> </span><span class="nx">number</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="nx">currentTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">initialTime</span><span class="p">;</span>
-<span class="w">  </span><span class="nx">advanceTimers</span><span class="p">(</span><span class="nx">currentTime</span><span class="p">);</span>
-<span class="w">  </span><span class="nx">currentTask</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">peek</span><span class="p">(</span><span class="nx">taskQueue</span><span class="p">);</span>
-<span class="w">  </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="nx">currentTask</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">enableAlwaysYieldScheduler</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">currentTask</span><span class="p">.</span><span class="nx">expirationTime</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="nx">currentTime</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">shouldYieldToHost</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="k">break</span><span class="p">;</span>
-<span class="w">      </span><span class="p">}</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">callback</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">currentTask</span><span class="p">.</span><span class="nx">callback</span><span class="p">;</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="ow">typeof</span><span class="w"> </span><span class="nx">callback</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;function&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nx">currentTask</span><span class="p">.</span><span class="nx">callback</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
-<span class="w">      </span><span class="nx">currentPriorityLevel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">currentTask</span><span class="p">.</span><span class="nx">priorityLevel</span><span class="p">;</span>
-<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">didUserCallbackTimeout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">currentTask</span><span class="p">.</span><span class="nx">expirationTime</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="nx">currentTime</span><span class="p">;</span>
-<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">continuationCallback</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">callback</span><span class="p">(</span><span class="nx">didUserCallbackTimeout</span><span class="p">);</span>
-<span class="w">      </span><span class="nx">currentTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">getCurrentTime</span><span class="p">();</span>
-<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="ow">typeof</span><span class="w"> </span><span class="nx">continuationCallback</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;function&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="c1">// If a continuation is returned, immediately yield to the main thread</span>
-<span class="w">        </span><span class="c1">// regardless of how much time is left in the current time slice.</span>
-<span class="w">        </span><span class="nx">currentTask</span><span class="p">.</span><span class="nx">callback</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">continuationCallback</span><span class="p">;</span>
-<span class="w">        </span><span class="nx">advanceTimers</span><span class="p">(</span><span class="nx">currentTime</span><span class="p">);</span>
-<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span>
-<span class="w">      </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">currentTask</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">peek</span><span class="p">(</span><span class="nx">taskQueue</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
-<span class="w">          </span><span class="nx">pop</span><span class="p">(</span><span class="nx">taskQueue</span><span class="p">);</span>
-<span class="w">        </span><span class="p">}</span>
-<span class="w">        </span><span class="nx">advanceTimers</span><span class="p">(</span><span class="nx">currentTime</span><span class="p">);</span>
-<span class="w">      </span><span class="p">}</span>
-<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nx">pop</span><span class="p">(</span><span class="nx">taskQueue</span><span class="p">);</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">    </span><span class="nx">currentTask</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">peek</span><span class="p">(</span><span class="nx">taskQueue</span><span class="p">);</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">enableAlwaysYieldScheduler</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">currentTask</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">currentTask</span><span class="p">.</span><span class="nx">expirationTime</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="nx">currentTime</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="c1">// This currentTask hasn&#39;t expired we yield to the browser task.</span>
-<span class="w">        </span><span class="k">break</span><span class="p">;</span>
-<span class="w">      </span><span class="p">}</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="w">  </span><span class="c1">// Return whether there&#39;s additional work</span>
-<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">currentTask</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span>
-<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="p">}</span>
-</code></pre></div>
-<p><code>workLoop(currentTime)</code> [核心工作循环]
-- advanceTimers(): 将到期的延迟任务移到 taskQueue
-- 循环处理 taskQueue 中的任务：
-    - peek(taskQueue) 获取最高优先级任务
-    - 检查是否应该让出控制权 (shouldYieldToHost)
-    - 执行任务的 callback
-    - 如果 callback 返回 continuation，继续调度
-    - 任务完成后从队列移除
-- 返回是否有更多任务 (hasMoreWork)</p>
-<p>如果有更多任务，继续调度 <code>schedulePerformWorkUntilDeadline</code>, 否则停止工作循环：<code>isMessageLoopRuning = false</code></p>
-        </article>
-        
-        <script src="https://giscus.app/client.js"
-                data-repo="oasis-cloud/blog-comments"
-                data-repo-id="R_kgDOKEliHA"
-                data-category="General"
-                data-category-id="DIC_kwDOKEliHM4CYb6e"
-                data-mapping="pathname"
-                data-strict="0"
-                data-reactions-enabled="1"
-                data-emit-metadata="0"
-                data-input-position="bottom"
-                data-theme="preferred_color_scheme"
-                data-lang="zh-CN"
-                crossorigin="anonymous"
-                async>
-        </script>
-    </body>
+<html lang="en-US" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>React scheduler | Oasis's Cloud</title>
+    <meta name="description" content="一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。—— 《一个数学家的辩白》">
+    <meta name="generator" content="VitePress v1.6.4">
+    <link rel="preload stylesheet" href="/assets/style.BubUdk9b.css" as="style">
+    <link rel="preload stylesheet" href="/vp-icons.css" as="style">
+    
+    <script type="module" src="/assets/app.BuMT4ivz.js"></script>
+    <link rel="modulepreload" href="/assets/chunks/theme.HZhl2uCL.js">
+    <link rel="modulepreload" href="/assets/chunks/framework.86O3EbG5.js">
+    <link rel="modulepreload" href="/assets/articles_frontend_react_3.md.COI_9hCd.lean.js">
+    <script id="check-mac-os">document.documentElement.classList.toggle("mac",/Mac|iPhone|iPod|iPad/i.test(navigator.platform));</script>
+  </head>
+  <body>
+    <div id="app"><div class="graphite-page"><header class="masthead"><h1><a href="/">Oasis&#39;s Cloud</a></h1><p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p><nav class="menu"><input id="menu-check" type="checkbox"><label id="menu-label" for="menu-check" class="unselectable"><span class="icon close-icon">✕</span><span class="icon open-icon">☰</span><span class="text">Menu</span></label><ul><li><a href="/">首页</a></li></ul></nav></header><article class="main"><header class="title"><h1>React scheduler</h1><p class="subtitle">基于 v19.2.0 版本</p><p class="author">作者：oasis</p><hr></header><div style="position:relative;"><div><p>调度器的源码位于 React 代码仓库 <code>packages/scheduler</code> 目录。其结构如下：</p><div class="language-html vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">html</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">scheduler</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">|-src</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    |-forks</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">|-index.js</span></span></code></pre></div><p>index.js 作为入口文件，导出了 forks 下 <code>Scheduler.js</code> 的方法和变量。 在 <code>Scheduler.js</code> 的第一行导入了调度器优先级的定义：</p><div class="language-typescript vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">typescript</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">export</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> NoPriority</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 0</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">; </span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 无优先级：默认状态，通常表示任务尚未分配优先级</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">export</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> ImmediatePriority</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 1</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">; </span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 立即优先级：最高优先级</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">export</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> UserBlockingPriority</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 2</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">; </span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 用户阻塞优先级：高优先级;用于用户交互相关的任务。例如：按钮点击、表单提交等用户直接触发的操作。</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">export</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> NormalPriority</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 3</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">; </span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 普通优先级：默认优先级，例如：数据获取、状态更新等</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">export</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> LowPriority</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 4</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">; </span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 低优先级：可延迟执行的任务。例如：预加载、分析数据上报等</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">export</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> IdlePriority</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 5</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">; </span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// 空闲优先级：最低优先级。仅在浏览器空闲时执行</span></span></code></pre></div><h2 id="优先级控制算法" tabindex="-1">优先级控制算法</h2><p><code>Scheduler</code> 的优先级通过 <code>packages/scheduler/src/SchedulerMinHeap.js</code> 实现的最小堆进行管理。最小堆是基于完全二叉树实现的。因为完全二叉树具有如下特点：</p><ol><li>可以用数组存储顺序存储</li></ol><div class="language-html vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">html</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">完全二叉树：</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">          1[0]</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">        /     \</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      2[1]    3[2]</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">     /   \   /</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">   4[3] 5[4] 6[5]</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">对应的数组：[1, 2, 3, 4, 5, 6]</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">索引：     [0, 1, 2, 3, 4, 5]</span></span></code></pre></div><ol start="2"><li>父子节点索引关系固定</li></ol><p>对于索引为 i 的节点：</p><ul><li>父节点索引：(i - 1) &gt;&gt;&gt; 1 或 Math.floor((i - 1) / 2) 在 <code>siftUp</code> 方法中对应的代码：<code> const parentIndex = (index - 1) &gt;&gt;&gt; 1;</code></li><li>左子节点索引：i * 2 + 1</li><li>右子节点索引：i * 2 + 2</li></ul><ol start="3"><li>数组长度等于节点个数</li></ol><p>执行示例可参看：<a href="/articles/frontend/react/3-1.html">最小堆执行过程</a></p><h2 id="调度器的工作流程" tabindex="-1">调度器的工作流程</h2><p><code>Scheduler.js</code> 中的初始化代码如下：</p><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">let</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> schedulePerformWorkUntilDeadline;</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">typeof</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> localSetImmediate </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">===</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &#39;function&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) {</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    // Node.js 和旧版 IE。</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    // 我们更倾向于使用 setImmediate 有几个原因。</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    //</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    // 与 MessageChannel 不同，它不会阻止 Node.js 进程退出。</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    // （尽管这是 Scheduler 的 DOM 分支，但在 Node.js 15+（它有 MessageChannel）和 jsdom 的混合环境中，你可能会来到这里。）</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    // https://github.com/facebook/react/issues/20756</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    //</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    // 另外，它运行得更早，这正是我们想要的语义。</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    // 如果其他浏览器实现了它，最好使用它。</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    // 尽管这两种方式都不如原生调度。</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">    schedulePerformWorkUntilDeadline</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> () </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">        localSetImmediate</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(performWorkUntilDeadline);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    };</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">} </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">else</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">typeof</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> MessageChannel </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">!==</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &#39;undefined&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) {</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    // DOM 和 Worker 环境。</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    // 我们更倾向于使用 MessageChannel，因为它避免了 setTimeout 的 4ms 限制。</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> channel</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> new</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> MessageChannel</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> port</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> channel.port2;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    channel.port1.onmessage </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> performWorkUntilDeadline;</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">    schedulePerformWorkUntilDeadline</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> () </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">        port.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">postMessage</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">null</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    };</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">} </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">else</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    // 我们应该只在非浏览器环境中回退到这里。</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">    schedulePerformWorkUntilDeadline</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> () </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">        localSetTimeout</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(performWorkUntilDeadline, </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">0</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    };</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span></code></pre></div><p>在这段代码中会根据不同的环境进入不同的实现中。 因为本文的实验在Chrome 中运行，所以只关注 MessageChannel 的流程。</p><p>在 MessageChannel 的逻辑中初始化了 <code>schedulePerformWorkUnitlDeadline</code> 方法，所以这里需要有方法调用它，MessageChannel 才能工作。</p><p>调用<code>schedulePerformWorkUnitlDeadline</code> 的关键是 <code>unstable_scheduleCallback</code>。</p><p>react-reconciler 包中的 <code>scheduleTaskForRootDuringMicrotask()</code> 会调用 <code>scheduleCallback</code>，给 schedule 增加待处理的任务。</p><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> newCallbackNode</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> scheduleCallback</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      schedulerPriorityLevel,</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      performWorkOnRootViaSchedulerTask.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">bind</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">null</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">, root),</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    );</span></span></code></pre></div><p>这样 react-reconciler 和 scheduler 就协同起来了。</p><p>除了 <code>scheduleTaskForRootDuringMicrotask</code>外，还有其他地方会调用 <code>scheduleCallback</code>，例如：<code>commitRoot</code>、<code>flushPassiveEffectsImpl</code>等。</p><p><code>unstable_scheduleCallback()</code> 会创建 Task 对象，计算过期时间，根据 startTime 决定放入哪个队列：</p><ul><li>startTime &gt; currentTime → timerQueue（延迟任务）</li><li>startTime &lt;= currentTime → taskQueue（立即任务）</li></ul><p>之后调用 <code>requestHostCallback()</code></p><p>调用 <code>schedulePerformWorkUntilDeadline()</code></p><ul><li>Node.js: <code>setImmediate()</code></li><li>浏览器: <code>MessageChannel.postMessage()</code></li><li>回退: <code>setTimeout()</code></li></ul><p><code>performWorkUntilDeadline()</code> [异步执行]</p><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">const</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> performWorkUntilDeadline</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> () </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (enableRequestPaint) {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    needsPaint </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> false</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  }</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (isMessageLoopRunning) {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> currentTime</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> getCurrentTime</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    // 记录开始时间，以便我们可以测量主线程被阻塞了多长时间。</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    startTime </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> currentTime;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    // 如果调度器任务抛出错误，退出当前浏览器任务，以便可以观察到错误。</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    //</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    // 故意不使用 try-catch，因为这会使某些调试技术变得更困难。</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    // 相反，如果 `flushWork` 出错，那么 `hasMoreWork` 将保持为 true，我们会继续工作循环。</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    let</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> hasMoreWork </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> true</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    try</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      hasMoreWork </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> flushWork</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(currentTime);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    } </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">finally</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">      if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (hasMoreWork) {</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">        // 如果还有更多工作，在前一个消息事件的末尾调度下一个消息事件。</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">        schedulePerformWorkUntilDeadline</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      } </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">else</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">        isMessageLoopRunning </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> false</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">};</span></span></code></pre></div><ul><li>记录开始时间 startTime</li><li>调用 flushWork(currentTime)</li></ul><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">function</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> flushWork</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">initialTime</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">:</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> number</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  return</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> workLoop</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(initialTime);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span></code></pre></div><p><code>flushWork(initialTime)</code></p><ul><li>设置 isPerformingWork = true</li><li>调用 workLoop(initialTime)</li><li>清理状态和标记</li></ul><div class="language-js vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">js</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">function</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> workLoop</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">initialTime</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">:</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> number</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  let</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> currentTime </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> initialTime;</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">  advanceTimers</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(currentTime);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  currentTask </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> peek</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(taskQueue);</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  while</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (currentTask </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">!==</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> null</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">!</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">enableAlwaysYieldScheduler) {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">      if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (currentTask.expirationTime </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> currentTime </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">&amp;&amp;</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> shouldYieldToHost</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">()) {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">        break</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    }</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> callback</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> currentTask.callback;</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">typeof</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> callback </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">===</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &#39;function&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      currentTask.callback </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> null</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      currentPriorityLevel </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> currentTask.priorityLevel;</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">      const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> didUserCallbackTimeout</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> currentTask.expirationTime </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">&lt;=</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> currentTime;</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">      const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> continuationCallback</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> callback</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(didUserCallbackTimeout);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      currentTime </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> getCurrentTime</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">();</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">      if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">typeof</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> continuationCallback </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">===</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;"> &#39;function&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) {</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">        // If a continuation is returned, immediately yield to the main thread</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">        // regardless of how much time is left in the current time slice.</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">        currentTask.callback </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> continuationCallback;</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">        advanceTimers</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(currentTime);</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">        return</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> true</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      } </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">else</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">        if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (currentTask </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">===</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> peek</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(taskQueue)) {</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">          pop</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(taskQueue);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">        }</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">        advanceTimers</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(currentTime);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    } </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">else</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">      pop</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(taskQueue);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    currentTask </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> peek</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(taskQueue);</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (enableAlwaysYieldScheduler) {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">      if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (currentTask </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">===</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> null</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> ||</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> currentTask.expirationTime </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> currentTime) {</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">        // This currentTask hasn&#39;t expired we yield to the browser task.</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">        break</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  }</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">  // Return whether there&#39;s additional work</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">  if</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> (currentTask </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">!==</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> null</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">) {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    return</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> true</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  } </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">else</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">    return</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> false</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">}</span></span></code></pre></div><p><code>workLoop(currentTime)</code> [核心工作循环]</p><ul><li>advanceTimers(): 将到期的延迟任务移到 taskQueue</li><li>循环处理 taskQueue 中的任务： <ul><li>peek(taskQueue) 获取最高优先级任务</li><li>检查是否应该让出控制权 (shouldYieldToHost)</li><li>执行任务的 callback</li><li>如果 callback 返回 continuation，继续调度</li><li>任务完成后从队列移除</li></ul></li><li>返回是否有更多任务 (hasMoreWork)</li></ul><p>如果有更多任务，继续调度 <code>schedulePerformWorkUntilDeadline</code>, 否则停止工作循环：<code>isMessageLoopRuning = false</code></p></div></div></article><div id="giscus-host"></div></div></div>
+    <script>window.__VP_HASH_MAP__=JSON.parse("{\"articles_1.md\":\"BcbiCNen\",\"articles_2.md\":\"BOs6JrAg\",\"articles_3.md\":\"CyolPGRT\",\"articles_4.md\":\"CQKiIuaw\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_0.md\":\"Doxdb5Ij\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_1.md\":\"wjOL1phh\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_10.md\":\"LyZJnSxs\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_11.md\":\"C2FmrDp9\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_12.md\":\"BEHmrOu0\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_13.md\":\"DiD-bHGf\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_14.md\":\"BBmdeYZf\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_15.md\":\"f2O62Iuk\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_16.md\":\"BKGADZ4j\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_17.md\":\"C5m88eYa\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_18.md\":\"DFfKG_xT\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_19.md\":\"C58qgz4I\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_2.md\":\"BfG3umGO\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_20.md\":\"royf5I3T\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_21.md\":\"CmoEuQRQ\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_22.md\":\"5Bz1s6MM\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_23.md\":\"CZho3lv8\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_24.md\":\"BPs4s-6q\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_25.md\":\"DhIkQ8QI\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_26.md\":\"DQrDDSmD\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_3.md\":\"XzEbegi1\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_4.md\":\"Blv6FVHR\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_5.md\":\"C-qPQeyL\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_6.md\":\"6Y-BWQfb\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_7.md\":\"CAzQfyMt\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_8.md\":\"CsjQZCCO\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_9.md\":\"BASgbQl4\",\"articles_artificial-intelligence_books_ai-modern-approach_1.md\":\"DDDLmf54\",\"articles_artificial-intelligence_books_ai-modern-approach_10.md\":\"DhmTh9g1\",\"articles_artificial-intelligence_books_ai-modern-approach_11.md\":\"CX8Rq9wV\",\"articles_artificial-intelligence_books_ai-modern-approach_12.md\":\"fnPMZxKE\",\"articles_artificial-intelligence_books_ai-modern-approach_13.md\":\"DelyBh0u\",\"articles_artificial-intelligence_books_ai-modern-approach_14.md\":\"CEVzmm13\",\"articles_artificial-intelligence_books_ai-modern-approach_15.md\":\"BYaoy4oU\",\"articles_artificial-intelligence_books_ai-modern-approach_16.md\":\"CJBur2Mw\",\"articles_artificial-intelligence_books_ai-modern-approach_17.md\":\"Q8pYMbdg\",\"articles_artificial-intelligence_books_ai-modern-approach_18.md\":\"BEtfJPVK\",\"articles_artificial-intelligence_books_ai-modern-approach_19.md\":\"DWkWsT-C\",\"articles_artificial-intelligence_books_ai-modern-approach_2.md\":\"Ck1Z-mEe\",\"articles_artificial-intelligence_books_ai-modern-approach_20.md\":\"CbcsJXY_\",\"articles_artificial-intelligence_books_ai-modern-approach_21.md\":\"DOHxMpLE\",\"articles_artificial-intelligence_books_ai-modern-approach_22.md\":\"BrmXqyYy\",\"articles_artificial-intelligence_books_ai-modern-approach_23.md\":\"ufr3NqX2\",\"articles_artificial-intelligence_books_ai-modern-approach_24.md\":\"CfKi8b69\",\"articles_artificial-intelligence_books_ai-modern-approach_25.md\":\"D3FZV2ha\",\"articles_artificial-intelligence_books_ai-modern-approach_26.md\":\"C9NvT34X\",\"articles_artificial-intelligence_books_ai-modern-approach_3.md\":\"5B16Mude\",\"articles_artificial-intelligence_books_ai-modern-approach_4.md\":\"CFTsLVCQ\",\"articles_artificial-intelligence_books_ai-modern-approach_5.md\":\"B6w77Qe3\",\"articles_artificial-intelligence_books_ai-modern-approach_6.md\":\"DOwdgivt\",\"articles_artificial-intelligence_books_ai-modern-approach_7.md\":\"BKl-9NUI\",\"articles_artificial-intelligence_books_ai-modern-approach_8.md\":\"Ca5nK7HY\",\"articles_artificial-intelligence_books_ai-modern-approach_9.md\":\"bjCn9mRw\",\"articles_artificial-intelligence_books_build-a-llm_1.md\":\"Cn53qMLE\",\"articles_artificial-intelligence_books_build-a-llm_2-1.md\":\"BEGkEHbf\",\"articles_artificial-intelligence_books_build-a-llm_2.md\":\"B9f-kfwa\",\"articles_artificial-intelligence_books_build-a-llm_3.md\":\"BgPDZZNE\",\"articles_artificial-intelligence_books_build-a-llm_4.md\":\"BGvCF-sm\",\"articles_artificial-intelligence_books_build-a-llm_5.md\":\"D6qs6PuA\",\"articles_artificial-intelligence_books_build-a-llm_6.md\":\"Ohih56sP\",\"articles_artificial-intelligence_books_build-a-llm_7.md\":\"HTDAcsNc\",\"articles_artificial-intelligence_books_essential-math-for-ai_1-1.md\":\"j-08bog-\",\"articles_artificial-intelligence_books_essential-math-for-ai_1.md\":\"CyeVwxe6\",\"articles_artificial-intelligence_books_essential-math-for-ai_2.md\":\"DLf3lmAl\",\"articles_artificial-intelligence_books_mathematics-for-ml-in-plain-words_11.md\":\"deaEf6CH\",\"articles_artificial-intelligence_books_shitangjijianrengongzhinengke_1.md\":\"Dspbam5X\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_1.md\":\"CsHrSBOo\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_2.md\":\"Ch4VnrDN\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_3.md\":\"DOx3ENDu\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_4.md\":\"BwTW514D\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_5.md\":\"CMT0adxO\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_6.md\":\"Da5Lo1qJ\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_7.md\":\"IVT6-nY0\",\"articles_artificial-intelligence_mcp_1.md\":\"BSwKgK20\",\"articles_artificial-intelligence_mcp_2.md\":\"BqYmOfWE\",\"articles_artificial-intelligence_mcp_3.md\":\"CRqerqdh\",\"articles_artificial-intelligence_mcp_4.md\":\"DlZf-ZBs\",\"articles_artificial-intelligence_network-source_1.md\":\"7tN07cqO\",\"articles_artificial-intelligence_python_1.md\":\"DEs7NHra\",\"articles_artificial-intelligence_research_1.md\":\"BRYxkx9w\",\"articles_artificial-intelligence_research_2.md\":\"D1S9y95L\",\"articles_artificial-intelligence_research_3.md\":\"CDPKFpDS\",\"articles_artificial-intelligence_research_4.md\":\"gcdEnQ27\",\"articles_artificial-intelligence_research_5.md\":\"BWuimyaG\",\"articles_artificial-intelligence_research_6.md\":\"ChDVsr6P\",\"articles_artificial-intelligence_skills_1.md\":\"CE_3tidO\",\"articles_artificial-intelligence_skills_2.md\":\"Dw-LqypE\",\"articles_artificial-intelligence_vibe-coding_1.md\":\"CIaQQuRU\",\"articles_artificial-intelligence_vibe-coding_2.md\":\"BYp_N-la\",\"articles_books_0-10000_1.md\":\"CqfzqHFB\",\"articles_books_burn-the-boats_1.md\":\"DQW5Dj64\",\"articles_books_dontmakemethink_1.md\":\"FcQgzyiC\",\"articles_books_gaoxiaonengrenshideqigexiguan_1.md\":\"Di8W2D55\",\"articles_books_head-start_1.md\":\"DSEU1Nd4\",\"articles_books_honghuanghouxiaoying_1.md\":\"DsEwgoHE\",\"articles_books_how-program-works_1.md\":\"In6CRTPC\",\"articles_books_how-program-works_2.md\":\"C__yRHZZ\",\"articles_books_kebiansikao_1.md\":\"ZpZj4VBL\",\"articles_books_lixingdebianjie_1.md\":\"C2i5IU4p\",\"articles_books_match_1.md\":\"DQuyyF-w\",\"articles_books_next-age-of-uncertainty_1.md\":\"B3kXpIOT\",\"articles_books_piancha_1.md\":\"DUp5o2L7\",\"articles_books_programingwithtypes_1.md\":\"DPf6sVtD\",\"articles_books_ruhexuexi_1.md\":\"BiBkTqFk\",\"articles_books_ruozhedewuqi_1.md\":\"CJI0TUtU\",\"articles_books_shendugongzuo_1.md\":\"BAdThtq3\",\"articles_books_shishituichu_1.md\":\"DSMpw3Mj\",\"articles_books_siweideqiutu_1.md\":\"D9N51GZd\",\"articles_books_xingweichuanranxiaoying_1.md\":\"D8YfH3E9\",\"articles_books_yingxianglidebadazhangai_1.md\":\"BkSkh0ib\",\"articles_books_zenyanglongluorenxin_1.md\":\"DyaoIWo4\",\"articles_books_zhegezhexuejiajiulewo_1.md\":\"EBCGPBD1\",\"articles_daily-thoughts_1.md\":\"rLmpFK7a\",\"articles_frontend_1.md\":\"B3Ok2hY9\",\"articles_frontend_10.md\":\"uK6wPfMr\",\"articles_frontend_11.md\":\"B8q93MGs\",\"articles_frontend_12.md\":\"D2lc-Jbc\",\"articles_frontend_13.md\":\"D5nGGZ29\",\"articles_frontend_14.md\":\"67MvYpiC\",\"articles_frontend_15.md\":\"Bonqr1JH\",\"articles_frontend_16.md\":\"BIcIqlrh\",\"articles_frontend_17.md\":\"DT2OnR9t\",\"articles_frontend_18.md\":\"C2UgM1rp\",\"articles_frontend_19.md\":\"Cm_l10Pp\",\"articles_frontend_2.md\":\"BH6obgzX\",\"articles_frontend_20.md\":\"DYOd_Ygi\",\"articles_frontend_21.md\":\"BGvMohX8\",\"articles_frontend_22.md\":\"C9-4PiZs\",\"articles_frontend_23.md\":\"LFQ7EJby\",\"articles_frontend_24.md\":\"CxV3Qmff\",\"articles_frontend_25.md\":\"KDaPWGvE\",\"articles_frontend_3.md\":\"Ocf5SV2e\",\"articles_frontend_4.md\":\"8oQMBnVM\",\"articles_frontend_6.md\":\"DLjPQ4H2\",\"articles_frontend_7.md\":\"C3_rdklM\",\"articles_frontend_8.md\":\"DmoQqnzq\",\"articles_frontend_9.md\":\"BIp4wdMq\",\"articles_frontend_fluent-react_1.md\":\"BsLnBF9_\",\"articles_frontend_immerjs_1.md\":\"cAKCGuJw\",\"articles_frontend_immerjs_2.md\":\"DhP_sCjK\",\"articles_frontend_micro-frontends_1.md\":\"CTPkX7P4\",\"articles_frontend_micro-frontends_2.md\":\"BhiyXnsA\",\"articles_frontend_next-intl_1.md\":\"CHLJLMhT\",\"articles_frontend_nextjs_1.md\":\"FcBi0n4F\",\"articles_frontend_nextjs_2.md\":\"IMXOyUyo\",\"articles_frontend_nextjs_3.md\":\"sMqC4VLv\",\"articles_frontend_nextjs_4.md\":\"YErQgQac\",\"articles_frontend_nextjs_5.md\":\"BSvkBEDC\",\"articles_frontend_nextjs_6.md\":\"C3vMZWNU\",\"articles_frontend_programming-with-types_1.md\":\"BZDTAiUn\",\"articles_frontend_programming-with-types_2.md\":\"DvF69qyh\",\"articles_frontend_programming-with-types_3.md\":\"D5ySUS2k\",\"articles_frontend_programming-with-types_4-1.md\":\"DgmuJ2FE\",\"articles_frontend_programming-with-types_4.md\":\"DCyvJyTt\",\"articles_frontend_programming-with-types_5.md\":\"D5s4hW6n\",\"articles_frontend_programming-with-types_6.md\":\"0TkUZXWK\",\"articles_frontend_programming-with-types_7.md\":\"ChvDQygU\",\"articles_frontend_react-hooks_1.md\":\"Da9rnukC\",\"articles_frontend_react_1-1.md\":\"DTtIXyO7\",\"articles_frontend_react_1.md\":\"B5UJRAnh\",\"articles_frontend_react_2-1.md\":\"BbIbpqlZ\",\"articles_frontend_react_2.md\":\"CFuzM5My\",\"articles_frontend_react_3-1.md\":\"CB6esavT\",\"articles_frontend_react_3-2.md\":\"Ddn-EfA3\",\"articles_frontend_react_3.md\":\"COI_9hCd\",\"articles_frontend_react_4.md\":\"DmDsL2Q0\",\"articles_frontend_zustand_1-1.md\":\"Bq6-0ZBv\",\"articles_frontend_zustand_1.md\":\"CXYFgHGX\",\"articles_github_1.md\":\"CAskap8A\",\"articles_github_2.md\":\"BV3nkWQp\",\"articles_github_3.md\":\"CMzJSJkE\",\"articles_github_4.md\":\"DJP9VajY\",\"articles_github_5.md\":\"Bn3oSnIk\",\"articles_javascript_1.md\":\"3nNbgAfV\",\"articles_javascript_2.md\":\"CjZc98RL\",\"articles_javascript_3.md\":\"CL42n_iU\",\"articles_learn-js-design-pattern_1.md\":\"CZTgpT5Z\",\"articles_morden-browser_1.md\":\"CFKiS64y\",\"articles_morden-browser_2.md\":\"BXaAupn0\",\"articles_network_1.md\":\"C0I3csFQ\",\"articles_network_2.md\":\"DDLuT2tq\",\"articles_network_3.md\":\"CWo0kz2B\",\"articles_nodejs_1.md\":\"Db65q0P1\",\"articles_nodejs_2.md\":\"CQAqiGBk\",\"articles_nodejs_3.md\":\"4FAcAo6A\",\"articles_philosophy-of-software-design_1.md\":\"B9EW4TRr\",\"articles_philosophy-of-software-design_2.md\":\"Lhpe0bAQ\",\"articles_philosophy-of-software-design_3.md\":\"CJxtSZDL\",\"articles_plan_1.md\":\"uSPmD0KW\",\"articles_plan_动手学大模型智能体.md\":\"BSQ4xbeQ\",\"articles_plan_动手学强化学习.md\":\"Bvnyy0ei\",\"articles_plan_动手学机器学习.md\":\"BJQt5tTu\",\"articles_plan_动手学深度学习.md\":\"BXMo25LP\",\"articles_plan_动手学自然语言处理.md\":\"BeVLNyzS\",\"articles_read_1.md\":\"DNGJ03Om\",\"articles_self_1.md\":\"zoUg7f4K\",\"articles_self_2.md\":\"BfDDBfsY\",\"articles_self_3.md\":\"fP1FAGSq\",\"articles_self_4.md\":\"B9_3N0SV\",\"articles_self_5.md\":\"BwBA7c2t\",\"articles_self_6.md\":\"BBHEUU_t\",\"articles_self_7.md\":\"DWHrJTvQ\",\"articles_self_8.md\":\"CqKpQtPR\",\"articles_self_9.md\":\"45INF02j\",\"articles_sicp_1.md\":\"BO4gTEQ3\",\"articles_sicp_2.md\":\"DG_VPyb9\",\"articles_software-design_1.md\":\"BKCWLXN0\",\"articles_software-design_2.md\":\"fRR0rO3E\",\"articles_software-design_3.md\":\"DgNX2j82\",\"articles_software-design_4.md\":\"7DoTTce3\",\"articles_software-design_5.md\":\"BcfmIT7R\",\"articles_software-design_6.md\":\"CNGJwx2j\",\"articles_typescript_1.md\":\"B_Q8hMP7\",\"articles_work_project-log-and-summary.md\":\"B5joyKE6\",\"index.md\":\"ofGALGuw\"}");window.__VP_SITE_DATA__=JSON.parse("{\"lang\":\"en-US\",\"dir\":\"ltr\",\"title\":\"Oasis's Cloud\",\"description\":\"一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。—— 《一个数学家的辩白》\",\"base\":\"/\",\"head\":[],\"router\":{\"prefetchLinks\":true},\"appearance\":false,\"themeConfig\":{},\"locales\":{},\"scrollOffset\":134,\"cleanUrls\":false}");</script>
+    
+  </body>
 </html>

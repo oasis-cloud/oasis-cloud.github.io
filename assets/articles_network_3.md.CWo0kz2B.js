@@ -1,0 +1,18 @@
+import{_ as a,b as n,c as p,g as e}from"./chunks/framework.86O3EbG5.js";const u=JSON.parse('{"title":"tcpdump","description":"","frontmatter":{"title":"tcpdump","author":"oasis","date":"2023-05-22T00:00:00.000Z"},"headers":[],"relativePath":"articles/network/3.md","filePath":"articles/network/3.md"}'),t={name:"articles/network/3.md"};function i(l,s,c,o,d,r){return n(),p("div",null,[...s[0]||(s[0]=[e(`<blockquote><p>原文地址：<a href="https://jvns.ca/blog/2016/03/16/tcpdump-is-amazing/" target="_blank" rel="noreferrer">https://jvns.ca/blog/2016/03/16/tcpdump-is-amazing/</a></p></blockquote><h2 id="tcpdump-是什么" tabindex="-1">tcpdump 是什么</h2><p>tcpdump 是一个网络抓包工具，通过使用它，可以捕获和分析网络数据包。它能够显示源地址、目标地址、协议类型、端口号、数据内容等信息。而且 tcpdump 支持多种协议：TCP、UDP、ICMP 等。并且提供了丰富的选项和过滤规则。</p><h2 id="tcpdump-命令" tabindex="-1">tcpdump 命令</h2><div class="language- vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang"></span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span>NAME</span></span>
+<span class="line"><span>       tcpdump - dump traffic on a network</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>SYNOPSIS</span></span>
+<span class="line"><span>       tcpdump [ -AbdDefhHIJKlLnNOpqStuUvxX# ] [ -B buffer_size ]</span></span>
+<span class="line"><span>               [ -c count ]</span></span>
+<span class="line"><span>               [ -C file_size ] [ -G rotate_seconds ] [ -F file ]</span></span>
+<span class="line"><span>               [ -i interface ] [ -j tstamp_type ] [ -k (metadata_arg) ]</span></span>
+<span class="line"><span>               [ -m module ] [ -M secret ]</span></span>
+<span class="line"><span>               [ --number ] [ -Q in|out|inout ]</span></span>
+<span class="line"><span>               [ -r file ] [ -V file ] [ -s snaplen ] [ -T type ] [ -w file ]</span></span>
+<span class="line"><span>               [ -W filecount ]</span></span>
+<span class="line"><span>               [ -E spi@ipaddr algo:secret,...  ]</span></span>
+<span class="line"><span>               [ -y datalinktype ] [ -z postrotate-command ] [ -Z user ]</span></span>
+<span class="line"><span>               [ -Q packet-metadata-filter ] [ -Q in|out|inout ]</span></span>
+<span class="line"><span>               [ --time-stamp-precision=tstamp_precision ]</span></span>
+<span class="line"><span>               [ --immediate-mode ] [ --version ]</span></span>
+<span class="line"><span>               [ expression ]</span></span></code></pre></div><h2 id="tcpdump-返回内容解释" tabindex="-1">tcpdump 返回内容解释</h2><p>命令 ：<code>sudo tcpdump -n -i any port 10086</code></p><p>tcpdump 的返回内容依赖协议。下面是大多数协议都有的部分。</p><ul><li>时间戳：显示数据包捕获的时间和日期信息。</li><li>源地址和目标地址：指示数据包的源IP地址和目标IP地址。</li><li>协议类型：指示数据包使用的协议，如TCP、UDP、ICMP等。</li><li>源端口和目标端口：指示数据包的源端口和目标端口号。</li><li>数据包长度：指示数据包的长度，通常以字节为单位。</li><li>标志和控制位：指示数据包的标志和控制位，如TCP的SYN、ACK、FIN等。</li><li>数据内容：显示数据包的原始内容，如数据包的有效载荷或有效负载。</li></ul><p>详细文档：<a href="https://www.tcpdump.org/manpages/tcpdump.1.html" target="_blank" rel="noreferrer">https://www.tcpdump.org/manpages/tcpdump.1.html</a></p><p><code>15:34:37.823226 IP 201.31.11.117.10086 &gt; 201.31.11.117.50798: Flags [P.], seq 0:2, ack 1, win 6370, options [nop,nop,TS val 2670709546 ecr 3306380947], length 2</code></p><h2 id="网管工具包" tabindex="-1">网管工具包</h2><ul><li>ping</li><li>dig/nslookup 域名解析</li><li>netstat/ss 检测端口号是否占用</li><li>ifconfig 检查 IP 地址</li><li>ip 配置路由</li><li>arp 查看 ARP Table</li><li>telnet 检测服务器的端口是可用</li><li>ssh</li><li>lsof 哪些端口被使用</li><li>sysctl 配置 socket</li><li>openvpn 配置 vpn</li><li>nftables/iptables 配置防火墙或 NAT</li></ul>`,13)])])}const h=a(t,[["render",i]]);export{u as __pageData,h as default};

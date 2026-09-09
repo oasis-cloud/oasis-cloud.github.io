@@ -1,204 +1,41 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Immer 数据处理流程解析</title>
-        <link rel="stylesheet" href="../../../assets/fonts.css">
-        <link rel="stylesheet" href="../../../assets/graphite.css">
-        <link rel="stylesheet" href="../../../assets/pygments.css">
-        <script src="../../../assets/image-zoom.js" defer></script>
-        
-        
-    </head>
-    <body class="node-articles-frontend-immerjs-2 node-articles-frontend-immerjs node-articles-frontend node-articles node">
-        <header class="masthead">
-            <h1><a href="../../../index.html">Oasis's Cloud</a></h1>
-            
-                <p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p>
-            
-            
-            <nav class="menu">
-                <input id="menu-check" type="checkbox"/>
-                <label id="menu-label" for="menu-check" class="unselectable">
-                    <span class="icon close-icon">✕</span>
-                    <span class="icon open-icon">☰</span>
-                    <span class="text">Menu</span>
-                </label>
-                <ul>
-<li><a href="../../../index.html">首页</a></li>
-</ul>
-            </nav>
-        </header>
-        <article class="main">
-            <header class="title">
-                <h1>Immer 数据处理流程解析</h1>
-                
-                
-                    <p class="author">作者：oasis</p>
-                
-                <hr>
-            </header>
-            <p>Immer 通过 <code>produce</code> 函数实现不可变数据的处理。整个流程可以概括为：创建 draft → 修改跟踪 → 最终化处理 → 返回新状态。下面结合流程图详细说明每个阶段的工作机制。</p>
-<p><img alt="img.png" src="/images/frontend/immer不可变数据的处理流程.png" /></p>
-<h2>流程概览</h2>
-<p>从流程图中可以看到，Immer 的数据处理主要分为三个阶段：</p>
-<ol>
-<li><strong>初始化阶段</strong>：创建 scope 和根 draft</li>
-<li><strong>修改阶段</strong>：通过 Proxy 拦截操作，跟踪修改</li>
-<li><strong>最终化阶段</strong>：根据修改情况生成新状态</li>
-</ol>
-<h2>初始化阶段</h2>
-<p>当调用 <code>produce(baseState, draft =&gt; { ... })</code> 时，首先会创建一个新的 scope：</p>
-<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">scope</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">enterScope</span><span class="p">(</span><span class="k">this</span><span class="p">)</span>
-<span class="kd">const</span><span class="w"> </span><span class="nx">proxy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">createProxy</span><span class="p">(</span><span class="nx">base</span><span class="p">,</span><span class="w"> </span><span class="kc">undefined</span><span class="p">)</span>
-</code></pre></div>
-<p><strong>Scope 的作用</strong>：
-- 管理整个 <code>produce</code> 调用的上下文
-- 存储所有创建的 draft 对象
-- 提供错误恢复机制</p>
-<p><strong>Draft 的创建</strong>：
-- 为原始对象创建 Proxy 代理
-- 每个 draft 内部都有 <code>DRAFT_STATE</code> 属性
-- State 包含 <code>base_</code>（原始对象）、<code>copy_</code>（null）、<code>modified_</code>（false）等</p>
-<h2>修改阶段</h2>
-<p>当在 recipe 函数中修改 draft 时，Proxy 会拦截这些操作：</p>
-<h3>属性访问</h3>
-<div class="highlight"><pre><span></span><code><span class="nx">draft</span><span class="p">.</span><span class="nx">user</span><span class="p">.</span><span class="nx">age</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">31</span>
-</code></pre></div>
-<p>访问 <code>draft.user</code> 时：
-- 检查 <code>user</code> 属性是否等于原始值
-- 如果相等，调用 <code>prepareCopy(state)</code> 准备副本
-- 创建 <code>user</code> 对象的 draft 并返回</p>
-<h3>属性赋值</h3>
-<p>设置 <code>age</code> 属性时：
-- <code>prepareCopy(state)</code>：为 draft 创建 <code>copy_</code>（浅拷贝）
-- <code>markChanged(state)</code>：标记当前 state 为 <code>modified_ = true</code>
-- 递归向上标记所有父级 state 为已修改
-- 将新值赋给 <code>copy_</code> 中的对应属性</p>
-<p><strong>关键设计</strong>：
-- <strong>惰性复制</strong>：只有在真正修改时才创建副本
-- <strong>修改传播</strong>：子对象的修改会自动传播到父级
-- <strong>结构共享</strong>：未修改的部分保持引用共享</p>
-<h2>最终化阶段</h2>
-<p>当 recipe 函数执行完成后，进入最终化处理：</p>
-<div class="highlight"><pre><span></span><code><span class="nx">processResult</span><span class="p">(</span><span class="nx">result</span><span class="p">,</span><span class="w"> </span><span class="nx">scope</span><span class="p">)</span>
-</code></pre></div>
-<h3>最终化流程</h3>
-<ol>
-<li>
-<p><strong>检查修改状态</strong>：</p>
-<ul>
-<li>如果 <code>modified_ = false</code>，直接返回原始对象</li>
-<li>如果 <code>modified_ = true</code>，处理 <code>copy_</code></li>
-</ul>
-</li>
-<li>
-<p><strong>递归处理子属性</strong>：</p>
-<ul>
-<li>遍历 <code>copy_</code> 中的所有属性</li>
-<li>如果属性是 draft，递归调用 <code>finalize</code></li>
-<li>如果属性是普通对象，根据配置决定是否冻结</li>
-</ul>
-</li>
-<li>
-<p><strong>生成补丁</strong>（如果启用）：</p>
-<ul>
-<li>收集所有变更操作</li>
-<li>生成 <code>patches_</code> 和 <code>inversePatches_</code></li>
-</ul>
-</li>
-<li>
-<p><strong>清理资源</strong>：</p>
-<ul>
-<li>撤销所有 draft 对象</li>
-<li>释放 scope 资源</li>
-</ul>
-</li>
-</ol>
-<h2>示例分析</h2>
-<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">baseState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nx">user</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;John&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nx">age</span><span class="o">:</span><span class="w"> </span><span class="mf">30</span><span class="p">,</span>
-<span class="w">    </span><span class="nx">address</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">      </span><span class="nx">city</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;New York&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nx">country</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;USA&quot;</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">  </span><span class="p">},</span>
-<span class="w">  </span><span class="nx">todos</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;task1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;task2&quot;</span><span class="p">]</span>
-<span class="p">};</span>
-
-<span class="kd">const</span><span class="w"> </span><span class="nx">nextState</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">produce</span><span class="p">(</span><span class="nx">baseState</span><span class="p">,</span><span class="w"> </span><span class="nx">draft</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nx">draft</span><span class="p">.</span><span class="nx">user</span><span class="p">.</span><span class="nx">age</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">31</span><span class="p">;</span>
-<span class="w">  </span><span class="nx">draft</span><span class="p">.</span><span class="nx">todos</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="s2">&quot;task3&quot;</span><span class="p">);</span>
-<span class="p">});</span>
-</code></pre></div>
-<p><strong>执行流程</strong>：</p>
-<ol>
-<li>
-<p><strong>初始化</strong>：</p>
-<ul>
-<li>创建 scope</li>
-<li>创建根 draft（baseState 的代理）</li>
-</ul>
-</li>
-<li>
-<p><strong>修改 <code>draft.user.age</code></strong>：</p>
-<ul>
-<li>访问 <code>draft.user</code> → 创建 user draft</li>
-<li>设置 <code>age</code> → 标记 user state 和根 state 为已修改</li>
-<li>创建 user 的 <code>copy_</code>，修改 <code>age</code> 为 31</li>
-</ul>
-</li>
-<li>
-<p><strong>修改 <code>draft.todos</code></strong>：</p>
-<ul>
-<li>访问 <code>draft.todos</code> → 创建数组 draft</li>
-<li><code>push</code> 操作 → 标记数组 state 和根 state 为已修改</li>
-<li>创建数组的 <code>copy_</code>，添加 &ldquo;task3&rdquo;</li>
-</ul>
-</li>
-<li>
-<p><strong>最终化</strong>：</p>
-<ul>
-<li>根 state 被修改，返回新的根对象</li>
-<li>user 被修改，返回新的 user 对象（age=31）</li>
-<li>address 未修改，保持原始引用</li>
-<li>todos 被修改，返回新的数组</li>
-</ul>
-</li>
-</ol>
-<p><strong>结果</strong>：
-<div class="highlight"><pre><span></span><code><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">baseState</span><span class="p">.</span><span class="nx">user</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">nextState</span><span class="p">.</span><span class="nx">user</span><span class="p">);</span><span class="w"> </span><span class="c1">// false</span>
-<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">baseState</span><span class="p">.</span><span class="nx">user</span><span class="p">.</span><span class="nx">address</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">nextState</span><span class="p">.</span><span class="nx">user</span><span class="p">.</span><span class="nx">address</span><span class="p">);</span><span class="w"> </span><span class="c1">// true</span>
-<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">baseState</span><span class="p">.</span><span class="nx">todos</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="nx">nextState</span><span class="p">.</span><span class="nx">todos</span><span class="p">);</span><span class="w"> </span><span class="c1">// false</span>
-</code></pre></div></p>
-<h2>性能优化</h2>
-<p>Immer 通过以下机制优化性能：</p>
-<ol>
-<li><strong>Copy-on-Write</strong>：只在修改时创建副本</li>
-<li><strong>结构共享</strong>：未修改的部分保持引用</li>
-<li><strong>修改跟踪</strong>：避免不必要的深度遍历</li>
-<li><strong>批量处理</strong>：scope 统一管理所有 drafts</li>
-</ol>
-<p>这种设计使得 Immer 既能保证不可变性，又能在性能上接近直接修改的方式。</p>
-        </article>
-        
-        <script src="https://giscus.app/client.js"
-                data-repo="oasis-cloud/blog-comments"
-                data-repo-id="R_kgDOKEliHA"
-                data-category="General"
-                data-category-id="DIC_kwDOKEliHM4CYb6e"
-                data-mapping="pathname"
-                data-strict="0"
-                data-reactions-enabled="1"
-                data-emit-metadata="0"
-                data-input-position="bottom"
-                data-theme="preferred_color_scheme"
-                data-lang="zh-CN"
-                crossorigin="anonymous"
-                async>
-        </script>
-    </body>
+<html lang="en-US" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Immer 数据处理流程解析 | Oasis's Cloud</title>
+    <meta name="description" content="一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。—— 《一个数学家的辩白》">
+    <meta name="generator" content="VitePress v1.6.4">
+    <link rel="preload stylesheet" href="/assets/style.BubUdk9b.css" as="style">
+    <link rel="preload stylesheet" href="/vp-icons.css" as="style">
+    
+    <script type="module" src="/assets/app.BuMT4ivz.js"></script>
+    <link rel="modulepreload" href="/assets/chunks/theme.HZhl2uCL.js">
+    <link rel="modulepreload" href="/assets/chunks/framework.86O3EbG5.js">
+    <link rel="modulepreload" href="/assets/articles_frontend_immerjs_2.md.DhP_sCjK.lean.js">
+    <script id="check-mac-os">document.documentElement.classList.toggle("mac",/Mac|iPhone|iPod|iPad/i.test(navigator.platform));</script>
+  </head>
+  <body>
+    <div id="app"><div class="graphite-page"><header class="masthead"><h1><a href="/">Oasis&#39;s Cloud</a></h1><p class="tagline">一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。<br />—— 《一个数学家的辩白》</p><nav class="menu"><input id="menu-check" type="checkbox"><label id="menu-label" for="menu-check" class="unselectable"><span class="icon close-icon">✕</span><span class="icon open-icon">☰</span><span class="text">Menu</span></label><ul><li><a href="/">首页</a></li></ul></nav></header><article class="main"><header class="title"><h1>Immer 数据处理流程解析</h1><!----><p class="author">作者：oasis</p><hr></header><div style="position:relative;"><div><p>Immer 通过 <code>produce</code> 函数实现不可变数据的处理。整个流程可以概括为：创建 draft → 修改跟踪 → 最终化处理 → 返回新状态。下面结合流程图详细说明每个阶段的工作机制。</p><p><img src="/images/frontend/immer%E4%B8%8D%E5%8F%AF%E5%8F%98%E6%95%B0%E6%8D%AE%E7%9A%84%E5%A4%84%E7%90%86%E6%B5%81%E7%A8%8B.png" alt="img.png"></p><h2 id="流程概览" tabindex="-1">流程概览</h2><p>从流程图中可以看到，Immer 的数据处理主要分为三个阶段：</p><ol><li><strong>初始化阶段</strong>：创建 scope 和根 draft</li><li><strong>修改阶段</strong>：通过 Proxy 拦截操作，跟踪修改</li><li><strong>最终化阶段</strong>：根据修改情况生成新状态</li></ol><h2 id="初始化阶段" tabindex="-1">初始化阶段</h2><p>当调用 <code>produce(baseState, draft =&gt; { ... })</code> 时，首先会创建一个新的 scope：</p><div class="language-typescript vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">typescript</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> scope</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> enterScope</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">this</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">)</span></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> proxy</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> createProxy</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(base, </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">undefined</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">)</span></span></code></pre></div><p><strong>Scope 的作用</strong>：</p><ul><li>管理整个 <code>produce</code> 调用的上下文</li><li>存储所有创建的 draft 对象</li><li>提供错误恢复机制</li></ul><p><strong>Draft 的创建</strong>：</p><ul><li>为原始对象创建 Proxy 代理</li><li>每个 draft 内部都有 <code>DRAFT_STATE</code> 属性</li><li>State 包含 <code>base_</code>（原始对象）、<code>copy_</code>（null）、<code>modified_</code>（false）等</li></ul><h2 id="修改阶段" tabindex="-1">修改阶段</h2><p>当在 recipe 函数中修改 draft 时，Proxy 会拦截这些操作：</p><h3 id="属性访问" tabindex="-1">属性访问</h3><div class="language-javascript vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">javascript</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">draft.user.age </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 31</span></span></code></pre></div><p>访问 <code>draft.user</code> 时：</p><ul><li>检查 <code>user</code> 属性是否等于原始值</li><li>如果相等，调用 <code>prepareCopy(state)</code> 准备副本</li><li>创建 <code>user</code> 对象的 draft 并返回</li></ul><h3 id="属性赋值" tabindex="-1">属性赋值</h3><p>设置 <code>age</code> 属性时：</p><ul><li><code>prepareCopy(state)</code>：为 draft 创建 <code>copy_</code>（浅拷贝）</li><li><code>markChanged(state)</code>：标记当前 state 为 <code>modified_ = true</code></li><li>递归向上标记所有父级 state 为已修改</li><li>将新值赋给 <code>copy_</code> 中的对应属性</li></ul><p><strong>关键设计</strong>：</p><ul><li><strong>惰性复制</strong>：只有在真正修改时才创建副本</li><li><strong>修改传播</strong>：子对象的修改会自动传播到父级</li><li><strong>结构共享</strong>：未修改的部分保持引用共享</li></ul><h2 id="最终化阶段" tabindex="-1">最终化阶段</h2><p>当 recipe 函数执行完成后，进入最终化处理：</p><div class="language-typescript vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">typescript</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">processResult</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(result, scope)</span></span></code></pre></div><h3 id="最终化流程" tabindex="-1">最终化流程</h3><ol><li><p><strong>检查修改状态</strong>：</p><ul><li>如果 <code>modified_ = false</code>，直接返回原始对象</li><li>如果 <code>modified_ = true</code>，处理 <code>copy_</code></li></ul></li><li><p><strong>递归处理子属性</strong>：</p><ul><li>遍历 <code>copy_</code> 中的所有属性</li><li>如果属性是 draft，递归调用 <code>finalize</code></li><li>如果属性是普通对象，根据配置决定是否冻结</li></ul></li><li><p><strong>生成补丁</strong>（如果启用）：</p><ul><li>收集所有变更操作</li><li>生成 <code>patches_</code> 和 <code>inversePatches_</code></li></ul></li><li><p><strong>清理资源</strong>：</p><ul><li>撤销所有 draft 对象</li><li>释放 scope 资源</li></ul></li></ol><h2 id="示例分析" tabindex="-1">示例分析</h2><div class="language-javascript vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">javascript</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> baseState</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  user: {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    name: </span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&quot;John&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">,</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    age: </span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;">30</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">,</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    address: {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      city: </span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&quot;New York&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">,</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">      country: </span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&quot;USA&quot;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">    }</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  },</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  todos: [</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&quot;task1&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">, </span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&quot;task2&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">]</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">};</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">const</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> nextState</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;"> produce</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(baseState, </span><span style="--shiki-light:#E36209;--shiki-dark:#E36209;">draft</span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;"> =&gt;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> {</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  draft.user.age </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">=</span><span style="--shiki-light:#005CC5;--shiki-dark:#005CC5;"> 31</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">  draft.todos.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">push</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(</span><span style="--shiki-light:#032F62;--shiki-dark:#032F62;">&quot;task3&quot;</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">);</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">});</span></span></code></pre></div><p><strong>执行流程</strong>：</p><ol><li><p><strong>初始化</strong>：</p><ul><li>创建 scope</li><li>创建根 draft（baseState 的代理）</li></ul></li><li><p><strong>修改 <code>draft.user.age</code></strong>：</p><ul><li>访问 <code>draft.user</code> → 创建 user draft</li><li>设置 <code>age</code> → 标记 user state 和根 state 为已修改</li><li>创建 user 的 <code>copy_</code>，修改 <code>age</code> 为 31</li></ul></li><li><p><strong>修改 <code>draft.todos</code></strong>：</p><ul><li>访问 <code>draft.todos</code> → 创建数组 draft</li><li><code>push</code> 操作 → 标记数组 state 和根 state 为已修改</li><li>创建数组的 <code>copy_</code>，添加 &quot;task3&quot;</li></ul></li><li><p><strong>最终化</strong>：</p><ul><li>根 state 被修改，返回新的根对象</li><li>user 被修改，返回新的 user 对象（age=31）</li><li>address 未修改，保持原始引用</li><li>todos 被修改，返回新的数组</li></ul></li></ol><p><strong>结果</strong>：</p><div class="language-javascript vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">javascript</span><pre class="shiki shiki-themes github-light github-light vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(baseState.user </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">===</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> nextState.user); </span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// false</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(baseState.user.address </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">===</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> nextState.user.address); </span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// true</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">console.</span><span style="--shiki-light:#6F42C1;--shiki-dark:#6F42C1;">log</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;">(baseState.todos </span><span style="--shiki-light:#D73A49;--shiki-dark:#D73A49;">===</span><span style="--shiki-light:#24292E;--shiki-dark:#24292E;"> nextState.todos); </span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">// false</span></span></code></pre></div><h2 id="性能优化" tabindex="-1">性能优化</h2><p>Immer 通过以下机制优化性能：</p><ol><li><strong>Copy-on-Write</strong>：只在修改时创建副本</li><li><strong>结构共享</strong>：未修改的部分保持引用</li><li><strong>修改跟踪</strong>：避免不必要的深度遍历</li><li><strong>批量处理</strong>：scope 统一管理所有 drafts</li></ol><p>这种设计使得 Immer 既能保证不可变性，又能在性能上接近直接修改的方式。</p></div></div></article><div id="giscus-host"></div></div></div>
+    <script>window.__VP_HASH_MAP__=JSON.parse("{\"articles_1.md\":\"BcbiCNen\",\"articles_2.md\":\"BOs6JrAg\",\"articles_3.md\":\"CyolPGRT\",\"articles_4.md\":\"CQKiIuaw\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_0.md\":\"Doxdb5Ij\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_1.md\":\"wjOL1phh\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_10.md\":\"LyZJnSxs\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_11.md\":\"C2FmrDp9\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_12.md\":\"BEHmrOu0\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_13.md\":\"DiD-bHGf\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_14.md\":\"BBmdeYZf\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_15.md\":\"f2O62Iuk\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_16.md\":\"BKGADZ4j\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_17.md\":\"C5m88eYa\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_18.md\":\"DFfKG_xT\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_19.md\":\"C58qgz4I\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_2.md\":\"BfG3umGO\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_20.md\":\"royf5I3T\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_21.md\":\"CmoEuQRQ\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_22.md\":\"5Bz1s6MM\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_23.md\":\"CZho3lv8\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_24.md\":\"BPs4s-6q\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_25.md\":\"DhIkQ8QI\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_26.md\":\"DQrDDSmD\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_3.md\":\"XzEbegi1\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_4.md\":\"Blv6FVHR\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_5.md\":\"C-qPQeyL\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_6.md\":\"6Y-BWQfb\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_7.md\":\"CAzQfyMt\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_8.md\":\"CsjQZCCO\",\"articles_artificial-intelligence_books_ai-modern-approach-homework_9.md\":\"BASgbQl4\",\"articles_artificial-intelligence_books_ai-modern-approach_1.md\":\"DDDLmf54\",\"articles_artificial-intelligence_books_ai-modern-approach_10.md\":\"DhmTh9g1\",\"articles_artificial-intelligence_books_ai-modern-approach_11.md\":\"CX8Rq9wV\",\"articles_artificial-intelligence_books_ai-modern-approach_12.md\":\"fnPMZxKE\",\"articles_artificial-intelligence_books_ai-modern-approach_13.md\":\"DelyBh0u\",\"articles_artificial-intelligence_books_ai-modern-approach_14.md\":\"CEVzmm13\",\"articles_artificial-intelligence_books_ai-modern-approach_15.md\":\"BYaoy4oU\",\"articles_artificial-intelligence_books_ai-modern-approach_16.md\":\"CJBur2Mw\",\"articles_artificial-intelligence_books_ai-modern-approach_17.md\":\"Q8pYMbdg\",\"articles_artificial-intelligence_books_ai-modern-approach_18.md\":\"BEtfJPVK\",\"articles_artificial-intelligence_books_ai-modern-approach_19.md\":\"DWkWsT-C\",\"articles_artificial-intelligence_books_ai-modern-approach_2.md\":\"Ck1Z-mEe\",\"articles_artificial-intelligence_books_ai-modern-approach_20.md\":\"CbcsJXY_\",\"articles_artificial-intelligence_books_ai-modern-approach_21.md\":\"DOHxMpLE\",\"articles_artificial-intelligence_books_ai-modern-approach_22.md\":\"BrmXqyYy\",\"articles_artificial-intelligence_books_ai-modern-approach_23.md\":\"ufr3NqX2\",\"articles_artificial-intelligence_books_ai-modern-approach_24.md\":\"CfKi8b69\",\"articles_artificial-intelligence_books_ai-modern-approach_25.md\":\"D3FZV2ha\",\"articles_artificial-intelligence_books_ai-modern-approach_26.md\":\"C9NvT34X\",\"articles_artificial-intelligence_books_ai-modern-approach_3.md\":\"5B16Mude\",\"articles_artificial-intelligence_books_ai-modern-approach_4.md\":\"CFTsLVCQ\",\"articles_artificial-intelligence_books_ai-modern-approach_5.md\":\"B6w77Qe3\",\"articles_artificial-intelligence_books_ai-modern-approach_6.md\":\"DOwdgivt\",\"articles_artificial-intelligence_books_ai-modern-approach_7.md\":\"BKl-9NUI\",\"articles_artificial-intelligence_books_ai-modern-approach_8.md\":\"Ca5nK7HY\",\"articles_artificial-intelligence_books_ai-modern-approach_9.md\":\"bjCn9mRw\",\"articles_artificial-intelligence_books_build-a-llm_1.md\":\"Cn53qMLE\",\"articles_artificial-intelligence_books_build-a-llm_2-1.md\":\"BEGkEHbf\",\"articles_artificial-intelligence_books_build-a-llm_2.md\":\"B9f-kfwa\",\"articles_artificial-intelligence_books_build-a-llm_3.md\":\"BgPDZZNE\",\"articles_artificial-intelligence_books_build-a-llm_4.md\":\"BGvCF-sm\",\"articles_artificial-intelligence_books_build-a-llm_5.md\":\"D6qs6PuA\",\"articles_artificial-intelligence_books_build-a-llm_6.md\":\"Ohih56sP\",\"articles_artificial-intelligence_books_build-a-llm_7.md\":\"HTDAcsNc\",\"articles_artificial-intelligence_books_essential-math-for-ai_1-1.md\":\"j-08bog-\",\"articles_artificial-intelligence_books_essential-math-for-ai_1.md\":\"CyeVwxe6\",\"articles_artificial-intelligence_books_essential-math-for-ai_2.md\":\"DLf3lmAl\",\"articles_artificial-intelligence_books_mathematics-for-ml-in-plain-words_11.md\":\"deaEf6CH\",\"articles_artificial-intelligence_books_shitangjijianrengongzhinengke_1.md\":\"Dspbam5X\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_1.md\":\"CsHrSBOo\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_2.md\":\"Ch4VnrDN\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_3.md\":\"DOx3ENDu\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_4.md\":\"BwTW514D\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_5.md\":\"CMT0adxO\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_6.md\":\"Da5Lo1qJ\",\"articles_artificial-intelligence_books_zhi-shi-tu-pu-dao-lun_7.md\":\"IVT6-nY0\",\"articles_artificial-intelligence_mcp_1.md\":\"BSwKgK20\",\"articles_artificial-intelligence_mcp_2.md\":\"BqYmOfWE\",\"articles_artificial-intelligence_mcp_3.md\":\"CRqerqdh\",\"articles_artificial-intelligence_mcp_4.md\":\"DlZf-ZBs\",\"articles_artificial-intelligence_network-source_1.md\":\"7tN07cqO\",\"articles_artificial-intelligence_python_1.md\":\"DEs7NHra\",\"articles_artificial-intelligence_research_1.md\":\"BRYxkx9w\",\"articles_artificial-intelligence_research_2.md\":\"D1S9y95L\",\"articles_artificial-intelligence_research_3.md\":\"CDPKFpDS\",\"articles_artificial-intelligence_research_4.md\":\"gcdEnQ27\",\"articles_artificial-intelligence_research_5.md\":\"BWuimyaG\",\"articles_artificial-intelligence_research_6.md\":\"ChDVsr6P\",\"articles_artificial-intelligence_skills_1.md\":\"CE_3tidO\",\"articles_artificial-intelligence_skills_2.md\":\"Dw-LqypE\",\"articles_artificial-intelligence_vibe-coding_1.md\":\"CIaQQuRU\",\"articles_artificial-intelligence_vibe-coding_2.md\":\"BYp_N-la\",\"articles_books_0-10000_1.md\":\"CqfzqHFB\",\"articles_books_burn-the-boats_1.md\":\"DQW5Dj64\",\"articles_books_dontmakemethink_1.md\":\"FcQgzyiC\",\"articles_books_gaoxiaonengrenshideqigexiguan_1.md\":\"Di8W2D55\",\"articles_books_head-start_1.md\":\"DSEU1Nd4\",\"articles_books_honghuanghouxiaoying_1.md\":\"DsEwgoHE\",\"articles_books_how-program-works_1.md\":\"In6CRTPC\",\"articles_books_how-program-works_2.md\":\"C__yRHZZ\",\"articles_books_kebiansikao_1.md\":\"ZpZj4VBL\",\"articles_books_lixingdebianjie_1.md\":\"C2i5IU4p\",\"articles_books_match_1.md\":\"DQuyyF-w\",\"articles_books_next-age-of-uncertainty_1.md\":\"B3kXpIOT\",\"articles_books_piancha_1.md\":\"DUp5o2L7\",\"articles_books_programingwithtypes_1.md\":\"DPf6sVtD\",\"articles_books_ruhexuexi_1.md\":\"BiBkTqFk\",\"articles_books_ruozhedewuqi_1.md\":\"CJI0TUtU\",\"articles_books_shendugongzuo_1.md\":\"BAdThtq3\",\"articles_books_shishituichu_1.md\":\"DSMpw3Mj\",\"articles_books_siweideqiutu_1.md\":\"D9N51GZd\",\"articles_books_xingweichuanranxiaoying_1.md\":\"D8YfH3E9\",\"articles_books_yingxianglidebadazhangai_1.md\":\"BkSkh0ib\",\"articles_books_zenyanglongluorenxin_1.md\":\"DyaoIWo4\",\"articles_books_zhegezhexuejiajiulewo_1.md\":\"EBCGPBD1\",\"articles_daily-thoughts_1.md\":\"rLmpFK7a\",\"articles_frontend_1.md\":\"B3Ok2hY9\",\"articles_frontend_10.md\":\"uK6wPfMr\",\"articles_frontend_11.md\":\"B8q93MGs\",\"articles_frontend_12.md\":\"D2lc-Jbc\",\"articles_frontend_13.md\":\"D5nGGZ29\",\"articles_frontend_14.md\":\"67MvYpiC\",\"articles_frontend_15.md\":\"Bonqr1JH\",\"articles_frontend_16.md\":\"BIcIqlrh\",\"articles_frontend_17.md\":\"DT2OnR9t\",\"articles_frontend_18.md\":\"C2UgM1rp\",\"articles_frontend_19.md\":\"Cm_l10Pp\",\"articles_frontend_2.md\":\"BH6obgzX\",\"articles_frontend_20.md\":\"DYOd_Ygi\",\"articles_frontend_21.md\":\"BGvMohX8\",\"articles_frontend_22.md\":\"C9-4PiZs\",\"articles_frontend_23.md\":\"LFQ7EJby\",\"articles_frontend_24.md\":\"CxV3Qmff\",\"articles_frontend_25.md\":\"KDaPWGvE\",\"articles_frontend_3.md\":\"Ocf5SV2e\",\"articles_frontend_4.md\":\"8oQMBnVM\",\"articles_frontend_6.md\":\"DLjPQ4H2\",\"articles_frontend_7.md\":\"C3_rdklM\",\"articles_frontend_8.md\":\"DmoQqnzq\",\"articles_frontend_9.md\":\"BIp4wdMq\",\"articles_frontend_fluent-react_1.md\":\"BsLnBF9_\",\"articles_frontend_immerjs_1.md\":\"cAKCGuJw\",\"articles_frontend_immerjs_2.md\":\"DhP_sCjK\",\"articles_frontend_micro-frontends_1.md\":\"CTPkX7P4\",\"articles_frontend_micro-frontends_2.md\":\"BhiyXnsA\",\"articles_frontend_next-intl_1.md\":\"CHLJLMhT\",\"articles_frontend_nextjs_1.md\":\"FcBi0n4F\",\"articles_frontend_nextjs_2.md\":\"IMXOyUyo\",\"articles_frontend_nextjs_3.md\":\"sMqC4VLv\",\"articles_frontend_nextjs_4.md\":\"YErQgQac\",\"articles_frontend_nextjs_5.md\":\"BSvkBEDC\",\"articles_frontend_nextjs_6.md\":\"C3vMZWNU\",\"articles_frontend_programming-with-types_1.md\":\"BZDTAiUn\",\"articles_frontend_programming-with-types_2.md\":\"DvF69qyh\",\"articles_frontend_programming-with-types_3.md\":\"D5ySUS2k\",\"articles_frontend_programming-with-types_4-1.md\":\"DgmuJ2FE\",\"articles_frontend_programming-with-types_4.md\":\"DCyvJyTt\",\"articles_frontend_programming-with-types_5.md\":\"D5s4hW6n\",\"articles_frontend_programming-with-types_6.md\":\"0TkUZXWK\",\"articles_frontend_programming-with-types_7.md\":\"ChvDQygU\",\"articles_frontend_react-hooks_1.md\":\"Da9rnukC\",\"articles_frontend_react_1-1.md\":\"DTtIXyO7\",\"articles_frontend_react_1.md\":\"B5UJRAnh\",\"articles_frontend_react_2-1.md\":\"BbIbpqlZ\",\"articles_frontend_react_2.md\":\"CFuzM5My\",\"articles_frontend_react_3-1.md\":\"CB6esavT\",\"articles_frontend_react_3-2.md\":\"Ddn-EfA3\",\"articles_frontend_react_3.md\":\"COI_9hCd\",\"articles_frontend_react_4.md\":\"DmDsL2Q0\",\"articles_frontend_zustand_1-1.md\":\"Bq6-0ZBv\",\"articles_frontend_zustand_1.md\":\"CXYFgHGX\",\"articles_github_1.md\":\"CAskap8A\",\"articles_github_2.md\":\"BV3nkWQp\",\"articles_github_3.md\":\"CMzJSJkE\",\"articles_github_4.md\":\"DJP9VajY\",\"articles_github_5.md\":\"Bn3oSnIk\",\"articles_javascript_1.md\":\"3nNbgAfV\",\"articles_javascript_2.md\":\"CjZc98RL\",\"articles_javascript_3.md\":\"CL42n_iU\",\"articles_learn-js-design-pattern_1.md\":\"CZTgpT5Z\",\"articles_morden-browser_1.md\":\"CFKiS64y\",\"articles_morden-browser_2.md\":\"BXaAupn0\",\"articles_network_1.md\":\"C0I3csFQ\",\"articles_network_2.md\":\"DDLuT2tq\",\"articles_network_3.md\":\"CWo0kz2B\",\"articles_nodejs_1.md\":\"Db65q0P1\",\"articles_nodejs_2.md\":\"CQAqiGBk\",\"articles_nodejs_3.md\":\"4FAcAo6A\",\"articles_philosophy-of-software-design_1.md\":\"B9EW4TRr\",\"articles_philosophy-of-software-design_2.md\":\"Lhpe0bAQ\",\"articles_philosophy-of-software-design_3.md\":\"CJxtSZDL\",\"articles_plan_1.md\":\"uSPmD0KW\",\"articles_plan_动手学大模型智能体.md\":\"BSQ4xbeQ\",\"articles_plan_动手学强化学习.md\":\"Bvnyy0ei\",\"articles_plan_动手学机器学习.md\":\"BJQt5tTu\",\"articles_plan_动手学深度学习.md\":\"BXMo25LP\",\"articles_plan_动手学自然语言处理.md\":\"BeVLNyzS\",\"articles_read_1.md\":\"DNGJ03Om\",\"articles_self_1.md\":\"zoUg7f4K\",\"articles_self_2.md\":\"BfDDBfsY\",\"articles_self_3.md\":\"fP1FAGSq\",\"articles_self_4.md\":\"B9_3N0SV\",\"articles_self_5.md\":\"BwBA7c2t\",\"articles_self_6.md\":\"BBHEUU_t\",\"articles_self_7.md\":\"DWHrJTvQ\",\"articles_self_8.md\":\"CqKpQtPR\",\"articles_self_9.md\":\"45INF02j\",\"articles_sicp_1.md\":\"BO4gTEQ3\",\"articles_sicp_2.md\":\"DG_VPyb9\",\"articles_software-design_1.md\":\"BKCWLXN0\",\"articles_software-design_2.md\":\"fRR0rO3E\",\"articles_software-design_3.md\":\"DgNX2j82\",\"articles_software-design_4.md\":\"7DoTTce3\",\"articles_software-design_5.md\":\"BcfmIT7R\",\"articles_software-design_6.md\":\"CNGJwx2j\",\"articles_typescript_1.md\":\"B_Q8hMP7\",\"articles_work_project-log-and-summary.md\":\"B5joyKE6\",\"index.md\":\"ofGALGuw\"}");window.__VP_SITE_DATA__=JSON.parse("{\"lang\":\"en-US\",\"dir\":\"ltr\",\"title\":\"Oasis's Cloud\",\"description\":\"一个人的首要责任，就是要有雄心。雄心是一种高尚的激情，它可以采取多种合理的形式。—— 《一个数学家的辩白》\",\"base\":\"/\",\"head\":[],\"router\":{\"prefetchLinks\":true},\"appearance\":false,\"themeConfig\":{},\"locales\":{},\"scrollOffset\":134,\"cleanUrls\":false}");</script>
+    
+  </body>
 </html>
