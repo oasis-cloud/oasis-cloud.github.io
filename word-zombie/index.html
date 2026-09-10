@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>单词怪兽</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div id="frame">
+      <canvas id="c"></canvas>
+    </div>
+
+    <div id="hud" hidden>
+      <div id="kills" class="kills">SCORE 0</div>
+      <div class="hp-wrap">
+        <div class="hp-label">HP 木屋</div>
+        <div class="hp-bar"><div id="hp-fill" class="hp-fill"></div></div>
+      </div>
+      <div id="spell" class="spell"></div>
+      <div id="stun-hint" class="stun-hint" hidden>卡住了</div>
+    </div>
+
+    <div id="lobby" class="overlay">
+      <div class="sheet">
+        <h1>单词怪兽</h1>
+        <p class="lead">
+          保护汤姆大叔的小木屋。左侧豌豆固定不动，单词怪兽从右侧攻来。看见头顶英文就打，打对则点名开炮。
+        </p>
+        <p class="hint">
+          看见就能打 · Backspace 删字 · 打错豌豆会卡住 · Esc 暂停
+        </p>
+        <div class="settings">
+          <label>
+            每批单词怪兽
+            <input
+              id="batch-input"
+              type="number"
+              min="1"
+              max="12"
+              step="1"
+              value="1"
+            />
+          </label>
+          <label>
+            移动速度
+            <input
+              id="speed-input"
+              type="range"
+              min="0.5"
+              max="2.5"
+              step="0.1"
+              value="1"
+            />
+            <span id="speed-label">1.0×</span>
+          </label>
+        </div>
+        <label for="word-input">词表（每行：英文,中文）</label>
+        <textarea
+          id="word-input"
+          spellcheck="false"
+          placeholder="apple,苹果"
+        ></textarea>
+        <p id="parse-error" class="err"></p>
+        <div class="row">
+          <button id="btn-start" class="primary" type="button">开始</button>
+          <button id="btn-default" type="button">恢复示例词</button>
+          <button id="btn-dex" type="button">单词怪兽图鉴</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="dex" class="overlay" hidden>
+      <div class="sheet sheet-wide">
+        <h1>单词怪兽图鉴</h1>
+        <p class="hint">十二种原创涂鸦怪兽，各自有不同的走法和外形。</p>
+        <div id="dex-grid" class="dex-grid"></div>
+        <div class="row">
+          <button id="btn-dex-close" class="primary" type="button">返回</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="pause" class="overlay" hidden>
+      <div class="sheet">
+        <h1>暂停</h1>
+        <p class="hint">木屋还在。继续防守，或先改词表。</p>
+        <div class="row">
+          <button id="btn-resume" class="primary" type="button">继续</button>
+          <button id="btn-edit" type="button">编辑词表</button>
+          <button id="btn-dex-pause" type="button">图鉴</button>
+          <button id="btn-restart" type="button">重新开始</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="gameover" class="overlay" hidden>
+      <div class="sheet">
+        <h1>木屋被攻破了</h1>
+        <p id="over-stats" class="stats"></p>
+        <div class="row">
+          <button id="btn-again" class="primary" type="button">
+            用原词再来
+          </button>
+          <button id="btn-again-edit" type="button">改词再来</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="./game.js"></script>
+  </body>
+</html>
