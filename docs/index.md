@@ -221,6 +221,7 @@ subTitle: 目录
 - [弱者的武器](/articles/books/weapons-of-the-weak/1.html)
 - [适时退出](/articles/books/quit/1.html)
 - [行为传染效应](/articles/books/behavioral-contagion/1.html)
+- [一片茶叶六种命](/articles/books/yipianchayeliuzhongming/1.html)
 
 <!-- <br /> -->
 
