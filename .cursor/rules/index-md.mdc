@@ -38,7 +38,9 @@ alwaysApply: false
 3. 无则并入主题相近的分组；仍无合适分组时，在主题区域末尾新建一组。
 4. **分组之间**用单独一行的 `<br />` 分隔，且**上下各留一空行**（否则会被 Markdown 并进上一条列表项，看不到分组间距）；组内条目连续排列，中间不加 `<br />`。
 
-常见主题区域（自上而下参考）：AI 教材 → MCP/实践 → LLM/图谱等 AI 书 → 前端源码 → Next/React → 其它前端 → Node → GitHub → 网络 → 软件设计 → SICP/设计哲学 → `books/` 读书笔记 → `self/`。
+常见主题区域（自上而下参考）：`books/how-program-works` → AI（`ai/mcp`、`ai/vibe-coding`）→ AI 书籍（`ai/books/`）→ 前端源码（`frontend/source-code`、`immerjs`）→ Next/React（`frontend/nextjs`、`react`、`zustand`）→ Taro/NutUI → 其它前端（`frontend/javascript`、`typescript`、`css`、`browser`、`tools`、`micro-frontends`）→ Node（`nodejs/`）→ GitHub（`github/`）→ 网络（`network/`）→ 软件设计（`software-design/`）→ 计算机经典（`books/sicp`、`philosophy-of-software-design`、`programming-style`）→ 通识读书笔记（`books/`）→ 随笔（`essays/`）。
+
+目录组织详见 `.cursor/rules/articles-structure.mdc`。
 
 ## 操作检查清单
 

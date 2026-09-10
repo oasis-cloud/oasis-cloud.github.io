@@ -1,0 +1,50 @@
+---
+description: docs/articles 目录组织规范——新文章落位、目录命名、专题划分
+globs: docs/articles/**/*.md
+alwaysApply: false
+---
+
+# Articles 目录组织规范
+
+`docs/articles/` 按「知识域 → 专题 → 章节」三级组织。新文章先找归属，再动笔。
+
+## 顶层结构
+
+```
+articles/
+├── ai/               # 人工智能：mcp/、vibe-coding/、skills/、research/、prompt/、python/
+│   └── books/        # AI 领域书籍笔记
+├── frontend/         # 前端：react/、nextjs/、zustand/、immerjs/、taro/、nutui/、
+│                     #       javascript/、typescript/、css/、browser/、micro-frontends/、
+│                     #       source-code/（源码分析）、tools/（工程化/工具链）
+├── nodejs/           # Node.js
+├── network/          # 网络协议与工具
+├── github/           # GitHub / Actions / CI
+├── software-design/  # 软件设计与编程实践
+├── books/            # 所有书籍笔记（含技术书，统一收编）
+├── essays/           # 随笔、随想、评论
+├── plan/             # 学习计划
+└── work/             # 工作记录
+```
+
+## 落位规则
+
+1. **书籍笔记一律放 `books/`**，技术书也不例外（如 `books/sicp`、`books/programming-with-types`）；AI 领域书籍放 `ai/books/`。
+2. 前端文章按主题进 `frontend/` 对应子目录；没有合适子目录时，先考虑能否归入 `source-code/` 或 `tools/`，再考虑新建专题目录。
+3. 同一主题文章 ≥ 3 篇才新建专题子目录；1~2 篇先放邻近目录。
+4. 个人感悟、评论、随想放 `essays/`；非文章类材料（简历）放 `docs/about.md`，不进 `articles/`。
+
+## 命名规范
+
+- 目录名：全小写英文 kebab-case（如 `programming-with-types`），**禁止拼音**（`shendugongzuo` ❌ → `deep-work` ✅）、禁止大写、避免拼写错误。
+- 书籍目录优先使用原书英文名（如 `deep-work`、`weapons-of-the-weak`、`quit`）。
+- 章节文件用数字编号：`1.md`、`2.md`；补充篇用 `2-1.md` 形式跟在主篇后。
+- 专题内新增文章取当前最大编号 +1。
+
+## 迁移检查
+
+移动/重命名文章后必须：
+
+1. 全站搜索旧路径（`grep -r "旧路径" docs/`），更新所有站内互链（含 `index.md`）。
+2. 图片在 `docs/public/images/`，移动文章不影响图片路径，无需改动。
+3. 运行 `pnpm build` 验证。

@@ -1,9 +1,10 @@
-王备
-电　话：18310926580（手机）
-邮  箱：835865303@qq.com
+---
+title: 关于我
+author: oasis
+---
+
 个人博客：https://oasis-cloud.github.io
 GitHub：https://github.com/oasis-cloud
-出生日期：1990年8月26日
 
 求职意向
 目标职能：高级前端开发工程师
