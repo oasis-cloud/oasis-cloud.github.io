@@ -12,14 +12,6 @@ subTitle: 目录
 
 <!-- <br /> -->
 
-- [程序是怎么跑起来的（一）](/articles/books/how-program-works/1.html)
-- [程序是怎么跑起来的（二）](/articles/books/how-program-works/2.html)
-- [程序是怎么跑起来的（三）](/articles/books/how-program-works/3.html)
-- [程序是怎么跑起来的（四）](/articles/books/how-program-works/4.html)
-- [程序是怎么跑起来的（五）](/articles/books/how-program-works/5.html)
-
-<!-- <br /> -->
-
 - [MCP 入门：基础概念](/articles/ai/mcp/1.html)
 - [MCP 入门：MCP 服务器的发现和调用](/articles/ai/mcp/2.html)
 - [MCP 入门：JSON RPC 的实现](/articles/ai/mcp/3.html)
@@ -195,6 +187,16 @@ subTitle: 目录
 - [软件设计的哲学-设计原则总结](/articles/books/philosophy-of-software-design/2.html)
 - [软件设计的哲学-警示信号](/articles/books/philosophy-of-software-design/3.html)
 - [编程格调](/articles/books/programming-style/1.html)
+
+<!-- <br /> -->
+
+- [程序是怎么跑起来的（一）](/articles/books/how-program-works/1.html)
+- [程序是怎么跑起来的（二）](/articles/books/how-program-works/2.html)
+- [程序是怎么跑起来的（三）](/articles/books/how-program-works/3.html)
+- [程序是怎么跑起来的（四）](/articles/books/how-program-works/4.html)
+- [程序是怎么跑起来的（五）](/articles/books/how-program-works/5.html)
+- [程序是怎么跑起来的（六）](/articles/books/how-program-works/6.html)
+- [程序是怎么跑起来的（七）](/articles/books/how-program-works/7.html)
 
 <!-- <br /> -->
 
