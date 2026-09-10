@@ -5,6 +5,9 @@ subTitle: 目录
 
 - [程序是怎么跑起来的（一）](/articles/books/how-program-works/1.html)
 - [程序是怎么跑起来的（二）](/articles/books/how-program-works/2.html)
+- [程序是怎么跑起来的（三）](/articles/books/how-program-works/3.html)
+- [程序是怎么跑起来的（四）](/articles/books/how-program-works/4.html)
+- [程序是怎么跑起来的（五）](/articles/books/how-program-works/5.html)
 
 <br />
 
