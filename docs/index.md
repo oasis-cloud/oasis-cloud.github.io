@@ -3,13 +3,22 @@ title: "☁️☁️☁️<br/>🌵🌵🌵🌵🌵"
 subTitle: 目录
 ---
 
+- [AI 必备数学（一）](/articles/ai/books/essential-math-for-ai/1.html)
+- [AI 必备数学（二）](/articles/ai/books/essential-math-for-ai/2.html)
+
+<!-- <br /> -->
+
+- [白话机器学习的数学](/articles/ai/books/math-for-ml/1.html)
+
+<!-- <br /> -->
+
 - [程序是怎么跑起来的（一）](/articles/books/how-program-works/1.html)
 - [程序是怎么跑起来的（二）](/articles/books/how-program-works/2.html)
 - [程序是怎么跑起来的（三）](/articles/books/how-program-works/3.html)
 - [程序是怎么跑起来的（四）](/articles/books/how-program-works/4.html)
 - [程序是怎么跑起来的（五）](/articles/books/how-program-works/5.html)
 
-<br />
+<!-- <br /> -->
 
 - [MCP 入门：基础概念](/articles/ai/mcp/1.html)
 - [MCP 入门：MCP 服务器的发现和调用](/articles/ai/mcp/2.html)
@@ -17,7 +26,7 @@ subTitle: 目录
 - [MCP 实践：鱼缸盐度计算](/articles/ai/mcp/4.html)
 - [Vibe Coding 实践：使用 Cursor 为博客添加图片放大功能](/articles/ai/vibe-coding/1.html)
 
-<br />
+<!-- <br /> -->
 
 - [从零构建大语言模型（一）](/articles/ai/books/build-a-llm/1.html)
 - [从零构建大语言模型（二）](/articles/ai/books/build-a-llm/2.html)
@@ -27,7 +36,7 @@ subTitle: 目录
 - [从零构建大语言模型（六）](/articles/ai/books/build-a-llm/6.html)
 - [从零构建大语言模型（七）](/articles/ai/books/build-a-llm/7.html)
 
-<br />
+<!-- <br /> -->
 
 - [知识图谱导论（一）](/articles/ai/books/knowledge-graph/1.html)
 - [知识图谱导论（二）](/articles/ai/books/knowledge-graph/2.html)
@@ -36,12 +45,12 @@ subTitle: 目录
 - [知识图谱导论（五）](/articles/ai/books/knowledge-graph/5.html)
 - [知识图谱导论（六）](/articles/ai/books/knowledge-graph/6.html)
 - [知识图谱导论（七）](/articles/ai/books/knowledge-graph/7.html)
-- [十堂极简人工智能课](/articles/ai/books/ten-ai-lessons/1.html)
-- [AI 必备数学（一）](/articles/ai/books/essential-math-for-ai/1.html)
-- [AI 必备数学（二）](/articles/ai/books/essential-math-for-ai/2.html)
-- [白话机器学习的数学](/articles/ai/books/math-for-ml/1.html)
 
-<br />
+<!-- <br /> -->
+
+- [十堂极简人工智能课](/articles/ai/books/ten-ai-lessons/1.html)
+
+<!-- <br /> -->
 
 - [人工智能现代方法（1）](/articles/ai/books/ai-modern-approach/1.html)
 - [人工智能现代方法（2）](/articles/ai/books/ai-modern-approach/2.html)
@@ -70,7 +79,7 @@ subTitle: 目录
 - [人工智能现代方法（25）](/articles/ai/books/ai-modern-approach/25.html)
 - [人工智能现代方法（26）](/articles/ai/books/ai-modern-approach/26.html)
 
-<br />
+<!-- <br /> -->
 
 - [源码分析——Redux](/articles/frontend/source-code/3.html)
 - [Immer 源码分析——State 和 Scope 的设计原因](/articles/frontend/immerjs/1.html)
@@ -78,7 +87,7 @@ subTitle: 目录
 - [源码分析——async-validator](/articles/frontend/source-code/2.html)
 - [源码分析——nrm](/articles/frontend/source-code/1.html)
 
-<br />
+<!-- <br /> -->
 
 - [mini-next.js 总览：Next.js 核心架构分析](/articles/frontend/nextjs/1.html)
 - [mini-next.js 文件系统路由：Pages Router 实现](/articles/frontend/nextjs/2.html)
@@ -88,7 +97,7 @@ subTitle: 目录
 - [mini-next.js 热重载：开发体验优化](/articles/frontend/nextjs/6.html)
 - [next-intl request.mjs 中 getRequestConfig 的调用流程解析](/articles/frontend/next-intl/1.html)
 
-<br />
+<!-- <br /> -->
 
 - [React 基础渲染流程——基于 v19.2.0 版本](/articles/frontend/react/1.html)
 - [React 状态更新流程——基于 v19.2.0 版本](/articles/frontend/react/2.html)
@@ -97,14 +106,14 @@ subTitle: 目录
 - [React Hooks —— useCallback](/articles/frontend/react/6.html)
 - [zustand 源码分析——基于 v5.0.0 版本](/articles/frontend/zustand/1.html)
 
-<br />
+<!-- <br /> -->
 
 - [Taro 运行时机制解析](/articles/frontend/taro/1.html)
 - [Taro 构建流程源码分析](/articles/frontend/taro/2.html)
 - [Taro 源码阅读笔记](/articles/frontend/taro/3.html)
 - [Vite 7.x 版本是如何处理 JS 和 CSS 的](/articles/frontend/tools/5.html)
 
-<br />
+<!-- <br /> -->
 
 - [类型系统简介](/articles/books/programming-with-types/1.html)
 - [基本类型](/articles/books/programming-with-types/2.html)
@@ -113,13 +122,13 @@ subTitle: 目录
 - [子类型](/articles/books/programming-with-types/5.html)
 - [泛型数据结构](/articles/books/programming-with-types/6.html)
 
-<br />
+<!-- <br /> -->
 
 - [NutUI React Checkbox 组件设计与实现](/articles/frontend/nutui/1.html)
 - [NutUI React 安全区组件的实现](/articles/frontend/nutui/3.html)
 - [NutUI React 在 Taro 中实现函数调用的方法](/articles/frontend/nutui/2.html)
 
-<br />
+<!-- <br /> -->
 
 - [yield 与生成器：把多步埋点收进同一个函数结构里](/articles/frontend/javascript/6.html)
 - [TypeScript config 文件中的 extends](/articles/frontend/typescript/2.html)
@@ -137,14 +146,14 @@ subTitle: 目录
 - [现代浏览器工作原理](/articles/frontend/browser/1.html)
 - [V8 引擎工作原理](/articles/frontend/browser/2.html)
 
-<br />
+<!-- <br /> -->
 
 - [通过 jscodeshift 重构代码](/articles/frontend/tools/3.html)
 - [通过 jscodeshift 向类型文件增加注释](/articles/frontend/tools/1.html)
 - [esbuild + es module 实现极简 CLI](/articles/frontend/tools/4.html)
 - [Brew 包管理器的工作流程分析](/articles/frontend/tools/2.html)
 
-<br />
+<!-- <br /> -->
 
 - [Nodes.js v22 带来的重大收益](/articles/nodejs/1.html)
 - [import.meta 在 Node.js 中的发展过程](/articles/nodejs/2.html)
@@ -152,7 +161,7 @@ subTitle: 目录
 - [Node.js 的 preserve-symlinks](/articles/nodejs/4.html)
 - [京东前端：PhantomJS 和 NodeJS 在京东网站前端监控平台的最佳实践](https://www.infoq.cn/article/practise-of-phantomjs-and-nodejs-in-jingdong)
 
-<br />
+<!-- <br /> -->
 
 - [NutUI React CI/CD](/articles/github/5.html)
 - [在 GitHub Action 中获取改动文件](/articles/github/4.html)
@@ -160,13 +169,13 @@ subTitle: 目录
 - [GitHub Action 入门](/articles/github/2.html)
 - [启动 Python 项目](/articles/github/1.html)
 
-<br />
+<!-- <br /> -->
 
 - [DNS 解析流程](/articles/network/1.html)
 - [Http Multipart 介绍](/articles/network/2.html)
 - [tcpdump](/articles/network/3.html)
 
-<br />
+<!-- <br /> -->
 
 - [系统编程](/articles/software-design/1.html)
 - [异步编程](/articles/software-design/2.html)
@@ -175,19 +184,19 @@ subTitle: 目录
 - [数据表](/articles/software-design/5.html)
 - [构建正则表达式](/articles/software-design/6.html)
 
-<br />
+<!-- <br /> -->
 
 - [构造数据抽象](/articles/books/sicp/2.html)
 - [构造过程抽象](/articles/books/sicp/1.html)
 
-<br />
+<!-- <br /> -->
 
 - [软件设计的哲学](/articles/books/philosophy-of-software-design/1.html)
 - [软件设计的哲学-设计原则总结](/articles/books/philosophy-of-software-design/2.html)
 - [软件设计的哲学-警示信号](/articles/books/philosophy-of-software-design/3.html)
 - [编程格调](/articles/books/programming-style/1.html)
 
-<br />
+<!-- <br /> -->
 
 - [深度工作](/articles/books/deep-work/1.html)
 - [可变思考](/articles/books/flexible-thinking/1.html)
@@ -211,7 +220,7 @@ subTitle: 目录
 - [适时退出](/articles/books/quit/1.html)
 - [行为传染效应](/articles/books/behavioral-contagion/1.html)
 
-<br />
+<!-- <br /> -->
 
 - [学科的范式奠基与路径依赖](/articles/essays/1.html)
 - [女性主义图书增加意味着什么](/articles/essays/2.html)
