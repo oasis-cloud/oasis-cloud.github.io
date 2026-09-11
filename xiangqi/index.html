@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>楚汉 · 象棋</title>
+    <link rel="stylesheet" href="./style.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div id="frame">
+      <canvas id="c"></canvas>
+    </div>
+
+    <div id="silk-frame" aria-hidden="true"></div>
+
+    <div id="hud" hidden>
+      <aside class="hud-rail">
+        <div class="seal-title">楚汉 · 象棋</div>
+        <div id="mode-label" class="mode-label"></div>
+        <ol id="move-list" class="move-list"></ol>
+      </aside>
+
+      <div class="hud-head">
+        <div id="turn" class="turn">汉军走</div>
+        <div id="hint-text" class="hint-text"></div>
+      </div>
+
+      <div id="eval-ink" class="eval-ink" aria-hidden="true">
+        <div id="eval-chu" class="eval-wash eval-chu"></div>
+        <div id="eval-han" class="eval-wash eval-han"></div>
+        <div class="eval-mid"></div>
+      </div>
+
+      <div id="captured-black" class="captured captured-chu" aria-label="楚军被吃"></div>
+      <div id="captured-red" class="captured captured-han" aria-label="汉军被吃"></div>
+
+      <div class="hud-actions">
+        <button id="btn-undo" class="seal zhuwen" type="button">悔棋</button>
+        <button id="btn-hint" class="seal zhuwen" type="button">提示</button>
+        <button id="btn-resign" class="seal zhuwen" type="button">认输</button>
+        <button id="btn-restart" class="seal zhuwen" type="button">重开</button>
+        <button id="btn-skip" class="seal baiwen" type="button" hidden>跳过布阵</button>
+        <button id="btn-silhouette" class="seal zhuwen" type="button">剪影</button>
+      </div>
+    </div>
+
+    <div id="lobby" class="overlay">
+      <div class="sheet">
+        <p class="kicker">工笔重彩 · 楚汉</p>
+        <h1>楚汉 · 象棋</h1>
+        <p class="lead">石青、朱砂、墨与泥金。棋子是人，棋盘是江山。</p>
+
+        <section class="choice">
+          <h2>人对引擎</h2>
+          <div class="row seals">
+            <button id="btn-start-easy" class="seal zhuwen" type="button">弱社</button>
+            <button id="btn-start-medium" class="seal baiwen" type="button">对局</button>
+            <button id="btn-start-hard" class="seal baiwen" type="button">沉机</button>
+          </div>
+        </section>
+
+        <section class="choice">
+          <h2>人对人</h2>
+          <div class="row seals">
+            <button id="btn-start-human" class="seal zhuwen" type="button">对坐手谈</button>
+          </div>
+        </section>
+
+        <div class="row seals">
+          <button id="btn-continue" class="seal baiwen" type="button" hidden>续上次未竟</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="over" class="overlay" hidden>
+      <div class="sheet">
+        <p class="kicker">终局</p>
+        <h1 id="over-title"></h1>
+        <p id="over-reason" class="lead"></p>
+        <div class="row seals">
+          <button id="btn-again" class="seal baiwen" type="button">再来一局</button>
+          <button id="btn-review" class="seal zhuwen" type="button">复盘</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="review" class="overlay overlay-soft" hidden>
+      <div class="sheet sheet-narrow">
+        <p class="kicker">复盘</p>
+        <h1>逐手观局</h1>
+        <p id="review-hint" class="lead review-hint"></p>
+        <div class="row seals">
+          <button id="btn-review-prev" class="seal zhuwen" type="button">上一手</button>
+          <button id="btn-review-next" class="seal baiwen" type="button">下一手</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
