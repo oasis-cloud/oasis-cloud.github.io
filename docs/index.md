@@ -237,3 +237,4 @@ subTitle: 目录
 <br />
 
 - [单词怪兽](/word-zombie.html)
+- [中国象棋](/xiangqi.html)
