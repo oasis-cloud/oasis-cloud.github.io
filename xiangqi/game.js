@@ -25,7 +25,7 @@ import {
 } from "./engine/rules.js";
 import { classifyDelta, createReviewController } from "./ui/review.js";
 import { toNotation } from "./ui/notation.js";
-import { applyIk, resetIk } from "./units/ik.js";
+import { applyIk, resetIk, restoreBindPose } from "./units/ik.js";
 import { buildClips, playClip, updateMixer } from "./units/animations.js";
 import { playCapture, playWalk } from "./units/combat.js";
 import { createUnit } from "./units/factory.js";
@@ -439,11 +439,12 @@ export function createGame(canvas, ui) {
     phase = PHASE.PARADE;
     hud.setSkipParadeVisible(true);
     view.cameraRig.setMode("opening");
-    spawnAll(false);
     if (skip) {
-      skipParade();
+      spawnAll(true);
+      finishParade();
       return;
     }
+    spawnAll(false);
     const units = [];
     view.pieceRoot.children.forEach((u) => {
       if (u.userData?.type) units.push(u);
@@ -478,8 +479,22 @@ export function createGame(canvas, ui) {
     if (!units.length) finishParade();
   }
 
+  function seatUnit(u) {
+    if (!u || !Number.isInteger(u.userData?.f) || u.userData.f < 0) return;
+    const w = homeOf(u.userData.f, u.userData.r);
+    u.position.set(w.x, w.y, w.z);
+    u.userData.homeY = w.y;
+    u.userData.moving = false;
+    restoreBindPose(u);
+    facing(u);
+    playClip(u, "idle", { fade: 0, loop: true });
+  }
+
   function finishParade() {
     hud.setSkipParadeVisible(false);
+    for (const row of meshes) {
+      for (const u of row) seatUnit(u);
+    }
     phase = PHASE.PLAYING;
     view.cameraRig.setMode("middle");
     if (vs === "human") view.cameraRig.faceSide(turn);
@@ -493,18 +508,7 @@ export function createGame(canvas, ui) {
   function skipParade() {
     if (phase !== PHASE.PARADE) return;
     clearJobs();
-    for (const row of meshes) {
-      for (const u of row) {
-        if (!u) continue;
-        const w = homeOf(u.userData.f, u.userData.r);
-        u.position.set(w.x, w.y, w.z);
-        u.userData.homeY = w.y;
-        u.userData.moving = false;
-        resetIk(u);
-        facing(u);
-        playClip(u, "idle", { fade: 0.1, loop: true });
-      }
-    }
+    spawnAll(true);
     finishParade();
   }
 
@@ -722,10 +726,11 @@ export function createGame(canvas, ui) {
     view.pieceRoot.children.forEach((unit) => {
       if (!unit.userData?.type) return;
       updateMixer(unit, step);
-      applyIk(unit, step, {
-        groundedY: unit.userData.homeY ?? unit.position.y,
-        moving: !!unit.userData.moving,
-      });
+      if (phase !== PHASE.PARADE) {
+        applyIk(unit, step, {
+          groundedY: unit.userData.homeY ?? unit.position.y,
+        });
+      }
       if (!unit.userData.moving && Number.isInteger(unit.userData.f) && unit.userData.f >= 0) {
         const selectedNow = selected && selected.f === unit.userData.f && selected.r === unit.userData.r;
         const hoverNow = hover === `${unit.userData.f},${unit.userData.r}`;

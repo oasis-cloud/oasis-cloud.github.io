@@ -6,7 +6,7 @@ import { TILE } from "../core/constants.js";
 import { tileToWorld } from "../core/coords.js";
 import { PIGMENT, armyOf } from "../core/palette.js";
 import { animClock, CLIP_DURATION, getCatapultArm, playClip } from "./animations.js";
-import { resetIk } from "./ik.js";
+import { restoreBindPose } from "./ik.js";
 import { spawnShatter } from "./pigment.js";
 
 const APPROACH = 0.73;
@@ -213,7 +213,7 @@ export function playWalk(unit, fromWorld, toWorld, duration, onDone) {
       if (u < 1) return false;
       unit.position.set(dest.x, dest.y, dest.z);
       unit.userData.moving = false;
-      resetIk(unit);
+      restoreBindPose(unit);
       restoreFacing(unit);
       playClip(unit, "idle", { fade: 0.18, loop: true });
       done = true;
@@ -259,7 +259,7 @@ export function playCapture({ attacker, defender, from, to, type, view, onHit, o
     onDoneFired = true;
     attacker.position.set(aTo.x, aTo.y, aTo.z);
     attacker.userData.moving = false;
-    resetIk(attacker);
+    restoreBindPose(attacker);
     restoreFacing(attacker);
     playClip(attacker, "idle", { fade: 0.16, loop: true });
     setTimeScale(view, 1);
