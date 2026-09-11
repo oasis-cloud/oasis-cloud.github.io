@@ -12,7 +12,8 @@
     </div>
 
     <div id="hud" hidden>
-      <div id="kills" class="kills">SCORE 0</div>
+      <div id="progress" class="kills">0 / 0</div>
+      <div id="combo" class="combo" hidden></div>
       <div class="hp-wrap">
         <div class="hp-label">HP 木屋</div>
         <div class="hp-bar"><div id="hp-fill" class="hp-fill"></div></div>
@@ -25,10 +26,10 @@
       <div class="sheet">
         <h1>单词怪兽</h1>
         <p class="lead">
-          保护汤姆大叔的小木屋。左侧豌豆固定不动，单词怪兽从右侧攻来。看见头顶英文就打，打对则点名开炮。
+          保护汤姆大叔的小木屋。每个单词会出现两次：先认词（英+中），再默写（只剩中文）。打对英文，豌豆点名开炮。
         </p>
         <p class="hint">
-          看见就能打 · Backspace 删字 · 打错豌豆会卡住 · Esc 暂停
+          看见就能打 · 每个词先认再默 · Backspace 删字 · 打错会卡住 · Esc 暂停
         </p>
         <div class="settings">
           <label>
@@ -103,6 +104,18 @@
             用原词再来
           </button>
           <button id="btn-again-edit" type="button">改词再来</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="victory" class="overlay" hidden>
+      <div class="sheet">
+        <h1>木屋保住了</h1>
+        <p id="win-stars" class="stars">★★★</p>
+        <p id="win-stats" class="stats"></p>
+        <div class="row">
+          <button id="btn-win-again" class="primary" type="button">再来一局</button>
+          <button id="btn-win-edit" type="button">回大厅</button>
         </div>
       </div>
     </div>
