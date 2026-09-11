@@ -162,6 +162,32 @@ export function resetIk(unit) {
   if (unit?.userData) unit.userData.ikRuntime = null;
 }
 
+/** 清 IK、停 mixer、骨骼回到绑定位姿。跳过布阵/走完瞬移后必须调用，否则脚还停在场外。 */
+export function restoreBindPose(unit) {
+  if (!unit) return;
+  resetIk(unit);
+  const mixer = unit.userData?.mixer;
+  if (mixer) {
+    mixer.stopAllAction();
+    unit.userData.activeAction = null;
+    unit.userData.activeClipName = null;
+  }
+  const bones = unit.userData?.bones || {};
+  for (const b of Object.values(bones)) {
+    if (!b) continue;
+    if (b.userData?.restPosition) b.position.copy(b.userData.restPosition);
+    if (b.userData?.restQuaternion) b.quaternion.copy(b.userData.restQuaternion);
+    b.scale.set(1, 1, 1);
+  }
+  const skel = unit.userData?.skeleton;
+  if (skel?.bones) {
+    for (const b of skel.bones) {
+      if (b?.scale) b.scale.set(1, 1, 1);
+    }
+  }
+  unit.updateMatrixWorld(true);
+}
+
 export function applyIk(unit, dt, { groundedY } = {}) {
   if (!unit) return;
   const ground = groundedY ?? unit.position.y;
