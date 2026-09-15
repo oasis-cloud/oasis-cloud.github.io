@@ -222,6 +222,7 @@ subTitle: 目录
 - [适时退出](/articles/books/quit/1.html)
 - [行为传染效应](/articles/books/behavioral-contagion/1.html)
 - [一片茶叶六种命](/articles/books/yipianchayeliuzhongming/1.html)
+- [人有人的用处](/articles/books/the-human-use-of-human-beings/1.html)
 
 <!-- <br /> -->
 
@@ -233,6 +234,7 @@ subTitle: 目录
 - [AI 重构生态：跨端概念已成过往](/articles/essays/6.html)
 - [AI 时代：智能终端，终将化身新电视](/articles/essays/7.html)
 - [如何撰写开发人员喜欢阅读的文章](/articles/essays/10.html)
+- [不要有感性的烦恼](/articles/essays/11.html)
 
 <br />
 
