@@ -235,6 +235,7 @@ subTitle: 目录
 - [AI 时代：智能终端，终将化身新电视](/articles/essays/7.html)
 - [如何撰写开发人员喜欢阅读的文章](/articles/essays/10.html)
 - [不要有感性的烦恼](/articles/essays/11.html)
+- [反馈回路与系统观](/articles/essays/13.html)
 
 <br />
 
