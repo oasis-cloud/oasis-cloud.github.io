@@ -13,12 +13,24 @@
 
     <div id="hud" hidden>
       <div id="progress" class="kills">0 / 0</div>
+      <div id="wave" class="wave" hidden></div>
       <div id="combo" class="combo" hidden></div>
       <div class="hp-wrap">
         <div class="hp-label">HP 木屋</div>
         <div class="hp-bar"><div id="hp-fill" class="hp-fill"></div></div>
       </div>
-      <div id="spell" class="spell"></div>
+      <div id="spell-panel" class="spell-panel">
+        <div class="spell-bar">
+          <button id="btn-mic" class="mic-btn" type="button">
+            开始说字母
+          </button>
+          <button id="btn-spell-del" class="spell-del" type="button" title="删除上一个字母">
+            删除
+          </button>
+        </div>
+        <div id="spell" class="spell-letters" aria-live="polite"></div>
+        <div id="spell-hint" class="spell-hint"></div>
+      </div>
       <div id="stun-hint" class="stun-hint" hidden>卡住了</div>
     </div>
 
@@ -26,10 +38,10 @@
       <div class="sheet">
         <h1>单词怪兽</h1>
         <p class="lead">
-          保护汤姆大叔的小木屋。每个单词会出现两次：先认词（英+中），再默写（只剩中文）。打对英文，豌豆点名开炮。
+          保护汤姆大叔的小木屋。每个单词会出现两次：先认词（英+中），再默写（只剩中文）。点「开始说字母」，一个一个说出字母，再说完点一次结束。
         </p>
         <p class="hint">
-          看见就能打 · 每个词先认再默 · Backspace 删字 · 打错会卡住 · Esc 暂停
+          点按说话 · 只能逐个说字母（如 a p p l e）· 删除键或「删除」退格 · 打错会卡住 · Esc 暂停
         </p>
         <div class="settings">
           <label>
