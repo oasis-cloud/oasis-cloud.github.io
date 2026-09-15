@@ -10,10 +10,26 @@ function shuffle(list) {
   return a;
 }
 
+/** 随机插入；队列非空时尽量不插到最前，避免同一词立刻再刷 */
+function insertRandom(queue, card, { avoidFront = true } = {}) {
+  if (!queue.length) {
+    queue.push(card);
+    return;
+  }
+  const min = avoidFront ? 1 : 0;
+  const idx = min + Math.floor(Math.random() * (queue.length - min + 1));
+  queue.splice(idx, 0, card);
+}
+
+/**
+ * 本关牌堆：词表每个词必须先认词、后默写，共 total = words.length * 2 次。
+ * 认词牌开局洗乱；默写牌在认词打对后随机插入剩余队列；漏怪也随机插回。
+ */
 export function createDeck(words) {
-  const queue = shuffle(words.map((word) => ({ word, mode: MODE_RECOGNIZE })));
+  const list = Array.isArray(words) ? words.filter(Boolean) : [];
+  const queue = shuffle(list.map((word) => ({ word, mode: MODE_RECOGNIZE })));
   let cleared = 0;
-  const total = words.length * 2;
+  const total = list.length * 2;
 
   return {
     get cleared() {
@@ -29,12 +45,16 @@ export function createDeck(words) {
       return queue.shift() || null;
     },
     returnCard(card) {
-      queue.push({ word: card.word, mode: card.mode });
+      insertRandom(queue, { word: card.word, mode: card.mode }, { avoidFront: true });
     },
     complete(card) {
       cleared += 1;
       if (card.mode === MODE_RECOGNIZE) {
-        queue.push({ word: card.word, mode: MODE_DICTATE });
+        insertRandom(
+          queue,
+          { word: card.word, mode: MODE_DICTATE },
+          { avoidFront: true },
+        );
       }
     },
     isClear(fieldCount) {

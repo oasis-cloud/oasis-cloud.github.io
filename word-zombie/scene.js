@@ -10,13 +10,18 @@ import {
 } from "./doodle.js";
 import { MODE_DICTATE } from "./deck.js";
 import { MONSTERS } from "./monsters/index.js";
+import { cardScale } from "./tension.js";
 
 export function createScene(ctx, doodle) {
   const { strokePath, doodleEllipse, doodleRect } = doodle;
 
-  function drawPaper(w, h) {
+  function drawPaper(w, h, { lowHp = false, danger = false, shake = 0 } = {}) {
+    ctx.save();
+    if (shake) {
+      ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
+    }
     ctx.fillStyle = PAPER;
-    ctx.fillRect(0, 0, w, h);
+    ctx.fillRect(-8, -8, w + 16, h + 16);
     ctx.strokeStyle = LINE;
     ctx.lineWidth = 1.2;
     for (let y = 28; y < h; y += 32) {
@@ -29,6 +34,19 @@ export function createScene(ctx, doodle) {
     for (let i = 0; i < 40; i++) {
       ctx.fillRect((i * 97) % w, (i * 53) % h, 2, 2);
     }
+    if (lowHp) {
+      ctx.fillStyle = "rgba(196, 92, 42, 0.14)";
+      ctx.fillRect(0, 0, w, h);
+    } else if (danger) {
+      ctx.fillStyle = "rgba(196, 92, 42, 0.07)";
+      ctx.fillRect(0, 0, w, h);
+      const g = ctx.createRadialGradient(w * 0.15, h * 0.7, 40, w * 0.15, h * 0.7, w * 0.55);
+      g.addColorStop(0, "rgba(196, 92, 42, 0)");
+      g.addColorStop(1, "rgba(196, 92, 42, 0.16)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+    }
+    ctx.restore();
   }
 
   function drawGrass(w, ground) {
@@ -43,7 +61,7 @@ export function createScene(ctx, doodle) {
         [w, ground + 6],
       ],
       INK,
-      2.2
+      2.2,
     );
     for (let x = 16; x < w; x += 18) {
       const gh = 8 + (x % 7);
@@ -55,10 +73,11 @@ export function createScene(ctx, doodle) {
     ctx.restore();
   }
 
-  function drawCabin(x, ground) {
+  function drawCabin(x, ground, { lowHp = false } = {}) {
     const w = 118;
     const h = 96;
-    doodleRect(x, ground - h, w, h, INK, 2.6, 11, "#f3e2c0");
+    const fill = lowHp ? "#efc9a8" : "#f3e2c0";
+    doodleRect(x, ground - h, w, h, lowHp ? ORANGE : INK, 2.6, 11, fill);
     strokePath(
       [
         [x - 10, ground - h + 8],
@@ -66,15 +85,15 @@ export function createScene(ctx, doodle) {
         [x + w + 10, ground - h + 8],
       ],
       ORANGE,
-      3
+      3,
     );
     doodleRect(x + 44, ground - 42, 28, 40, INK, 2.2, 12, "#d9c39a");
     doodleRect(x + 14, ground - h + 22, 26, 22, INK, 2, 13, "#cfe6f4");
     doodleRect(x + 78, ground - h + 22, 26, 22, INK, 2, 14, "#cfe6f4");
-    ctx.fillStyle = INK_DARK;
+    ctx.fillStyle = lowHp ? ORANGE : INK_DARK;
     ctx.font = "12px PingFang SC, Microsoft YaHei, sans-serif";
     ctx.textAlign = "left";
-    ctx.fillText("汤姆大叔", x + 18, ground - h - 46);
+    ctx.fillText(lowHp ? "撑住啊！" : "汤姆大叔", x + 18, ground - h - 46);
   }
 
   function drawPea(x, ground, { stunned, glowing }) {
@@ -90,7 +109,7 @@ export function createScene(ctx, doodle) {
         [px - 4, ground - 48],
       ],
       GREEN_DARK,
-      4
+      4,
     );
     doodleEllipse(px - 10, ground - 18, 10, 16, GREEN, 2.2, 21, "#b7e39a");
     doodleEllipse(px + 12, ground - 16, 11, 17, GREEN, 2.2, 22, "#b7e39a");
@@ -115,9 +134,33 @@ export function createScene(ctx, doodle) {
     doodleEllipse(x, y + 4, 18, 6, INK, 1.6, 8, "rgba(43, 108, 176, 0.22)");
   }
 
-  function drawWordCard(z, highlight, x, y) {
+  function drawPressureBar(x, y, progress, danger) {
+    const bw = 52;
+    const bh = 6;
+    const bx = x - bw / 2;
+    const by = y - 172;
+    ctx.save();
+    ctx.fillStyle = "rgba(255,252,244,0.9)";
+    ctx.strokeStyle = danger ? ORANGE : INK;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.rect(bx, by, bw, bh);
+    ctx.fill();
+    ctx.stroke();
+    const fillW = Math.max(2, bw * Math.min(1, Math.max(0, progress)));
+    ctx.fillStyle = danger ? ORANGE : GREEN;
+    ctx.fillRect(bx, by, fillW, bh);
+    ctx.restore();
+  }
+
+  function drawWordCard(z, highlight, x, y, scale) {
     const dictate = z.mode === MODE_DICTATE;
     const zh = z.word.zh;
+    ctx.save();
+    ctx.translate(x, y - 156);
+    ctx.scale(scale, scale);
+    ctx.translate(-x, -(y - 156));
+
     ctx.font = "13px PingFang SC, Microsoft YaHei, sans-serif";
     const zhW = ctx.measureText(zh).width;
     let enW = 0;
@@ -128,8 +171,23 @@ export function createScene(ctx, doodle) {
     const tw = Math.max(48, enW, zhW) + 20;
     const th = dictate ? 28 : 36;
     const cardY = y - 156;
-    doodleRect(x - tw / 2, cardY, tw, th, INK, 1.8, z.seed + 4, highlight ? "#e8f2ff" : "#fffcf4");
+    const border = z.berserk ? ORANGE : INK;
+    doodleRect(
+      x - tw / 2,
+      cardY,
+      tw,
+      th,
+      border,
+      z.berserk ? 2.6 : 1.8,
+      z.seed + 4,
+      highlight ? "#e8f2ff" : z.berserk ? "#fff0e4" : "#fffcf4",
+    );
     ctx.textAlign = "center";
+    if (z.berserk) {
+      ctx.fillStyle = ORANGE;
+      ctx.font = "10px PingFang SC, Microsoft YaHei, sans-serif";
+      ctx.fillText("狂", x + tw / 2 - 8, cardY - 2);
+    }
     if (dictate) {
       ctx.fillStyle = ORANGE;
       ctx.font = "11px PingFang SC, Microsoft YaHei, sans-serif";
@@ -145,14 +203,20 @@ export function createScene(ctx, doodle) {
       ctx.font = "13px PingFang SC, Microsoft YaHei, sans-serif";
       ctx.fillText(zh, x, cardY + 30);
     }
+    ctx.restore();
   }
 
-  function drawMonster(z, y, highlight, inked) {
+  function drawMonster(z, y, highlight, inked, { approach = 0, danger = false } = {}) {
     const walk = Math.sin(z.phase) * 5;
     if (inked) drawInkPuddle(z.x, y);
+    if (danger) {
+      doodleEllipse(z.x, y + 6, 26, 8, ORANGE, 1.4, z.seed + 30, "rgba(224, 122, 47, 0.25)");
+    }
     const species = MONSTERS[z.kind] || MONSTERS[0];
-    species.draw(doodle, { x: z.x, y, walk, seed: z.seed, hl: highlight });
-    drawWordCard(z, highlight, z.x, y);
+    species.draw(doodle, { x: z.x, y, walk, seed: z.seed, hl: highlight || danger });
+    const scale = cardScale(approach);
+    drawWordCard(z, highlight || danger, z.x, y, scale);
+    drawPressureBar(z.x, y, approach, danger);
   }
 
   function drawPeaShot(p) {
