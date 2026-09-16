@@ -6,3 +6,6 @@ dist
 out
 docs/.vitepress/cache
 docs/.vitepress/dist
+
+# 本地原书 epub（受版权保护，勿提交）
+skills/books/
