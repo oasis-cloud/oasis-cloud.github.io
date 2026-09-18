@@ -223,6 +223,7 @@ subTitle: 目录
 - [行为传染效应](/articles/books/behavioral-contagion/1.html)
 - [一片茶叶六种命](/articles/books/yipianchayeliuzhongming/1.html)
 - [人有人的用处](/articles/books/the-human-use-of-human-beings/1.html)
+- [摄影师之眼](/articles/books/the-photographers-eye/1.html)
 
 <!-- <br /> -->
 
