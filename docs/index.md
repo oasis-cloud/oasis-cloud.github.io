@@ -227,6 +227,13 @@ subTitle: 目录
 
 <!-- <br /> -->
 
+- [美国纽约摄影学院摄影教材：摄影师的工作流程](/articles/books/nyip-course/1.html)
+- [美国纽约摄影学院摄影教材：培养摄影眼](/articles/books/nyip-course/2.html)
+- [美国纽约摄影学院摄影教材：光线](/articles/books/nyip-course/3.html)
+- [美国纽约摄影学院摄影教材：好照片的标准与题材](/articles/books/nyip-course/4.html)
+
+<!-- <br /> -->
+
 - [学科的范式奠基与路径依赖](/articles/essays/1.html)
 - [女性主义图书增加意味着什么](/articles/essays/2.html)
 - [人生何处无波澜](/articles/essays/3.html)
@@ -237,6 +244,7 @@ subTitle: 目录
 - [如何撰写开发人员喜欢阅读的文章](/articles/essays/10.html)
 - [不要有感性的烦恼](/articles/essays/11.html)
 - [反馈回路与系统观](/articles/essays/13.html)
+- [人创造了可以超越自己的东西](/articles/essays/16.html)
 
 <br />
 
