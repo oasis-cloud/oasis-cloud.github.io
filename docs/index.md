@@ -240,6 +240,13 @@ subTitle: 目录
 
 <!-- <br /> -->
 
+- [古代汉语：课文三则](/articles/gu-dai-han-yu/1.html)
+- [古代汉语：所字结构](/articles/gu-dai-han-yu/1-1.html)
+- [古代汉语：通论语法总表](/articles/gu-dai-han-yu/1-2.html)
+- [古代汉语：如何分析一个句子](/articles/gu-dai-han-yu/2.html)
+
+<!-- <br /> -->
+
 - [学科的范式奠基与路径依赖](/articles/essays/1.html)
 - [女性主义图书增加意味着什么](/articles/essays/2.html)
 - [人生何处无波澜](/articles/essays/3.html)
