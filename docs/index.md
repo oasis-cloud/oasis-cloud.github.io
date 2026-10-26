@@ -11,15 +11,17 @@ subTitle: 目录
 
 <!-- <br /> -->
 
-- [古代汉语：课文三则](/articles/gu-dai-han-yu/1.html)
-- [古代汉语：所字结构](/articles/gu-dai-han-yu/1-1.html)
-- [古代汉语：通论语法总表](/articles/gu-dai-han-yu/1-2.html)
-- [古代汉语：词汇的构成和古今词义的异同](/articles/gu-dai-han-yu/2.html)
-- [古代汉语：汉字的结构](/articles/gu-dai-han-yu/3.html)
-- [古代汉语：古汉语语法](/articles/gu-dai-han-yu/4.html)
-- [古代汉语：音韵与诗词格律](/articles/gu-dai-han-yu/5.html)
-- [古代汉语：古注](/articles/gu-dai-han-yu/6.html)
-- [古代汉语：修辞](/articles/gu-dai-han-yu/7.html)
+- [古代汉语：课文三则](/articles/books/classical-chinese/1.html)
+- [古代汉语：所字结构](/articles/books/classical-chinese/1-1.html)
+- [古代汉语：通论语法总表](/articles/books/classical-chinese/1-2.html)
+- [古代汉语：词汇的构成和古今词义的异同](/articles/books/classical-chinese/2.html)
+- [古代汉语：汉字的结构](/articles/books/classical-chinese/3.html)
+- [古代汉语：古汉语语法](/articles/books/classical-chinese/4.html)
+- [古代汉语：音韵与诗词格律](/articles/books/classical-chinese/5.html)
+- [古代汉语：古注](/articles/books/classical-chinese/6.html)
+- [古代汉语：修辞](/articles/books/classical-chinese/7.html)
+- [古代汉语：课后题 · 工具书](/articles/books/classical-chinese/exercises/1.html)
+- [古代汉语：课后题 · 词汇构成](/articles/books/classical-chinese/exercises/2.html)
 
 <!-- <br /> -->
 
