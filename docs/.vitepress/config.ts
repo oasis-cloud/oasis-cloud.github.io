@@ -18,5 +18,19 @@ export default defineConfig({
     anchor: {
       permalink: false,
     },
+    config(md) {
+      const fence = md.renderer.rules.fence
+      md.renderer.rules.fence = (tokens, idx, options, env, self) => {
+        const token = tokens[idx]
+        if (token.info.trim() === 'mermaid') {
+          const content = token.content
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+          return `<pre class="mermaid">${content}</pre>\n`
+        }
+        return fence?.(tokens, idx, options, env, self) ?? ''
+      }
+    },
   },
 })

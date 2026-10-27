@@ -25,6 +25,13 @@ subTitle: 目录
 
 <!-- <br /> -->
 
+- [中国古代纪时考：纪日](/articles/books/zhong-guo-gudai-ji-shi-kao/1.html)
+- [中国古代纪时考：纪时刻与时辰](/articles/books/zhong-guo-gudai-ji-shi-kao/2.html)
+- [中国古代纪时考：纪月](/articles/books/zhong-guo-gudai-ji-shi-kao/3.html)
+- [中国古代纪时考：纪年](/articles/books/zhong-guo-gudai-ji-shi-kao/4.html)
+
+<!-- <br /> -->
+
 - [AI 必备数学（一）](/articles/ai/books/essential-math-for-ai/1.html)
 - [AI 必备数学（二）](/articles/ai/books/essential-math-for-ai/2.html)
 

@@ -113,6 +113,23 @@ article.main mjx-container {
   max-width: 100%;
 }
 
+article.main pre.mermaid {
+  margin: 1.5em 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  overflow-x: auto;
+  text-align: center;
+  white-space: pre;
+  font-family: 'Crimson Text', Georgia, serif;
+  line-height: 1.4;
+}
+
+article.main pre.mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
 /* Giscus sits below the floated columns */
 #giscus-host {
   clear: both;

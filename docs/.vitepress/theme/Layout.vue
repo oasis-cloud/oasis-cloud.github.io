@@ -3,6 +3,7 @@ import { computed, nextTick, onMounted, watch } from 'vue'
 import { Content, useData, useRoute } from 'vitepress'
 import Giscus from './components/Giscus.vue'
 import { initImageZoom } from './useImageZoom'
+import { renderMermaid } from './useMermaid'
 
 const { frontmatter, page } = useData()
 const route = useRoute()
@@ -48,6 +49,7 @@ function applyBodyClass() {
 async function afterPageReady() {
   applyBodyClass()
   await nextTick()
+  await renderMermaid(document)
   // Allow Content to paint before binding zoom handlers
   requestAnimationFrame(() => initImageZoom())
 }
