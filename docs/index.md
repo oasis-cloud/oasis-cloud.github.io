@@ -72,7 +72,7 @@ subTitle: 目录
 - [十堂极简人工智能课](/articles/ai/books/ten-ai-lessons/1.html)
 
 <!-- <br /> -->
-
+<!--
 - [人工智能现代方法（1）](/articles/ai/books/ai-modern-approach/1.html)
 - [人工智能现代方法（2）](/articles/ai/books/ai-modern-approach/2.html)
 - [人工智能现代方法（3）](/articles/ai/books/ai-modern-approach/3.html)
@@ -99,7 +99,7 @@ subTitle: 目录
 - [人工智能现代方法（24）](/articles/ai/books/ai-modern-approach/24.html)
 - [人工智能现代方法（25）](/articles/ai/books/ai-modern-approach/25.html)
 - [人工智能现代方法（26）](/articles/ai/books/ai-modern-approach/26.html)
-
+-->
 <!-- <br /> -->
 
 - [源码分析——Redux](/articles/frontend/source-code/3.html)
