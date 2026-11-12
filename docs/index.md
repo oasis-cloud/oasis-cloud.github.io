@@ -56,6 +56,7 @@ subTitle: 目录
 - [从零构建大语言模型（五）](/articles/ai/books/build-a-llm/5.html)
 - [从零构建大语言模型（六）](/articles/ai/books/build-a-llm/6.html)
 - [从零构建大语言模型（七）](/articles/ai/books/build-a-llm/7.html)
+- [Transformer 与注意力基础](/articles/books/tu-jie-llm/1.html)
 
 <!-- <br /> -->
 
