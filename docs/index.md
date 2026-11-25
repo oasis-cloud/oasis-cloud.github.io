@@ -3,6 +3,8 @@ title: "☁️☁️☁️<br/>🌵🌵🌵🌵🌵"
 subTitle: 目录
 ---
 
+- [概率导论：化简不等式的动机](/articles/maths/1.html)
+
 <!-- <br /> -->
 
 - [电影摄影：理论与实践：电影作为一种语言](/articles/books/cinematography-theory-and-practice/1.html)
@@ -78,7 +80,10 @@ subTitle: 目录
 - [人工智能现代方法（2）](/articles/ai/books/ai-modern-approach/2.html)
 - [人工智能现代方法（3）](/articles/ai/books/ai-modern-approach/3.html)
 - [人工智能现代方法（4）](/articles/ai/books/ai-modern-approach/4.html)
+-->
+
 - [人工智能现代方法（5）](/articles/ai/books/ai-modern-approach/5.html)
+<!--
 - [人工智能现代方法（6）](/articles/ai/books/ai-modern-approach/6.html)
 - [人工智能现代方法（7）](/articles/ai/books/ai-modern-approach/7.html)
 - [人工智能现代方法（8）](/articles/ai/books/ai-modern-approach/8.html)
